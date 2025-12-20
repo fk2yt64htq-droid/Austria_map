@@ -1,15 +1,14 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Austria Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { margin: 0; padding: 0; }
-        #map { height: 100vh; width: 100vw; background: #fff; }
-        .btn { padding: 10px; border: none; color: #fff; border-radius: 5px; width: 100%; margin-top: 5px; font-weight: bold; cursor: pointer; }
-        .btn-g { background: #28a745; }
-        .btn-r { background: #dc3545; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; }
+        #map { height: 100vh; width: 100vw; }
+        .btn { padding: 10px; width: 100%; margin-top: 5px; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 5px; }
     </style>
 </head>
 <body>
@@ -25,18 +24,14 @@
 
         const locs = [
             {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
-            {id: 2, n: "Nuziders A14", lt: 47.1731, ln: 9.7737},
-            {id: 3, n: "Rabfeld A12", lt: 47.4574, ln: 11.9196},
-            {id: 4, n: "Kundl A12", lt: 47.4734, ln: 11.9693},
-            {id: 5, n: "Wels A8", lt: 48.1790, ln: 13.8623}
+            {id: 4, n: "Kundl A12", lt: 47.4734, ln: 11.9693}
         ];
 
         locs.forEach(l => {
-            const m = L.marker([l.lt, l.ln]).addTo(map);
-            m.bindPopup(`
+            L.marker([l.lt, l.ln]).addTo(map).bindPopup(`
                 <b>${l.n}</b><br>
-                <button class="btn btn-g" onclick="sendS(${l.id},'green')">ЧИСТО 🟢</button>
-                <button class="btn btn-r" onclick="sendS(${l.id},'red')">КОНТРОЛЬ 🔴</button>
+                <button class="btn" style="background:green" onclick="sendS(${l.id},'green')">ЧИСТО 🟢</button>
+                <button class="btn" style="background:red" onclick="sendS(${l.id},'red')">КОНТРОЛЬ 🔴</button>
             `);
         });
 
