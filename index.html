@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Austria Road Control Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; }
@@ -21,11 +20,9 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Центр мапи — Австрія
         const map = L.map('map').setView([47.5, 13.5], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        // Список усіх 13 точок
         const locs = [
             {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
             {id: 2, n: "Nuziders A14", lt: 47.1731, ln: 9.7737},
@@ -42,7 +39,6 @@
             {id: 13, n: "Arnoldstein A2", lt: 46.5492, ln: 13.7042}
         ];
 
-        // Додавання маркерів на мапу
         locs.forEach(l => {
             L.marker([l.lt, l.ln]).addTo(map).bindPopup(`
                 <b>${l.n}</b><br>
@@ -51,7 +47,6 @@
             `);
         });
 
-        // Функція відправки даних у бот
         function sendS(id, s) {
             const data = JSON.stringify({id: id, status: s});
             tg.sendData(data);
