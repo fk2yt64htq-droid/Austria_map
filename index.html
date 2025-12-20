@@ -1,90 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Austria Map</title>
-    <meta charset="utf-8" />
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { margin: 0; padding: 0; background-color: white; }
-        #map { height: 100vh; width: 100vw; }
-        .popup-content { text-align: center; font-family: Arial, sans-serif; min-width: 150px; }
-        .btn { padding: 12px; margin: 5px; border: none; color: white; cursor: pointer; border-radius: 8px; width: 90%; font-weight: bold; }
-        .btn-green { background: #28a745; }
-        .btn-red { background: #dc3545; }
+        body { margin: 0; padding: 0; }
+        #map { height: 100vh; width: 100vw; background: #fff; }
+        .popup-content { text-align: center; min-width: 140px; }
+        .btn { padding: 10px; border: none; color: #fff; border-radius: 5px; width: 100%; margin-top: 5px; font-weight: bold; cursor: pointer; }
+        .btn-g { background: #28a745; }
+        .btn-r { background: #dc3545; }
     </style>
 </head>
 <body>
     <div id="map"></div>
-
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
-        // Ініціалізація Telegram WebApp
         const tg = window.Telegram.WebApp;
         tg.expand();
+        const map = L.map('map').setView([47.5, 13.5], 7);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        // Список ваших точок
-        const locations = [
-            {id: 1, name: "Hörbranz A14", lat: 47.5446, lon: 9.7407},
-            {id: 2, name: "Nuziders A14", lat: 47.1731, lon: 9.7737},
-            {id: 3, name: "Rabfeld A12", lat: 47.4574, lon: 11.9196},
-            {id: 4, name: "Kundl A12", lat: 47.4734, lon: 11.9693},
-            {id: 5, name: "Wels A8", lat: 48.1790, lon: 13.8623},
-            {id: 6, name: "Wolfsbach A1 (1)", lat: 48.1120, lon: 14.6761},
-            {id: 7, name: "Wolfsbach A1 (2)", lat: 48.1123, lon: 14.6786},
-            {id: 8, name: "Mistelbach A5", lat: 48.5389, lon: 16.6259},
-            {id: 9, name: "Bruce an der Leitha A4", lat: 48.0431, lon: 16.7791},
-            {id: 10, name: "Pernau A2", lat: 47.0900, lon: 15.8511},
-            {id: 11, name: "Strass in Steiermark A9", lat: 46.7317, lon: 15.6436},
-            {id: 12, name: "Haimburg A2", lat: 46.6845, lon: 14.6591}
+        const locs = [
+            {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
+            {id: 2, n: "Nuziders A14", lt: 47.1731, ln: 9.7737},
+            {id: 3, n: "Rabfeld A12", lt: 47.4574, ln: 11.9196},
+            {id: 4, n: "Kundl A12", lt: 47.4734, ln: 11.9693},
+            {id: 5, n: "Wels A8", lt: 48.1790, ln: 13.8623},
+            {id: 6, n: "Wolfsbach A1 (1)", lt: 48.1120, ln: 14.6761},
+            {id: 7, n: "Wolfsbach A1 (2)", lt: 48.1123, ln: 14.6786},
+            {id: 8, n: "Mistelbach A5", lt: 48.5389, ln: 16.6259},
+            {id: 9, n: "Bruce an der Leitha A4", lt: 48.0431, ln: 16.7791},
+            {id: 10, n: "Pernau A2", lt: 47.0900, ln: 15.8511},
+            {id: 11, n: "Strass in Steiermark A9", lt: 46.7317, ln: 15.6436},
+            {id: 12, n: "Haimburg A2", lt: 46.6845, ln: 14.6591}
         ];
 
-        // Створення карти (центр Австрії)
-        const map = L.map('map').setView([47.8, 13.0], 7);
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
-
-        // Функція розрахунку відстані
-        function getDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371;
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        }
-
-        // Додаємо точки на карту
-        locations.forEach(loc => {
-            const marker = L.marker([loc.lat, loc.lon]).addTo(map);
-            
-            marker.on('click', function() {
-                // Питаємо координати користувача ПРИ КЛІКУ на точку
-                navigator.geolocation.getCurrentPosition(pos => {
-                    const dist = getDistance(pos.coords.latitude, pos.coords.longitude, loc.lat, loc.lon);
-                    
-                    let content = <div class="popup-content"><h3>${loc.name}</h3>;
-                    if (dist <= 1.5) { // Дозволяємо 1.5 км для надійності
-                        content += `<p>Ви поруч!</p>
-                                    <button class="btn btn-green" onclick="sendStat(${loc.id}, 'green')">Чисто 🟢</button>
-                                    <button class="btn btn-red" onclick="sendStat(${loc.id}, 'red')">Контроль 🔴</button>`;
-                    } else {
-                        content += <p style="color:red">Далеко (${dist.toFixed(1)} км).<br>Зміна статусу недоступна.</p>;
-                    }
-                    content += </div>;
-                    marker.bindPopup(content).openPopup();
-                }, () => {
-                    marker.bindPopup(`<div class="popup-content"><h3>${loc.
-                                                                       name}</h3><p style="color:red">Увімкніть GPS!</p></div>`).openPopup();
-                });
-            });
+        locs.forEach(l => {
+            const m = L.marker([l.lt, l.ln]).addTo(map);
+            m.bindPopup(`
+                <div class="popup-content">
+                    <b>${l.n}</b><br>
+                    <button class="btn btn-g" onclick="sendS(${l.id},'green')">ЧИСТО 🟢</button>
+                    <button class="btn btn-r" onclick="sendS(${l.id},'red')">КОНТРОЛЬ 🔴</button>
+                </div>
+            `);
         });
 
-        function sendStat(id, status) {
-            tg.sendData(JSON.stringify({id: id, status: status}));
+        function sendS(id, s) {
+            tg.sendData(JSON.stringify({id: id, status: s}));
             tg.close();
         }
     </script>
