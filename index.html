@@ -50,9 +50,7 @@
         });
 
         function sendS(id, s) {
-            tg.sendData(JSON.stringify({id: id, status: s}));
-            tg.close();
-        }
-    </script>
-</body>
-</html>
+    const data = JSON.stringify({id: id, status: s});
+    tg.sendData(data);
+    tg.close();
+}
