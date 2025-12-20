@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Austria Control Map</title>
+    <title>Austria Map</title>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { margin: 0; padding: 0; }
+        body { margin: 0; padding: 0; background-color: white; }
         #map { height: 100vh; width: 100vw; }
-        .popup-content { text-align: center; font-family: sans-serif; }
-        .btn { padding: 10px; margin: 5px; border: none; color: white; cursor: pointer; border-radius: 5px; }
+        .popup-content { text-align: center; font-family: Arial, sans-serif; min-width: 150px; }
+        .btn { padding: 12px; margin: 5px; border: none; color: white; cursor: pointer; border-radius: 8px; width: 90%; font-weight: bold; }
         .btn-green { background: #28a745; }
         .btn-red { background: #dc3545; }
     </style>
@@ -20,32 +20,36 @@
     <div id="map"></div>
 
     <script>
+        // Ініціалізація Telegram WebApp
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Розгортаємо на весь екран
+        tg.expand();
 
-        // Координати точок (ті самі, що ви скинули)
+        // Список ваших точок
         const locations = [
-            {id: 1, name: "Hörbranz A14", lat: 47.5446716, lon: 9.7407056},
-            {id: 2, name: "Nuziders A14", lat: 47.1731061, lon: 9.7737490},
-            {id: 3, name: "Rabfeld A12", lat: 47.4574499, lon: 11.9196131},
-            {id: 4, name: "Kundl A12", lat: 47.4734057, lon: 11.9693550},
-            {id: 5, name: "Wels A8", lat: 48.1790998, lon: 13.8623469},
-            {id: 6, name: "Wolfsbach A1 (1)", lat: 48.1120424, lon: 14.6761559},
-            {id: 7, name: "Wolfsbach A1 (2)", lat: 48.1123486, lon: 14.6786235},
-            {id: 8, name: "Mistelbach A5", lat: 48.5389208, lon: 16.6259452},
-            {id: 9, name: "Bruce an der Leitha A4", lat: 48.0431949, lon: 16.7791466},
-            {id: 10, name: "Pernau A2", lat: 47.0900261, lon: 15.8511415},
-            {id: 11, name: "Strass in Steiermark A9", lat: 46.7317264, lon: 15.6436314},
-            {id: 12, name: "Haimburg A2", lat: 46.6845354, lon: 14.6591346}
+            {id: 1, name: "Hörbranz A14", lat: 47.5446, lon: 9.7407},
+            {id: 2, name: "Nuziders A14", lat: 47.1731, lon: 9.7737},
+            {id: 3, name: "Rabfeld A12", lat: 47.4574, lon: 11.9196},
+            {id: 4, name: "Kundl A12", lat: 47.4734, lon: 11.9693},
+            {id: 5, name: "Wels A8", lat: 48.1790, lon: 13.8623},
+            {id: 6, name: "Wolfsbach A1 (1)", lat: 48.1120, lon: 14.6761},
+            {id: 7, name: "Wolfsbach A1 (2)", lat: 48.1123, lon: 14.6786},
+            {id: 8, name: "Mistelbach A5", lat: 48.5389, lon: 16.6259},
+            {id: 9, name: "Bruce an der Leitha A4", lat: 48.0431, lon: 16.7791},
+            {id: 10, name: "Pernau A2", lat: 47.0900, lon: 15.8511},
+            {id: 11, name: "Strass in Steiermark A9", lat: 46.7317, lon: 15.6436},
+            {id: 12, name: "Haimburg A2", lat: 46.6845, lon: 14.6591}
         ];
 
-        // Ініціалізація мапи (центр Австрії)
-        const map = L.map('map').setView([47.5, 13.5], 7);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        // Створення карти (центр Австрії)
+        const map = L.map('map').setView([47.8, 13.0], 7);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
 
-        // Функція розрахунку відстані (формула Haversine)
+        // Функція розрахунку відстані
         function getDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; // Радіус Землі в км
+            const R = 6371;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -53,38 +57,34 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        // Додавання маркерів
+        // Додаємо точки на карту
         locations.forEach(loc => {
             const marker = L.marker([loc.lat, loc.lon]).addTo(map);
             
-            marker.bindPopup(() => {
-                const div = document.createElement('div');
-                div.className = 'popup-content';
-                div.innerHTML = <h3>${loc.name}</h3><p>Визначення вашої відстані...</p>;
-
-                // Запит геолокації користувача
+            marker.on('click', function() {
+                // Питаємо координати користувача ПРИ КЛІКУ на точку
                 navigator.geolocation.getCurrentPosition(pos => {
                     const dist = getDistance(pos.coords.latitude, pos.coords.longitude, loc.lat, loc.lon);
                     
-                    if (dist <= 1.0) { // Якщо ближче 1 км
-                        div.innerHTML = `<h3>${loc.name}</h3>
-                            <p>Ви поруч (<b>${dist.toFixed(2)} км</b>). Оновіть статус:</p>
-                            <button class="btn btn-green" onclick="updateStatus(${loc.id}, 'green')">Все чисто 🟢</button>
-                            <button class="btn btn-red" onclick="updateStatus(${loc.id}, 'red')">Контроль 🔴</button>`;
+                    let content = <div class="popup-content"><h3>${loc.name}</h3>;
+                    if (dist <= 1.5) { // Дозволяємо 1.5 км для надійності
+                        content += `<p>Ви поруч!</p>
+                                    <button class="btn btn-green" onclick="sendStat(${loc.id}, 'green')">Чисто 🟢</button>
+                                    <button class="btn btn-red" onclick="sendStat(${loc.id}, 'red')">Контроль 🔴</button>`;
                     } else {
-                        div.innerHTML = `<h3>${loc.name}</h3>
-                            <p style="color: grey;">Зміна статусу недоступна. Ви занадто далеко (<b>${dist.toFixed(2)} км</b>).</p>`;
+                        content += <p style="color:red">Далеко (${dist.toFixed(1)} км).<br>Зміна статусу недоступна.</p>;
                     }
+                    content += </div>;
+                    marker.bindPopup(content).openPopup();
                 }, () => {
-                    div.innerHTML = <h3>${loc.name}</h3><p style="color: red;">Увімкніть GPS для зміни статусу!</p>;
+                    marker.bindPopup(`<div class="popup-content"><h3>${loc.
+                                                                       name}</h3><p style="color:red">Увімкніть GPS!</p></div>`).openPopup();
                 });
-
-                return div;
             });
         });
 
-        function updateStatus(id, color) {
-            tg.sendData(JSON.stringify({location_id: id, status: color}));
+        function sendStat(id, status) {
+            tg.sendData(JSON.stringify({id: id, status: status}));
             tg.close();
         }
     </script>
