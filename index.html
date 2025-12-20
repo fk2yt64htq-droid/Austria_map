@@ -1,14 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Austria Map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Austria Road Control Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; }
         #map { height: 100vh; width: 100vw; }
         .btn { padding: 10px; width: 100%; margin-top: 5px; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 5px; }
+        .btn-g { background: #28a745; }
+        .btn-r { background: #dc3545; }
     </style>
 </head>
 <body>
@@ -19,22 +21,37 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
+        // Центр мапи — Австрія
         const map = L.map('map').setView([47.5, 13.5], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
+        // Список усіх 13 точок
         const locs = [
             {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
-            {id: 4, n: "Kundl A12", lt: 47.4734, ln: 11.9693}
+            {id: 2, n: "Nuziders A14", lt: 47.1731, ln: 9.7737},
+            {id: 3, n: "Rabfeld A12", lt: 47.4574, ln: 11.9196},
+            {id: 4, n: "Kundl A12", lt: 47.4734, ln: 11.9693},
+            {id: 5, n: "Wels A8", lt: 48.1790, ln: 13.8623},
+            {id: 6, n: "Wolfsbach A1 (1)", lt: 48.1120, ln: 14.6761},
+            {id: 7, n: "Wolfsbach A1 (2)", lt: 48.1123, ln: 14.6786},
+            {id: 8, n: "Mistelbach A5", lt: 48.5389, ln: 16.6259},
+            {id: 9, n: "Bruck an der Leitha A4", lt: 48.0431, ln: 16.7791},
+            {id: 10, n: "Pernau A2", lt: 47.0900, ln: 15.8511},
+            {id: 11, n: "Strass in Steiermark A9", lt: 46.7317, ln: 15.6436},
+            {id: 12, n: "Hainburg A2", lt: 46.6845, ln: 14.6591},
+            {id: 13, n: "Arnoldstein A2", lt: 46.5492, ln: 13.7042}
         ];
 
+        // Додавання маркерів на мапу
         locs.forEach(l => {
             L.marker([l.lt, l.ln]).addTo(map).bindPopup(`
                 <b>${l.n}</b><br>
-                <button class="btn" style="background:green" onclick="sendS(${l.id},'green')">ЧИСТО 🟢</button>
-                <button class="btn" style="background:red" onclick="sendS(${l.id},'red')">КОНТРОЛЬ 🔴</button>
+                <button class="btn btn-g" onclick="sendS(${l.id},'green')">ЧИСТО 🟢</button>
+                <button class="btn btn-r" onclick="sendS(${l.id},'red')">КОНТРОЛЬ 🔴</button>
             `);
         });
 
+        // Функція відправки даних у бот
         function sendS(id, s) {
             const data = JSON.stringify({id: id, status: s});
             tg.sendData(data);
