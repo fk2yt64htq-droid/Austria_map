@@ -40,10 +40,12 @@ function onLocationError(e) {
 }
 // -------------------------------
         const map = L.map('map').setView([47.5, 13.5], 7);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-const urlParams = new URLSearchParams(window.location.search);
-const rawData = urlParams.get('data');
-let savedStatuses = {};
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+// ЗАПУСК GPS:
+map.locate({setView: false, watch: true});
+map.on('locationfound', onLocationFound);
+map.on('locationerror', onLocationError);
 
 if (rawData) {
     try {
