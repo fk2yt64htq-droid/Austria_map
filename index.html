@@ -3,26 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Austria Road Control</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
         #map { height: 100vh; width: 100vw; }
-        .btn { padding: 12px; width: 100%; margin-top: 8px; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 6px; font-size: 14px; }
+        .btn { padding: 10px; width: 100%; margin-top: 5px; color: white; border: none; font-weight: bold; border-radius: 5px; }
         .btn-g { background: #28a745; }
         .btn-r { background: #dc3545; }
-        .progress-bar-container { width: 100%; height: 10px; background: #eee; border-radius: 5px; margin: 10px 0; overflow: hidden; display: flex; }
-        .stat-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; margin-bottom: 2px; }
-        
-        /* Стиль для зміни кольору стандартного маркера */
-        .marker-red { filter: hue-rotate(140deg) brightness(90%) saturate(150%); }
-        .marker-green { filter: hue-rotate(260deg) brightness(90%) saturate(150%); }
-        .marker-blue { filter: none; } /* Стандартний */
+        .progress-bar { width: 100%; height: 8px; background: #eee; border-radius: 4px; margin: 5px 0; overflow: hidden; display: flex; }
+        /* Кольори маркерів */
+        .m-red { filter: hue-rotate(140deg) saturate(3); }
+        .m-green { filter: hue-rotate(250deg) saturate(3); }
+        .m-blue { filter: none; }
     </style>
 </head>
 <body>
     <div id="map"></div>
-
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
@@ -32,21 +28,21 @@
         const map = L.map('map').setView([47.5, 13.5], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        // --- ВАША ГЕОПОЗИЦІЯ (Синя точка) ---
+        // Геопозиція водія
         function onLocationFound(e) {
-            if (window.userMarker) {
-                window.userMarker.setLatLng(e.latlng);
-            } else {
-                window.userMarker = L.circleMarker(e.latlng, {
-                    radius: 9, fillColor: "#2196F3", color: "#fff", weight: 3, opacity: 1, fillOpacity: 1
-                }).addTo(map).bindPopup("Ви тут");
-            }
+            if (window.userMarker) window.userMarker.setLatLng(e.latlng);
+            else window.userMarker = L.circleMarker(e.latlng, {radius: 7, fillColor: "#007AFF", color: "#fff", weight: 2, fillOpacity: 1}).addTo(map);
         }
         map.on('locationfound', onLocationFound);
-        map.locate({setView: false, watch: true, enableHighAccuracy: true});
+        map.locate({setView: false, watch: true});
 
-        // --- СПИСОК ТОЧОК ---
-        const locs = [
+        // Дані з сервера
+        let stats = {};
+        const params = new URLSearchParams(window.location.search);
+        const dataRaw = params.get('data');
+        if (dataRaw) { try { stats = JSON.parse(decodeURIComponent(dataRaw)); } catch(e) {} }
+
+        const locations = [
             {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
             {id: 2, n: "Nuziders A14", lt: 47.1731, ln: 9.7737},
             {id: 3, n: "Rabfeld A12", lt: 47.4574, ln: 11.9196},
@@ -62,85 +58,41 @@
             {id: 13, n: "Arnoldstein A2", lt: 46.5492, ln: 13.7042}
         ];
 
-        // Отримуємо дані про статистику з URL
-        let savedStatuses = {};
-        const urlParams = new URLSearchParams(window.location.search);
-        const rawData = urlParams.get('data');
-        if (rawData) {
-            try { savedStatuses = JSON.parse(decodeURIComponent(rawData)); } catch (e) {}
-        }
-
-        function getDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371;
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        }
-
-        // --- МАЛЮВАННЯ ТОЧОК ---
-        locs.forEach(l => {
-            let markerClass = "marker-blue";let statsHtml = '<div style="color:gray; font-size:11px; margin:5px 0;">Голосів ще немає</div>';
+        locations.forEach(l => {
+            let colorClass = "m-blue";
+            let htmlStat = "Немає даних";
             
-            if (savedStatuses[l.id]) {
-                const status = savedStatuses[l.id].status;
-                if (status === 'red') markerClass = "marker-red";
-                else if (status === 'green') markerClass = "marker-green";
-
-                const red = savedStatuses[l.id].red_c || 0;
-                const green = savedStatuses[l.id].green_c || 0;
-                const total = red + green;
+            if (stats[l.id]) {
+                const r = stats[l.id].red_c || 0;
+                const g = stats[l.id].green_c || 0;
+                const total = r + g;
+                colorClass = stats[l.id].status === 'red' ? "m-red" : "m-green";
                 
                 if (total > 0) {
-                    const redP = Math.round((red / total) * 100);
-                    const greenP = 100 - redP;
-                    statsHtml = `
-                        <div style="margin: 8px 0;">
-                            <div class="stat-label"><span style="color:red;">🔴 ${redP}%</span><span style="color:green;">${greenP}% 🟢</span></div>
-                            <div class="progress-bar-container">
-                                <div style="width:${redP}%; background:red;"></div>
-                                <div style="width:${greenP}%; background:green;"></div>
-                            </div>
-                            <div style="font-size:10px; color:gray; text-align:right;">Всього: ${total}</div>
-                        </div>`;
+                    const pr = Math.round((r/total)*100);
+                    htmlStat = `<div class="progress-bar"><div style="width:${pr}%;background:red"></div><div style="width:${100-pr}%;background:green"></div></div>
+                                <small>🔴 ${pr}% | 🟢 ${100-pr}% (Голосів: ${total})</small>`;
                 }
             }
 
-            // Додаємо маркер-краплю з потрібним кольором
-            const marker = L.marker([l.lt, l.ln]).addTo(map).bindPopup(`
-                <div style="text-align:center; min-width:170px;">
-                    <b style="font-size:15px;">${l.n}</b><br>
-                    ${statsHtml}
-                    <hr style="margin: 8px 0; border: 0; border-top: 1px solid #eee;">
-                    <div style="display: flex; gap: 6px;">
-                        <button class="btn btn-g" onclick="checkPosAndSend(${l.id},'green')">ЧИСТО</button>
-                        <button class="btn btn-r" onclick="checkPosAndSend(${l.id},'red')">КОНТРОЛЬ</button>
-                    </div>
-                </div>
+            const m = L.marker([l.lt, l.ln]).addTo(map).bindPopup(`
+                <div style="text-align:center">
+                    <b>${l.n}</b><br>${htmlStat}<br>
+                    <button class="btn btn-g" onclick="send(${l.id},'green')">ЧИСТО</button>
+                    <button class="btn btn-r" onclick="checkDist(${l.id},'red')">КОНТРОЛЬ</button></div>
             `);
-
-            // Застосовуємо колір до іконки
-            marker.on('add', function() {
-                marker._icon.classList.add(markerClass);
-            });
+            
+            m.on('add', function() { m._icon.classList.add(colorClass); });
         });
 
-        function checkPosAndSend(id, s) {
-            let uLat = 0, uLon = 0;
-            if (window.userMarker) {
-                const loc = window.userMarker.getLatLng();
-                uLat = loc.lat; uLon = loc.lng;
-            }
-            const target = locs.find(item => item.id === id);
-            const dist = getDistance(uLat, uLon, target.lt, target.ln);
+        function send(id, s) {
+            tg.sendData(JSON.stringify({id: id, status: s}));
+            tg.close();
+        }
 
-            // ТЕСТОВА ВІДСТАНЬ 10000 км (змініть на 1.5 для роботи)
-            if (dist <= 10000) {
-                tg.sendData(JSON.stringify({id: id, status: s}));
-                tg.close();
-            } else {
-                alert("Ви задалеко!");
-            }
+        function checkDist(id, s) {
+            // Тимчасово без перевірки дистанції для тесту
+            send(id, s);
         }
     </script>
 </body>
