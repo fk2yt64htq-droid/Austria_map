@@ -146,7 +146,7 @@
             const target = locs.find(item => item.id === id);
             const dist = getDistance(userLoc.lat, userLoc.lng, target.lt, target.ln);
 
-            if (dist <= 1.5) {
+            if (dist <= 10000) {
                 tg.sendData(JSON.stringify({id: id, status: s}));
                 tg.close();
             } else {
