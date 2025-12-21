@@ -7,9 +7,10 @@
     <style>
         body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
         #map { height: 100vh; width: 100vw; }
-        .btn { padding: 12px; width: 100%; margin-top: 8px; color: white; border: none; font-weight: bold; border-radius: 6px; }
+        .btn { padding: 12px; width: 100%; margin-top: 8px; color: white; border: none; font-weight: bold; border-radius: 6px; cursor: pointer; }
         .btn-g { background: #28a745; }
         .btn-r { background: #dc3545; }
+        .progress { width: 100%; height: 10px; background: #eee; border-radius: 5px; margin: 5px 0; display: flex; overflow: hidden; }
     </style>
 </head>
 <body>
@@ -23,7 +24,6 @@
         const map = L.map('map').setView([47.5, 13.5], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        // Дані про кольори
         const params = new URLSearchParams(window.location.search);
         let store = {};
         try { store = JSON.parse(decodeURIComponent(params.get('data') || '{}')); } catch(e) {}
@@ -45,17 +45,18 @@
         ];
 
         locs.forEach(l => {
-            let status = store[l.id] ? store[l.id].status : 'blue';
+            let s = store[l.id] || {status: 'blue', red_c: 0, green_c: 0};
+            let iconUrl = https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${s.status}.png;
             
-            // Вибір картинки маркера
-            let iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png';
-            if (status === 'red') iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png';
-            if (status === 'green') iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png';
+            let total = s.red_c + s.green_c;
+            let statHtml = total > 0 ? 
+                <div class="progress"><div style="width:${(s.red_c/total)*100}%;background:red"></div><div style="width:${(s.green_c/total)*100}%;background:green"></div></div><small>🔴 ${Math.round((s.red_c/total)*100)}% | 🟢 ${Math.round((s.green_c/total)*100)}%</small> 
+                : "Немає голосів";
 
-            const myIcon = L.icon({ iconUrl: iconUrl, shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41] });
+            const icon = L.icon({ iconUrl: iconUrl, shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41] });
 
-            L.marker([l.lt, l.ln], {icon: myIcon}).addTo(map).bindPopup(`
-                <b>${l.n}</b><br>
+            L.marker([l.lt, l.ln], {icon: icon}).addTo(map).bindPopup(`
+                <b>${l.n}</b><br>${statHtml}<hr>
                 <button class="btn btn-g" onclick="tg.sendData(JSON.stringify({id:${l.id},status:'green'}));tg.close();">ЧИСТО</button>
                 <button class="btn btn-r" onclick="tg.sendData(JSON.stringify({id:${l.id},status:'red'}));tg.close();">КОНТРОЛЬ</button>
             `);
