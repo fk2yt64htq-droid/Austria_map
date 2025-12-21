@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: #eee; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: #f0f0f0; }
         #map { height: 100vh; width: 100vw; }
         .btn { padding: 15px; width: 100%; margin-top: 10px; color: white; border: none; font-weight: bold; border-radius: 8px; font-size: 16px; cursor: pointer; }
     </style>
@@ -22,6 +22,11 @@
 
             const map = L.map('map').setView([47.5, 13.5], 7);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+            // Геолокація користувача
+            let userPos = null;
+            map.on('locationfound', (e) => { userPos = e.latlng; });
+            map.locate({watch: true, enableHighAccuracy: true});
 
             const params = new URLSearchParams(window.location.search);
             let store = {};
@@ -46,6 +51,21 @@
                 {id: 13, n: "Arnoldstein A2", lt: 46.5492, ln: 13.7042}
             ];
 
+            function getDist(p1, p2) {
+                if (!p1 || !p2) return 999;
+                return map.distance(p1, p2) / 1000;
+            }
+
+            function sendVote(id, status, targetPos) {
+                const dist = getDist(userPos, targetPos);
+                if (dist <= 1.5) {
+                    tg.sendData(JSON.stringify({id: id, status: status}));
+                    tg.close();
+                } else {
+                    alert("Ви задалеко (" + dist.toFixed(1) + " км). Голосувати можна в межах 1.5 км.");
+                }
+            }
+
             dots.forEach(l => {
                 const s = store[l.id] || {red_c: 0, green_c: 0};
                 const total = s.red_c + s.green_c;
@@ -54,12 +74,12 @@
                 L.marker([l.lt, l.ln]).addTo(map).bindPopup(`
                     <div style="width:200px; text-align:center;">
                         <b>${l.n}</b><br>${stat}<hr>
-                        <button class="btn" style="background:green" onclick="tg.sendData(JSON.stringify({id:${l.id},status:'green'}));tg.close();">ЧИСТО</button>
-                        <button class="btn" style="background:red" onclick="tg.sendData(JSON.stringify({id:${l.id},status:'red'}));tg.close();">КОНТРОЛЬ</button>
+                        <button class="btn" style="background:green" onclick="sendVote(${l.id}, 'green', [${l.lt}, ${l.ln}])">ЧИСТО</button>
+                        <button class="btn" style="background:red" onclick="sendVote(${l.id}, 'red', [${l.lt}, ${l.ln}])">КОНТРОЛЬ</button>
                     </div>
                 `);
             });
-            document.getElementById('map').innerHTML = ""; // Прибираємо текст завантаження
+            document.getElementById('map').innerHTML = ""; 
         } catch (err) {
             document.getElementById('map').innerHTML = "Помилка коду: " + err.message;
         }
