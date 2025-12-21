@@ -22,7 +22,17 @@
 
         const map = L.map('map').setView([47.5, 13.5], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+const urlParams = new URLSearchParams(window.location.search);
+const rawData = urlParams.get('data');
+let savedStatuses = {};
 
+if (rawData) {
+    try {
+        savedStatuses = JSON.parse(decodeURIComponent(rawData));
+    } catch (e) {
+        console.error("Помилка даних:", e);
+    }
+}
         const locs = [
             {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
             {id: 2, n: "Nuziders A14", lt: 47.1731, ln: 9.7737},
@@ -40,12 +50,26 @@
         ];
 
         locs.forEach(l => {
-            L.marker([l.lt, l.ln]).addTo(map).bindPopup(`
-                <b>${l.n}</b><br>
-                <button class="btn btn-g" onclick="sendS(${l.id},'green')">ЧИСТО 🟢</button>
-                <button class="btn btn-r" onclick="sendS(${l.id},'red')">КОНТРОЛЬ 🔴</button>
-            `);
-        });
+    // Перевіряємо статус точки
+    let markerColor = "blue"; 
+    if (savedStatuses[l.id]) {
+        markerColor = savedStatuses[l.id].status;
+    }
+
+    // Створюємо маркер
+    let m = L.marker([l.lt, l.ln]).addTo(map).bindPopup(`
+        <b>${l.n}</b><br>
+        <button class="btn btn-g" onclick="sendS(${l.id},'green')">ЧИСТО ✅</button>
+        <button class="btn btn-r" onclick="sendS(${l.id},'red')">КОНТРОЛЬ 🔴</button>
+    `);
+
+    // Фарбуємо маркер
+    if (markerColor === 'red') {
+        m.getElement().style.filter = "hue-rotate(120deg) brightness(90%) saturate(150%)";
+    } else if (markerColor === 'green') {
+        m.getElement().style.filter = "hue-rotate(250deg) brightness(90%) saturate(150%)";
+    }
+});
 
         function sendS(id, s) {
     const data = JSON.stringify({id: id, status: s});
