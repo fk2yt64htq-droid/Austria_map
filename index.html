@@ -87,10 +87,12 @@
 
         // 5. Малювання точок
         locs.forEach(l => {
-            let markerColor = "blue";let statsHtml = '<div style="color:gray; font-size:11px; margin:5px 0;">Голосів ще немає</div>';
+            let markerColor = "blue"; // По замовчуванню - невідомо
+            let statsHtml = '<div style="color:gray; font-size:11px; margin:5px 0;">Голосів ще немає</div>';
             
+            // Перевіряємо, чи є дані для цієї точки
             if (savedStatuses[l.id]) {
-                markerColor = savedStatuses[l.id].status;
+                markerColor = savedStatuses[l.id].status; // Беремо 'red' або 'green' з сервера
                 const red = savedStatuses[l.id].red_c || 0;
                 const green = savedStatuses[l.id].green_c || 0;
                 const total = red + green;
@@ -113,9 +115,24 @@
                 }
             }
 
-            L.circle([l.lt, l.ln], { radius: 1500, color: markerColor === 'red' ? 'red' : (markerColor === 'green' ? 'green' : 'blue'), fillOpacity: 0.1, weight: 1 }).addTo(map);
+            // Малюємо зону 1.5км (колір зони теж міняється)
+            L.circle([l.lt, l.ln], { 
+                radius: 1500, 
+                color: markerColor === 'red' ? 'red' : (markerColor === 'green' ? 'green' : 'blue'), 
+                fillOpacity: 0.1, 
+                weight: 1 
+            }).addTo(map);
 
-            let m = L.marker([l.lt, l.ln]).addTo(map).bindPopup(`
+            // Створюємо кастомну іконку (крапку), яка міняє колір
+            const customIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style="background-color:${markerColor === 'red' ? '#dc3545' : (markerColor === 'green' ? '#28a745' : '#2196F3')}; 
+                            width: 15px; height: 15px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.5);"></div>`,
+                iconSize: [15, 15],
+                iconAnchor: [7, 7]
+            });
+
+            let m = L.marker([l.lt, l.ln], {icon: customIcon}).addTo(map).bindPopup(`
                 <div style="text-align:center; min-width:170px;">
                     <b style="font-size:15px;">${l.n}</b><br>
                     ${statsHtml}
@@ -126,16 +143,7 @@
                     </div>
                 </div>
             `);
-
-            m.on('add', function() {
-                const el = m.getElement();
-                if (el) {
-                    if (markerColor === 'red') el.style.filter = "hue-rotate(120deg) brightness(95%) saturate(160%)";
-                    else if (markerColor === 'green') el.style.filter = "hue-rotate(250deg) brightness(95%) saturate(160%)";
-                }
-            });
         });
-
         // 6. Функція відправки голосу
         function checkPosAndSend(id, s) {
             if (!window.userMarker) {
