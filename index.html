@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Austria Map Control</title>
+    <title>Austria Road Control</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; }
@@ -13,6 +13,11 @@
         .btn-r { background: #dc3545; }
         .progress-bar-container { width: 100%; height: 10px; background: #eee; border-radius: 5px; margin: 10px 0; overflow: hidden; display: flex; }
         .stat-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; margin-bottom: 2px; }
+        
+        /* Стиль для зміни кольору стандартного маркера */
+        .marker-red { filter: hue-rotate(140deg) brightness(90%) saturate(150%); }
+        .marker-green { filter: hue-rotate(260deg) brightness(90%) saturate(150%); }
+        .marker-blue { filter: none; } /* Стандартний */
     </style>
 </head>
 <body>
@@ -24,35 +29,23 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // 1. Ініціалізація мапи
         const map = L.map('map').setView([47.5, 13.5], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        // 2. Функція відстеження вашої локації (синя точка)
+        // --- ВАША ГЕОПОЗИЦІЯ (Синя точка) ---
         function onLocationFound(e) {
             if (window.userMarker) {
                 window.userMarker.setLatLng(e.latlng);
             } else {
                 window.userMarker = L.circleMarker(e.latlng, {
-                    radius: 9,
-                    fillColor: "#2196F3",
-                    color: "#fff",
-                    weight: 3,
-                    opacity: 1,
-                    fillOpacity: 1
+                    radius: 9, fillColor: "#2196F3", color: "#fff", weight: 3, opacity: 1, fillOpacity: 1
                 }).addTo(map).bindPopup("Ви тут");
             }
         }
-
-        function onLocationError(e) {
-            console.warn("GPS не знайдено: " + e.message);
-        }
-
         map.on('locationfound', onLocationFound);
-        map.on('locationerror', onLocationError);
         map.locate({setView: false, watch: true, enableHighAccuracy: true});
 
-        // 3. Список локацій
+        // --- СПИСОК ТОЧОК ---
         const locs = [
             {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
             {id: 2, n: "Nuziders A14", lt: 47.1731, ln: 9.7737},
@@ -69,7 +62,7 @@
             {id: 13, n: "Arnoldstein A2", lt: 46.5492, ln: 13.7042}
         ];
 
-        // 4. Отримання даних про статистику з URL
+        // Отримуємо дані про статистику з URL
         let savedStatuses = {};
         const urlParams = new URLSearchParams(window.location.search);
         const rawData = urlParams.get('data');
@@ -85,14 +78,15 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        // 5. Малювання точок
+        // --- МАЛЮВАННЯ ТОЧОК ---
         locs.forEach(l => {
-            let markerColor = "blue"; // По замовчуванню - невідомо
-            let statsHtml = '<div style="color:gray; font-size:11px; margin:5px 0;">Голосів ще немає</div>';
+            let markerClass = "marker-blue";let statsHtml = '<div style="color:gray; font-size:11px; margin:5px 0;">Голосів ще немає</div>';
             
-            // Перевіряємо, чи є дані для цієї точки
             if (savedStatuses[l.id]) {
-                markerColor = savedStatuses[l.id].status; // Беремо 'red' або 'green' з сервера
+                const status = savedStatuses[l.id].status;
+                if (status === 'red') markerClass = "marker-red";
+                else if (status === 'green') markerClass = "marker-green";
+
                 const red = savedStatuses[l.id].red_c || 0;
                 const green = savedStatuses[l.id].green_c || 0;
                 const total = red + green;
@@ -102,10 +96,7 @@
                     const greenP = 100 - redP;
                     statsHtml = `
                         <div style="margin: 8px 0;">
-                            <div class="stat-label">
-                                <span style="color:red;">🔴 ${redP}%</span>
-                                <span style="color:green;">${greenP}% 🟢</span>
-                            </div>
+                            <div class="stat-label"><span style="color:red;">🔴 ${redP}%</span><span style="color:green;">${greenP}% 🟢</span></div>
                             <div class="progress-bar-container">
                                 <div style="width:${redP}%; background:red;"></div>
                                 <div style="width:${greenP}%; background:green;"></div>
@@ -115,24 +106,8 @@
                 }
             }
 
-            // Малюємо зону 1.5км (колір зони теж міняється)
-            L.circle([l.lt, l.ln], { 
-                radius: 1500, 
-                color: markerColor === 'red' ? 'red' : (markerColor === 'green' ? 'green' : 'blue'), 
-                fillOpacity: 0.1, 
-                weight: 1 
-            }).addTo(map);
-
-            // Створюємо кастомну іконку (крапку), яка міняє колір
-            const customIcon = L.divIcon({
-                className: 'custom-div-icon',
-                html: `<div style="background-color:${markerColor === 'red' ? '#dc3545' : (markerColor === 'green' ? '#28a745' : '#2196F3')}; 
-                            width: 15px; height: 15px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.5);"></div>`,
-                iconSize: [15, 15],
-                iconAnchor: [7, 7]
-            });
-
-            let m = L.marker([l.lt, l.ln], {icon: customIcon}).addTo(map).bindPopup(`
+            // Додаємо маркер-краплю з потрібним кольором
+            const marker = L.marker([l.lt, l.ln]).addTo(map).bindPopup(`
                 <div style="text-align:center; min-width:170px;">
                     <b style="font-size:15px;">${l.n}</b><br>
                     ${statsHtml}
@@ -143,22 +118,28 @@
                     </div>
                 </div>
             `);
-        });
-        // 6. Функція відправки голосу
-        function checkPosAndSend(id, s) {
-            if (!window.userMarker) {
-                alert("Почекайте, поки GPS визначить вашу позицію!");
-                return;
-            }
-            const userLoc = window.userMarker.getLatLng();
-            const target = locs.find(item => item.id === id);
-            const dist = getDistance(userLoc.lat, userLoc.lng, target.lt, target.ln);
 
+            // Застосовуємо колір до іконки
+            marker.on('add', function() {
+                marker._icon.classList.add(markerClass);
+            });
+        });
+
+        function checkPosAndSend(id, s) {
+            let uLat = 0, uLon = 0;
+            if (window.userMarker) {
+                const loc = window.userMarker.getLatLng();
+                uLat = loc.lat; uLon = loc.lng;
+            }
+            const target = locs.find(item => item.id === id);
+            const dist = getDistance(uLat, uLon, target.lt, target.ln);
+
+            // ТЕСТОВА ВІДСТАНЬ 10000 км (змініть на 1.5 для роботи)
             if (dist <= 10000) {
                 tg.sendData(JSON.stringify({id: id, status: s}));
                 tg.close();
             } else {
-                alert("Ви задалеко! Потрібно бути в межах 1.5 км. Ваша відстань: " + dist.toFixed(2) + " км");
+                alert("Ви задалеко!");
             }
         }
     </script>
