@@ -3,34 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-        #map { height: 100vh; width: 100vw; background: white; }
-        .btn { padding: 12px; width: 100%; margin-top: 8px; color: white; border: none; font-weight: bold; border-radius: 6px; cursor: pointer; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; }
+        #map { height: 100%; width: 100%; background: #f0f0f0; }
+        .btn { padding: 10px; width: 100%; margin-top: 5px; color: white; border: none; font-weight: bold; border-radius: 5px; cursor: pointer; }
         .btn-g { background: #28a745; }
         .btn-r { background: #dc3545; }
     </style>
 </head>
 <body>
     <div id="map"></div>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
+        // Створюємо карту
         const map = L.map('map').setView([47.5, 13.5], 7);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
 
-        const params = new URLSearchParams(window.location.search);
+        // Читаємо дані
+        const urlParams = new URLSearchParams(window.location.search);
         let store = {};
-        try { 
-            const dataParam = params.get('data');
-            if (dataParam) store = JSON.parse(decodeURIComponent(dataParam)); 
-        } catch(e) { console.error(e); }
+        try {
+            const data = urlParams.get('data');
+            if (data) store = JSON.parse(decodeURIComponent(data));
+        } catch(e) {}
 
-        const locs = [
+        const locations = [
             {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
             {id: 2, n: "Nuziders A14", lt: 47.1731, ln: 9.7737},
             {id: 3, n: "Rabfeld A12", lt: 47.4574, ln: 11.9196},
@@ -46,15 +52,17 @@
             {id: 13, n: "Arnoldstein A2", lt: 46.5492, ln: 13.7042}
         ];
 
-        locs.forEach(l => {
-            let s = store[l.id] || {red_c: 0, green_c: 0};
-            let total = s.red_c + s.green_c;
-            let stat = total > 0 ? 🔴 ${Math.round((s.red_c/total)*100)}% | 🟢 ${Math.round((s.green_c/total)*100)}% : "Немає даних";
+        locations.forEach(l => {
+            const s = store[l.id] || {red_c: 0, green_c: 0};
+            const total = s.red_c + s.green_c;
+            const info = total > 0 ? 🔴 ${Math.round((s.red_c/total)*100)}% | 🟢 ${Math.round((s.green_c/total)*100)}% : "Голосів: 0";
 
             L.marker([l.lt, l.ln]).addTo(map).bindPopup(`
-                <b>${l.n}</b><br>${stat}<hr>
-                <button class="btn btn-g" onclick="tg.sendData(JSON.stringify({id:${l.id},status:'green'}));tg.close();">ЧИСТО</button>
-                <button class="btn btn-r" onclick="tg.sendData(JSON.stringify({id:${l.id},status:'red'}));tg.close();">КОНТРОЛЬ</button>
+                <div style="text-align:center;">
+                    <b>${l.n}</b><br>${info}<hr>
+                    <button class="btn btn-g" onclick="tg.sendData(JSON.stringify({id:${l.id},status:'green'}));tg.close();">ЧИСТО</button>
+                    <button class="btn btn-r" onclick="tg.sendData(JSON.stringify({id:${l.id},status:'red'}));tg.close();">КОНТРОЛЬ</button>
+                </div>
             `);
         });
     </script>
