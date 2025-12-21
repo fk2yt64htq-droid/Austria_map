@@ -67,7 +67,7 @@ locs.forEach(l => {
         markerColor = savedStatuses[l.id].status;
     }
 
-    // Малюємо коло радіусом 1.5 км
+    // Малюємо коло 1.5 км навколо кожної точки
     L.circle([l.lt, l.ln], {
         radius: 1500,
         color: markerColor === 'red' ? 'red' : (markerColor === 'green' ? 'green' : 'blue'),
@@ -75,6 +75,7 @@ locs.forEach(l => {
         weight: 1
     }).addTo(map);
 
+    // Створюємо маркер з кнопками, які викликають checkPosAndSend
     let m = L.marker([l.lt, l.ln]).addTo(map).bindPopup(`
         <b>${l.n}</b><br>
         <div style="text-align:center; margin-top:10px;">
@@ -83,6 +84,7 @@ locs.forEach(l => {
         </div>
     `);
 
+    // Фарбуємо іконку маркера
     m.on('add', function() {
         const el = m.getElement();
         if (el) {
@@ -92,44 +94,26 @@ locs.forEach(l => {
     });
 });
 
-    // Створюємо маркер
-    let m = L.marker([l.lt, l.ln]).addTo(map).bindPopup(`
-        <b>${l.n}</b><br>
-        <button class="btn btn-g" onclick="sendS(${l.id},'green')">ЧИСТО ✅</button>
-        <button class="btn btn-r" onclick="sendS(${l.id},'red')">КОНТРОЛЬ 🔴</button>
-    `);
-
-    // Фарбуємо маркер
-    if (markerColor === 'red') {
-        m.getElement().style.filter = "hue-rotate(120deg) brightness(90%) saturate(150%)";
-    } else if (markerColor === 'green') {
-        m.getElement().style.filter = "hue-rotate(250deg) brightness(90%) saturate(150%)";
-    }
-});
-
-        // Функція перевірки GPS та відправки даних
+// Функція перевірки GPS (остання в скрипті)
 function checkPosAndSend(id, s) {
     navigator.geolocation.getCurrentPosition(function(position) {
         const uLat = position.coords.latitude;
         const uLon = position.coords.longitude;
         
-        // Знаходимо точку в масиві locs за її id
         const target = locs.find(item => item.id === id);
         const dist = getDistance(uLat, uLon, target.lt, target.ln);
 
-        // Перевірка: якщо відстань менше або дорівнює 1.5 км
         if (dist <= 1.5) {
             const data = JSON.stringify({id: id, status: s});
             tg.sendData(data);
             alert("Дякуємо! Статус оновлено.");
         } else {
-            // Якщо користувач занадто далеко
             alert("Ви занадто далеко! Відстань: " + dist.toFixed(2) + " км. Потрібно бути в межах 1.5 км.");
         }
     }, function() {
-        alert("Помилка GPS. Переконайтеся, що геолокація увімкнена!");
+        alert("Помилка GPS. Увімкніть геолокацію!");
     }, {enableHighAccuracy: true});
 }
-    </script>
+</script>
 </body>
 </html>
