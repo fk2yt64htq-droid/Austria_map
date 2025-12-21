@@ -1,20 +1,15 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
         #map { height: 100vh; width: 100vw; }
-        .btn { padding: 10px; width: 100%; margin-top: 5px; color: white; border: none; font-weight: bold; border-radius: 5px; }
+        .btn { padding: 12px; width: 100%; margin-top: 8px; color: white; border: none; font-weight: bold; border-radius: 6px; }
         .btn-g { background: #28a745; }
         .btn-r { background: #dc3545; }
-        .progress-bar { width: 100%; height: 8px; background: #eee; border-radius: 4px; margin: 5px 0; overflow: hidden; display: flex; }
-        /* Кольори маркерів */
-        .m-red { filter: hue-rotate(140deg) saturate(3); }
-        .m-green { filter: hue-rotate(250deg) saturate(3); }
-        .m-blue { filter: none; }
     </style>
 </head>
 <body>
@@ -28,21 +23,12 @@
         const map = L.map('map').setView([47.5, 13.5], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        // Геопозиція водія
-        function onLocationFound(e) {
-            if (window.userMarker) window.userMarker.setLatLng(e.latlng);
-            else window.userMarker = L.circleMarker(e.latlng, {radius: 7, fillColor: "#007AFF", color: "#fff", weight: 2, fillOpacity: 1}).addTo(map);
-        }
-        map.on('locationfound', onLocationFound);
-        map.locate({setView: false, watch: true});
-
-        // Дані з сервера
-        let stats = {};
+        // Дані про кольори
         const params = new URLSearchParams(window.location.search);
-        const dataRaw = params.get('data');
-        if (dataRaw) { try { stats = JSON.parse(decodeURIComponent(dataRaw)); } catch(e) {} }
+        let store = {};
+        try { store = JSON.parse(decodeURIComponent(params.get('data') || '{}')); } catch(e) {}
 
-        const locations = [
+        const locs = [
             {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
             {id: 2, n: "Nuziders A14", lt: 47.1731, ln: 9.7737},
             {id: 3, n: "Rabfeld A12", lt: 47.4574, ln: 11.9196},
@@ -58,42 +44,22 @@
             {id: 13, n: "Arnoldstein A2", lt: 46.5492, ln: 13.7042}
         ];
 
-        locations.forEach(l => {
-            let colorClass = "m-blue";
-            let htmlStat = "Немає даних";
+        locs.forEach(l => {
+            let status = store[l.id] ? store[l.id].status : 'blue';
             
-            if (stats[l.id]) {
-                const r = stats[l.id].red_c || 0;
-                const g = stats[l.id].green_c || 0;
-                const total = r + g;
-                colorClass = stats[l.id].status === 'red' ? "m-red" : "m-green";
-                
-                if (total > 0) {
-                    const pr = Math.round((r/total)*100);
-                    htmlStat = `<div class="progress-bar"><div style="width:${pr}%;background:red"></div><div style="width:${100-pr}%;background:green"></div></div>
-                                <small>🔴 ${pr}% | 🟢 ${100-pr}% (Голосів: ${total})</small>`;
-                }
-            }
+            // Вибір картинки маркера
+            let iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png';
+            if (status === 'red') iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png';
+            if (status === 'green') iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png';
 
-            const m = L.marker([l.lt, l.ln]).addTo(map).bindPopup(`
-                <div style="text-align:center">
-                    <b>${l.n}</b><br>${htmlStat}<br>
-                    <button class="btn btn-g" onclick="send(${l.id},'green')">ЧИСТО</button>
-                    <button class="btn btn-r" onclick="checkDist(${l.id},'red')">КОНТРОЛЬ</button></div>
+            const myIcon = L.icon({ iconUrl: iconUrl, shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41] });
+
+            L.marker([l.lt, l.ln], {icon: myIcon}).addTo(map).bindPopup(`
+                <b>${l.n}</b><br>
+                <button class="btn btn-g" onclick="tg.sendData(JSON.stringify({id:${l.id},status:'green'}));tg.close();">ЧИСТО</button>
+                <button class="btn btn-r" onclick="tg.sendData(JSON.stringify({id:${l.id},status:'red'}));tg.close();">КОНТРОЛЬ</button>
             `);
-            
-            m.on('add', function() { m._icon.classList.add(colorClass); });
         });
-
-        function send(id, s) {
-            tg.sendData(JSON.stringify({id: id, status: s}));
-            tg.close();
-        }
-
-        function checkDist(id, s) {
-            // Тимчасово без перевірки дистанції для тесту
-            send(id, s);
-        }
     </script>
 </body>
 </html>
