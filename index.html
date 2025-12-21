@@ -49,12 +49,48 @@ if (rawData) {
             {id: 13, n: "Arnoldstein A2", lt: 46.5492, ln: 13.7042}
         ];
 
-        locs.forEach(l => {
-    // Перевіряємо статус точки
+        // Функція розрахунку відстані
+function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; 
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+locs.forEach(l => {
     let markerColor = "blue"; 
     if (savedStatuses[l.id]) {
         markerColor = savedStatuses[l.id].status;
     }
+
+    // Малюємо коло радіусом 1.5 км
+    L.circle([l.lt, l.ln], {
+        radius: 1500,
+        color: markerColor === 'red' ? 'red' : (markerColor === 'green' ? 'green' : 'blue'),
+        fillOpacity: 0.1,
+        weight: 1
+    }).addTo(map);
+
+    let m = L.marker([l.lt, l.ln]).addTo(map).bindPopup(`
+        <b>${l.n}</b><br>
+        <div style="text-align:center; margin-top:10px;">
+            <button class="btn btn-g" onclick="checkPosAndSend(${l.id},'green')">ЧИСТО ✅</button>
+            <button class="btn btn-r" onclick="checkPosAndSend(${l.id},'red')">КОНТРОЛЬ 🔴</button>
+        </div>
+    `);
+
+    m.on('add', function() {
+        const el = m.getElement();
+        if (el) {
+            if (markerColor === 'red') el.style.filter = "hue-rotate(120deg) brightness(90%) saturate(150%)";
+            else if (markerColor === 'green') el.style.filter = "hue-rotate(250deg) brightness(90%) saturate(150%)";
+        }
+    });
+});
 
     // Створюємо маркер
     let m = L.marker([l.lt, l.ln]).addTo(map).bindPopup(`
@@ -71,10 +107,28 @@ if (rawData) {
     }
 });
 
-        function sendS(id, s) {
-    const data = JSON.stringify({id: id, status: s});
-    tg.sendData(data);
-    tg.close();
+        // Функція перевірки GPS та відправки даних
+function checkPosAndSend(id, s) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+        const uLat = position.coords.latitude;
+        const uLon = position.coords.longitude;
+        
+        // Знаходимо точку в масиві locs за її id
+        const target = locs.find(item => item.id === id);
+        const dist = getDistance(uLat, uLon, target.lt, target.ln);
+
+        // Перевірка: якщо відстань менше або дорівнює 1.5 км
+        if (dist <= 1.5) {
+            const data = JSON.stringify({id: id, status: s});
+            tg.sendData(data);
+            alert("Дякуємо! Статус оновлено.");
+        } else {
+            // Якщо користувач занадто далеко
+            alert("Ви занадто далеко! Відстань: " + dist.toFixed(2) + " км. Потрібно бути в межах 1.5 км.");
+        }
+    }, function() {
+        alert("Помилка GPS. Переконайтеся, що геолокація увімкнена!");
+    }, {enableHighAccuracy: true});
 }
     </script>
 </body>
