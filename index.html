@@ -89,12 +89,27 @@ function getDistance(lat1, lon1, lat2, lon2) {
 }
 
 locs.forEach(l => {
-    let markerColor = "blue"; 
+    let markerColor = "blue";
+    let timeText = "немає даних";
+    
     if (savedStatuses[l.id]) {
         markerColor = savedStatuses[l.id].status;
+        
+        // Розрахунок часу
+        const savedTime = savedStatuses[l.id].time; // беремо час з бази
+        const currentTime = Math.floor(Date.now() / 1000);
+        const diffMinutes = Math.floor((currentTime - savedTime) / 60);
+        
+        if (diffMinutes < 1) {
+            timeText = "щойно";
+        } else if (diffMinutes < 60) {
+            timeText = diffMinutes + " хв. тому";
+        } else {
+            timeText = "більше години тому";
+        }
     }
 
-    // Малюємо коло 1.5 км навколо кожної точки
+    // 1. Малюємо коло 1.5 км
     L.circle([l.lt, l.ln], {
         radius: 1500,
         color: markerColor === 'red' ? 'red' : (markerColor === 'green' ? 'green' : 'blue'),
@@ -102,16 +117,20 @@ locs.forEach(l => {
         weight: 1
     }).addTo(map);
 
-    // Створюємо маркер з кнопками, які викликають checkPosAndSend
+    // 2. Створюємо маркер з часом оновлення
     let m = L.marker([l.lt, l.ln]).addTo(map).bindPopup(`
-        <b>${l.n}</b><br>
-        <div style="text-align:center; margin-top:10px;">
-            <button class="btn btn-g" onclick="checkPosAndSend(${l.id},'green')">ЧИСТО ✅</button>
-            <button class="btn btn-r" onclick="checkPosAndSend(${l.id},'red')">КОНТРОЛЬ 🔴</button>
+        <div style="text-align:center;">
+            <b style="font-size:14px;">${l.n}</b><br>
+            <span style="color:gray; font-size:11px;">Оновлено: ${timeText}</span>
+            <hr style="margin: 8px 0; border: 0; border-top: 1px solid #eee;">
+            <div style="display: flex; gap: 5px;">
+                <button class="btn btn-g" style="flex:1;" onclick="checkPosAndSend(${l.id},'green')">ЧИСТО ✅</button>
+                <button class="btn btn-r" style="flex:1;" onclick="checkPosAndSend(${l.id},'red')">КОНТРОЛЬ 🔴</button>
+            </div>
         </div>
     `);
-
-    // Фарбуємо іконку маркера
+    
+    // 3. Фарбуємо іконку (ваш старий код)
     m.on('add', function() {
         const el = m.getElement();
         if (el) {
@@ -120,7 +139,6 @@ locs.forEach(l => {
         }
     });
 });
-
 // Функція перевірки GPS (остання в скрипті)
 function checkPosAndSend(id, s) {
     navigator.geolocation.getCurrentPosition(function(position) {
