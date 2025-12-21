@@ -6,11 +6,10 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-        #map { height: 100vh; width: 100vw; }
+        #map { height: 100vh; width: 100vw; background: white; }
         .btn { padding: 12px; width: 100%; margin-top: 8px; color: white; border: none; font-weight: bold; border-radius: 6px; cursor: pointer; }
         .btn-g { background: #28a745; }
         .btn-r { background: #dc3545; }
-        .progress { width: 100%; height: 10px; background: #eee; border-radius: 5px; margin: 5px 0; display: flex; overflow: hidden; }
     </style>
 </head>
 <body>
@@ -26,7 +25,10 @@
 
         const params = new URLSearchParams(window.location.search);
         let store = {};
-        try { store = JSON.parse(decodeURIComponent(params.get('data') || '{}')); } catch(e) {}
+        try { 
+            const dataParam = params.get('data');
+            if (dataParam) store = JSON.parse(decodeURIComponent(dataParam)); 
+        } catch(e) { console.error(e); }
 
         const locs = [
             {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
@@ -45,18 +47,12 @@
         ];
 
         locs.forEach(l => {
-            let s = store[l.id] || {status: 'blue', red_c: 0, green_c: 0};
-            let iconUrl = https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${s.status}.png;
-            
+            let s = store[l.id] || {red_c: 0, green_c: 0};
             let total = s.red_c + s.green_c;
-            let statHtml = total > 0 ? 
-                <div class="progress"><div style="width:${(s.red_c/total)*100}%;background:red"></div><div style="width:${(s.green_c/total)*100}%;background:green"></div></div><small>🔴 ${Math.round((s.red_c/total)*100)}% | 🟢 ${Math.round((s.green_c/total)*100)}%</small> 
-                : "Немає голосів";
+            let stat = total > 0 ? 🔴 ${Math.round((s.red_c/total)*100)}% | 🟢 ${Math.round((s.green_c/total)*100)}% : "Немає даних";
 
-            const icon = L.icon({ iconUrl: iconUrl, shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41] });
-
-            L.marker([l.lt, l.ln], {icon: icon}).addTo(map).bindPopup(`
-                <b>${l.n}</b><br>${statHtml}<hr>
+            L.marker([l.lt, l.ln]).addTo(map).bindPopup(`
+                <b>${l.n}</b><br>${stat}<hr>
                 <button class="btn btn-g" onclick="tg.sendData(JSON.stringify({id:${l.id},status:'green'}));tg.close();">ЧИСТО</button>
                 <button class="btn btn-r" onclick="tg.sendData(JSON.stringify({id:${l.id},status:'red'}));tg.close();">КОНТРОЛЬ</button>
             `);
