@@ -3,48 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Austria Map Control</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; }
         #map { height: 100vh; width: 100vw; }
-        .btn { padding: 10px; width: 100%; margin-top: 5px; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 5px; }
+        .btn { padding: 12px; width: 100%; margin-top: 8px; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 6px; font-size: 14px; }
         .btn-g { background: #28a745; }
         .btn-r { background: #dc3545; }
-        .progress-container { width: 100%; height: 8px; background: #eee; border-radius: 4px; margin: 8px 0; overflow: hidden; display: flex; }
+        .progress-bar-container { width: 100%; height: 10px; background: #eee; border-radius: 5px; margin: 10px 0; overflow: hidden; display: flex; }
+        .stat-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; margin-bottom: 2px; }
     </style>
 </head>
 <body>
     <div id="map"></div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
+        // 1. Ініціалізація мапи
         const map = L.map('map').setView([47.5, 13.5], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-// --- ДОДАТИ ЦЕЙ БЛОК ---
-function onLocationFound(e) {
-    if (window.userMarker) {
-        window.userMarker.setLatLng(e.latlng);
-    } else {
-        window.userMarker = L.circleMarker(e.latlng, {
-            radius: 8,
-            fillColor: "#2196F3",
-            color: "#fff",
-            weight: 2,
-            opacity: 1,
-            fillOpacity: 1
-        }).addTo(map).bindPopup("Ви тут");
-    }
-}
 
-map.on('locationfound', onLocationFound);
+        // 2. Функція відстеження вашої локації (синя точка)
+        function onLocationFound(e) {
+            if (window.userMarker) {
+                window.userMarker.setLatLng(e.latlng);
+            } else {
+                window.userMarker = L.circleMarker(e.latlng, {
+                    radius: 9,
+                    fillColor: "#2196F3",
+                    color: "#fff",
+                    weight: 3,
+                    opacity: 1,
+                    fillOpacity: 1
+                }).addTo(map).bindPopup("Ви тут");
+            }
+        }
 
-// Запускаємо постійне відстеження
-map.locate({setView: false, watch: true});
-// -----------------------
-        // Дані про локації (ваші точки)
+        function onLocationError(e) {
+            console.warn("GPS не знайдено: " + e.message);
+        }
+
+        map.on('locationfound', onLocationFound);
+        map.on('locationerror', onLocationError);
+        map.locate({setView: false, watch: true, enableHighAccuracy: true});
+
+        // 3. Список локацій
         const locs = [
             {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
             {id: 2, n: "Nuziders A14", lt: 47.1731, ln: 9.7737},
@@ -61,12 +69,12 @@ map.locate({setView: false, watch: true});
             {id: 13, n: "Arnoldstein A2", lt: 46.5492, ln: 13.7042}
         ];
 
-        // Отримання статусів з URL
+        // 4. Отримання даних про статистику з URL
         let savedStatuses = {};
         const urlParams = new URLSearchParams(window.location.search);
         const rawData = urlParams.get('data');
         if (rawData) {
-            try { savedStatuses = JSON.parse(decodeURIComponent(rawData)); } catch (e) { console.error(e); }
+            try { savedStatuses = JSON.parse(decodeURIComponent(rawData)); } catch (e) {}
         }
 
         function getDistance(lat1, lon1, lat2, lon2) {
@@ -77,9 +85,9 @@ map.locate({setView: false, watch: true});
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
+        // 5. Малювання точок
         locs.forEach(l => {
-            let markerColor = "blue";
-            let statsHtml = '<span style="color:gray; font-size:11px;">Немає голосів</span>';
+            let markerColor = "blue";let statsHtml = '<div style="color:gray; font-size:11px; margin:5px 0;">Голосів ще немає</div>';
             
             if (savedStatuses[l.id]) {
                 markerColor = savedStatuses[l.id].status;
@@ -91,14 +99,16 @@ map.locate({setView: false, watch: true});
                     const redP = Math.round((red / total) * 100);
                     const greenP = 100 - redP;
                     statsHtml = `
-                        <div style="margin: 5px 0;">
-                            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold;">
+                        <div style="margin: 8px 0;">
+                            <div class="stat-label">
                                 <span style="color:red;">🔴 ${redP}%</span>
                                 <span style="color:green;">${greenP}% 🟢</span>
                             </div>
-                            <div class="progress-container">
-                                <div style="width:${redP}%; background:red;"></div><div style="width:${greenP}%; background:green;"></div>
+                            <div class="progress-bar-container">
+                                <div style="width:${redP}%; background:red;"></div>
+                                <div style="width:${greenP}%; background:green;"></div>
                             </div>
+                            <div style="font-size:10px; color:gray; text-align:right;">Всього: ${total}</div>
                         </div>`;
                 }
             }
@@ -106,11 +116,11 @@ map.locate({setView: false, watch: true});
             L.circle([l.lt, l.ln], { radius: 1500, color: markerColor === 'red' ? 'red' : (markerColor === 'green' ? 'green' : 'blue'), fillOpacity: 0.1, weight: 1 }).addTo(map);
 
             let m = L.marker([l.lt, l.ln]).addTo(map).bindPopup(`
-                <div style="text-align:center; min-width:160px;">
-                    <b style="font-size:14px;">${l.n}</b><br>
+                <div style="text-align:center; min-width:170px;">
+                    <b style="font-size:15px;">${l.n}</b><br>
                     ${statsHtml}
                     <hr style="margin: 8px 0; border: 0; border-top: 1px solid #eee;">
-                    <div style="display: flex; gap: 5px;">
+                    <div style="display: flex; gap: 6px;">
                         <button class="btn btn-g" onclick="checkPosAndSend(${l.id},'green')">ЧИСТО</button>
                         <button class="btn btn-r" onclick="checkPosAndSend(${l.id},'red')">КОНТРОЛЬ</button>
                     </div>
@@ -120,23 +130,28 @@ map.locate({setView: false, watch: true});
             m.on('add', function() {
                 const el = m.getElement();
                 if (el) {
-                    if (markerColor === 'red') el.style.filter = "hue-rotate(120deg) brightness(90%) saturate(150%)";
-                    else if (markerColor === 'green') el.style.filter = "hue-rotate(250deg) brightness(90%) saturate(150%)";
+                    if (markerColor === 'red') el.style.filter = "hue-rotate(120deg) brightness(95%) saturate(160%)";
+                    else if (markerColor === 'green') el.style.filter = "hue-rotate(250deg) brightness(95%) saturate(160%)";
                 }
             });
         });
 
+        // 6. Функція відправки голосу
         function checkPosAndSend(id, s) {
-            navigator.geolocation.getCurrentPosition(function(position) {
-                const target = locs.find(item => item.id === id);
-                const dist = getDistance(position.coords.latitude, position.coords.longitude, target.lt, target.ln);
-                if (dist <= 1.5) {
-                    tg.sendData(JSON.stringify({id: id, status: s}));
-                    tg.close();
-                } else {
-                    alert("Ви задалеко! Потрібно бути в межах 1.5 км. Ваша відстань: " + dist.toFixed(2) + " км");
-                }
-            }, () => alert("Увімкніть GPS!"), {enableHighAccuracy: true});
+            if (!window.userMarker) {
+                alert("Почекайте, поки GPS визначить вашу позицію!");
+                return;
+            }
+            const userLoc = window.userMarker.getLatLng();
+            const target = locs.find(item => item.id === id);
+            const dist = getDistance(userLoc.lat, userLoc.lng, target.lt, target.ln);
+
+            if (dist <= 1.5) {
+                tg.sendData(JSON.stringify({id: id, status: s}));
+                tg.close();
+            } else {
+                alert("Ви задалеко! Потрібно бути в межах 1.5 км. Ваша відстань: " + dist.toFixed(2) + " км");
+            }
         }
     </script>
 </body>
