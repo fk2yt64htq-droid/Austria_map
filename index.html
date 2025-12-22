@@ -9,7 +9,7 @@
     <style>
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; }
         #map { height: 100vh; width: 100vw; }
-        .btn { padding: 15px; width: 100%; margin-top: 10px; color: white; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 16px; }
+        .btn { padding: 15px; width: 100%; margin-top: 10px; color: white; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -17,39 +17,14 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-
         const map = L.map('map').setView([47.5, 13.5], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
         let userCoords = null;
-        map.locate({setView: false, watch: true});
+        map.locate({watch: true});
         map.on('locationfound', (e) => { userCoords = e.latlng; });
 
-        function getDistance(lat1, lon1, lat2, lon2) {
-            return map.distance([lat1, lon1], [lat2, lon2]);
-        }
-
-        function sendStatus(id, type) {
-            if (!userCoords) {
-                alert("Почекайте, визначаємо вашу геолокацію...");
-                return;
-            }
-            const target = locations.find(l => l.id === id);
-            const dist = getDistance(userCoords.lat, userCoords.lng, target.lt, target.ln);
-            
-            if (dist > 1500) {
-                alert(`Ви занадто далеко! Відстань: ${(dist/1000).toFixed(1)} км. Потрібно бути в межах 1.5 км.`);
-            } else {
-                tg.sendData(`${type}_${id}`);
-                tg.close();
-            }
-        }
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const statsRaw = urlParams.get('stats');
-        const stats = statsRaw ? JSON.parse(decodeURIComponent(statsRaw)) : {};
-
-        const locations = [
+        const dots = [
             {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
             {id: 2, n: "Nuziders A14", lt: 47.1731, ln: 9.7737},
             {id: 3, n: "Rabfeld A12", lt: 47.4574, ln: 11.9196},
@@ -65,27 +40,34 @@
             {id: 13, n: "Arnoldstein A2", lt: 46.5492, ln: 13.7042}
         ];
 
-        locations.forEach(l => {
-            const s = stats[l.id] || {color: 'blue', green_pct: 0, red_pct: 0, last_time: "немає даних"};
+        const params = new URLSearchParams(window.location.search);
+        const stats = JSON.parse(decodeURIComponent(params.get('stats') || '{}'));
+
+        dots.forEach(l => {
+            const s = stats[l.id] || {color: 'blue', green_pct: 0, red_pct: 0, last_time: 'ніколи'};
+            const iconUrl = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-" + s.color + ".png";
             
             const icon = new L.Icon({
-                iconUrl: https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${s.color}.png,
+                iconUrl: iconUrl,
                 shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
                 iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
             });
 
-            L.marker([l.lt, l.ln], {icon: icon}).addTo(map).bindPopup(`
-                <div style="text-align:center; min-width: 150px;">
-                    <b>${l.n}</b><br>
-                    <small>Оновлено: ${s.last_time}</small><br>
-                    <div style="margin: 8px 0; font-weight: bold;">🟢 ${s.green_pct}% | 🔴 ${s.red_pct}%</div>
-                    <button class="btn" style="background:green" onclick="sendStatus(${l.id}, 'green')">✅ ЧИСТО</button>
-                    <button class="btn" style="background:red" onclick="sendStatus(${l.id}, 'red')">🚨 КОНТРОЛЬ</button>
-                </div>
-            `);
+            const content = "<b>" + l.n + "</b><br>Оновлено: " + s.last_time + "<br>🟢 " + s.green_pct + "% | 🔴 " + s.red_pct + "%<br>" +
+                "<button class='btn' style='background:green' onclick='send(" + l.id + ",\"green\")'>ЧИСТО</button>" +
+                "<button class='btn' style='background:red' onclick='send(" + l.id + ",\"red\")'>КОНТРОЛЬ</button>";
 
-            L.circle([l.lt, l.ln], {radius: 1500, color: s.color, fillOpacity: 0.1, weight: 1}).addTo(map);
+            L.marker([l.lt, l.ln], {icon: icon}).addTo(map).bindPopup(content);
+            L.circle([l.lt, l.ln], {radius: 1500, color: s.color, fillOpacity: 0.1}).addTo(map);
         });
+
+        function send(id, type) {
+            if (!userCoords) { alert("Ввімкніть GPS!"); return; }
+            const target = dots.find(d => d.id === id);
+            const dist = map.distance(userCoords, [target.lt, target.ln]);
+            if (dist > 1500) { alert("Ви задалеко! (" + (dist/1000).toFixed(1) + " км)"); }
+            else { tg.sendData(type + "_" + id); tg.close(); }
+        }
     </script>
 </body>
 </html>
