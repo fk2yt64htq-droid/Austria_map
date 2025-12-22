@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; }
+        #map { height: 100vh; width: 100vw; }
+        .btn { padding: 12px; width: 100%; margin-top: 8px; color: white; border: none; font-weight: bold; border-radius: 6px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        const map = L.map('map').setView([47.5, 13.5], 7);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        const dots = [
+            {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
+            {id: 2, n: "Nuziders A14", lt: 47.1731, ln: 9.7737},
+            {id: 3, n: "Rabfeld A12", lt: 47.4574, ln: 11.9196},
+            {id: 4, n: "Kundl A12", lt: 47.4734, ln: 11.9693},
+            {id: 5, n: "Wels A8", lt: 48.1790, ln: 13.8623},
+            {id: 6, n: "Wolfsbach A1 (1)", lt: 48.1120, ln: 14.6761},
+            {id: 7, n: "Wolfsbach A1 (2)", lt: 48.1123, ln: 14.6786},
+            {id: 8, n: "Mistelbach A5", lt: 48.5389, ln: 16.6259},
+            {id: 9, n: "Bruck an der Leitha A4", lt: 48.0431, ln: 16.7791},
+            {id: 10, n: "Pernau A2", lt: 47.0900, ln: 15.8511},
+            {id: 11, n: "Strass in Steiermark A9", lt: 46.7317, ln: 15.6436},
+            {id: 12, n: "Hainburg A2", lt: 46.6845, ln: 14.6591},
+            {id: 13, n: "Arnoldstein A2", lt: 46.5492, ln: 13.7042}
+        ];
+
+        dots.forEach(l => {
+            L.marker([l.lt, l.ln]).addTo(map).bindPopup(`
+                <b>${l.n}</b><hr>
+                <button class="btn" style="background:green" onclick="tg.sendData('green_' + ${l.id});tg.close();">ЧИСТО</button>
+                <button class="btn" style="background:red" onclick="tg.sendData('red_' + ${l.id});tg.close();">КОНТРОЛЬ</button>
+            `);
+        });
+    </script>
+</body>
+</html>
