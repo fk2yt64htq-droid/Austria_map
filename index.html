@@ -7,24 +7,25 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: white; }
         #map { height: 100vh; width: 100vw; }
-        .btn { padding: 15px; width: 100%; margin-top: 10px; color: white; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; }
+        .btn { padding: 15px; width: 100%; margin-top: 10px; color: white; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 16px; }
     </style>
 </head>
 <body>
     <div id="map"></div>
     <script>
-        const tg = window.Telegram.WebApp;
+        var tg = window.Telegram.WebApp;
         tg.expand();
-        const map = L.map('map').setView([47.5, 13.5], 7);
+
+        var map = L.map('map').setView([47.5, 13.5], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        let userCoords = null;
-        map.locate({watch: true});
-        map.on('locationfound', (e) => { userCoords = e.latlng; });
+        var userPos = null;
+        map.locate({watch: true, enableHighAccuracy: true});
+        map.on('locationfound', function(e) { userPos = e.latlng; });
 
-        const dots = [
+        var dots = [
             {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
             {id: 2, n: "Nuziders A14", lt: 47.1731, ln: 9.7737},
             {id: 3, n: "Rabfeld A12", lt: 47.4574, ln: 11.9196},
@@ -40,34 +41,37 @@
             {id: 13, n: "Arnoldstein A2", lt: 46.5492, ln: 13.7042}
         ];
 
-        const params = new URLSearchParams(window.location.search);
-        const stats = JSON.parse(decodeURIComponent(params.get('stats') || '{}'));
+        var params = new URLSearchParams(window.location.search);
+        var stats = {};
+        try {
+            var sData = params.get('stats');
+            if (sData) stats = JSON.parse(decodeURIComponent(sData));
+        } catch(e) {}
 
-        dots.forEach(l => {
-            const s = stats[l.id] || {color: 'blue', green_pct: 0, red_pct: 0, last_time: 'ніколи'};
-            const iconUrl = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-" + s.color + ".png";
-            
-            const icon = new L.Icon({
-                iconUrl: iconUrl,
+        dots.forEach(function(l) {
+            var s = stats[l.id] || {color: 'blue', green_pct: 0, red_pct: 0, last_time: 'ніколи'};
+            var icon = new L.Icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-' + s.color + '.png',
                 shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
                 iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
             });
 
-            const content = "<b>" + l.n + "</b><br>Оновлено: " + s.last_time + "<br>🟢 " + s.green_pct + "% | 🔴 " + s.red_pct + "%<br>" +
-                "<button class='btn' style='background:green' onclick='send(" + l.id + ",\"green\")'>ЧИСТО</button>" +
-                "<button class='btn' style='background:red' onclick='send(" + l.id + ",\"red\")'>КОНТРОЛЬ</button>";
+            var html = '<b>' + l.n + '</b><br><small>Оновлено: ' + s.last_time + '</small><br>' +
+                       '🟢 ' + s.green_pct + '% | 🔴 ' + s.red_pct + '%<br>' +
+                       '<button class="btn" style="background:green" onclick="send(' + l.id + ',\'green\')">ЧИСТО</button>' +
+                       '<button class="btn" style="background:red" onclick="send(' + l.id + ',\'red\')">КОНТРОЛЬ</button>';
 
-            L.marker([l.lt, l.ln], {icon: icon}).addTo(map).bindPopup(content);
+            L.marker([l.lt, l.ln], {icon: icon}).addTo(map).bindPopup(html);
             L.circle([l.lt, l.ln], {radius: 1500, color: s.color, fillOpacity: 0.1}).addTo(map);
         });
 
-        function send(id, type) {
-            if (!userCoords) { alert("Ввімкніть GPS!"); return; }
-            const target = dots.find(d => d.id === id);
-            const dist = map.distance(userCoords, [target.lt, target.ln]);
+        window.send = function(id, type) {
+            if (!userPos) { alert("GPS не знайдено!"); return; }
+            var target = dots.find(function(d){ return d.id === id; });
+            var dist = map.distance(userPos, [target.lt, target.ln]);
             if (dist > 1500) { alert("Ви задалеко! (" + (dist/1000).toFixed(1) + " км)"); }
             else { tg.sendData(type + "_" + id); tg.close(); }
-        }
+        };
     </script>
 </body>
 </html>
