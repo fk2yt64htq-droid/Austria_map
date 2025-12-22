@@ -89,10 +89,11 @@
             if (!userPos) { alert("GPS не знайдено!"); return; }
             var target = dots.find(function(d){ return d.id === id; });
             var dist = map.distance(userPos, [target.lt, target.ln]);
-            if (dist > 1500) { alert("Ви задалеко! (" + (dist/1000).toFixed(1) + " км)"); }
+            if (dist > 150000) { alert("Ви задалеко! (" + (dist/1000).toFixed(1) + " км)"); }
             else { tg.sendData(type + "_" + id); tg.close(); }
         };
     </script>
 </body>
 </html>
+
 
