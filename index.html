@@ -85,24 +85,24 @@
             L.circle([l.lt, l.ln], {radius: 1500, color: s.color, fillOpacity: 0.1}).addTo(map);
         });
 
-        window.send = function(id, type) {
-    // Для тесту ми приберемо перевірку дистанції, щоб ви точно могли натиснути
-    // Коли перевіримо, повернемо назад
-    
-    // Формуємо дані
+      window.send = function(id, type) {
+    var webapp = window.Telegram.WebApp; // Використовуємо пряме посилання
     var data = type + "_" + id;
     
-    // Спеціальний метод для Inline-кнопок
-    tg.sendData(data); 
+    try {
+        webapp.sendData(data); // Відправка даних боту
+    } catch (e) {
+        alert("Помилка відправки: " + e);
+    }
     
-    // Додаємо запасний варіант (якщо sendData блокується)
     setTimeout(function() {
-        tg.close();
-    }, 100);
+        webapp.close();
+    }, 150);
 };
     </script>
 </body>
 </html>
+
 
 
 
