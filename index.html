@@ -86,15 +86,24 @@
         });
 
         window.send = function(id, type) {
-            if (!userPos) { alert("GPS не знайдено!"); return; }
-            var target = dots.find(function(d){ return d.id === id; });
-            var dist = map.distance(userPos, [target.lt, target.ln]);
-            if (dist > 15000000) { alert("Ви задалеко! (" + (dist/1000).toFixed(1) + " км)"); }
-            else { tg.sendData(type + "_" + id); tg.close(); }
-        };
+    // Для тесту ми приберемо перевірку дистанції, щоб ви точно могли натиснути
+    // Коли перевіримо, повернемо назад
+    
+    // Формуємо дані
+    var data = type + "_" + id;
+    
+    // Спеціальний метод для Inline-кнопок
+    tg.sendData(data); 
+    
+    // Додаємо запасний варіант (якщо sendData блокується)
+    setTimeout(function() {
+        tg.close();
+    }, 100);
+};
     </script>
 </body>
 </html>
+
 
 
 
