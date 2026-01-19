@@ -8,7 +8,7 @@
     <script src="https://telegram.org"></script>
     <style>
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: white; }
-        #map { height: 100vh; width: 100vw; }
+        #map { height: 100vh; width: 100vw; background: #f0f0f0; }
         .btn { padding: 15px; width: 100%; margin-top: 10px; color: white; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 16px; }
     </style>
 </head>
@@ -19,20 +19,19 @@
         tg.ready();
         tg.expand();
 
-        // Кнопка оновлення
-        tg.MainButton.setText("ОНОВИТИ МАПУ");
-        tg.MainButton.show();
-        tg.MainButton.onClick(function() { location.reload(); });
-
+        // Ініціалізація карти
         var map = L.map('map').setView([47.5, 13.5], 7);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
 
+        // Обробка статистики з URL
         var params = new URLSearchParams(window.location.search);
         var stats = {};
         try {
             var sData = params.get('stats');
             if (sData) stats = JSON.parse(decodeURIComponent(sData));
-        } catch(e) { console.log("Error loading stats"); }
+        } catch(e) { console.log("Stats error"); }
 
         var dots = [
             {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
@@ -53,9 +52,10 @@
         dots.forEach(function(l) {
             var s = stats[l.id] || {color: 'blue', green_pct: 0, red_pct: 0, last_time: 'немає'};
             
-            // ТУТ БУЛА ПОМИЛКА — ТЕПЕР ВСЕ ВИПРАВЛЕНО
-            var icon = new L.Icon({
-                iconUrl: 'https://raw.githubusercontent.com' + s.color + '.png',
+            // Спрощене створення іконки без порожніх значень
+            var iconUrl = 'https://raw.githubusercontent.com' + s.color + '.png';
+            var myIcon = new L.Icon({
+                iconUrl: iconUrl,
                 shadowUrl: 'https://cdnjs.cloudflare.com',
                 iconSize: [25, 41],
                 iconAnchor: [12, 41],
@@ -65,16 +65,16 @@
 
             var html = '<b>' + l.n + '</b><br><small>Оновлено: ' + s.last_time + '</small><br>' +
                        '🟢 ' + s.green_pct + '% | 🔴 ' + s.red_pct + '%<br>' +
-                       '<button class="btn" style="background:green" onclick="send(' + l.id + ',\'green\')">ЧИСТО</button>' +
-                       '<button class="btn" style="background:red" onclick="send(' + l.id + ',\'red\')">КОНТРОЛЬ</button>';
+                       '<button class="btn" style="background:green" onclick="sendData(\'' + l.id + '\',\'green\')">ЧИСТО</button>' +
+                       '<button class="btn" style="background:red" onclick="sendData(\'' + l.id + '\',\'red\')">КОНТРОЛЬ</button>';
 
-            L.marker([l.lt, l.ln], {icon: icon}).addTo(map).bindPopup(html);
+            L.marker([l.lt, l.ln], {icon: myIcon}).addTo(map).bindPopup(html);
             L.circle([l.lt, l.ln], {radius: 1500, color: s.color, fillOpacity: 0.1}).addTo(map);
         });
 
-        window.send = function(id, type) {
+        window.sendData = function(id, type) {
             tg.sendData(type + "_" + id);
-            setTimeout(function() { tg.close(); }, 150);
+            setTimeout(function() { tg.close(); }, 100);
         };
     </script>
 </body>
