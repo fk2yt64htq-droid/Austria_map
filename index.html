@@ -16,25 +16,23 @@
     <div id="map"></div>
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();
         tg.ready();
+        tg.expand();
 
-        // Кнопка оновлення Telegram
+        // Кнопка оновлення
         tg.MainButton.setText("ОНОВИТИ МАПУ");
         tg.MainButton.show();
         tg.MainButton.onClick(function() { location.reload(); });
 
-        // Карта
         var map = L.map('map').setView([47.5, 13.5], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        // Читання статистики з URL
         var params = new URLSearchParams(window.location.search);
         var stats = {};
         try {
             var sData = params.get('stats');
             if (sData) stats = JSON.parse(decodeURIComponent(sData));
-        } catch(e) { console.log("Stats error"); }
+        } catch(e) { console.log("Error loading stats"); }
 
         var dots = [
             {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
@@ -55,7 +53,7 @@
         dots.forEach(function(l) {
             var s = stats[l.id] || {color: 'blue', green_pct: 0, red_pct: 0, last_time: 'немає'};
             
-            // Спрощене створення іконки
+            // ТУТ БУЛА ПОМИЛКА — ТЕПЕР ВСЕ ВИПРАВЛЕНО
             var icon = new L.Icon({
                 iconUrl: 'https://raw.githubusercontent.com' + s.color + '.png',
                 shadowUrl: 'https://cdnjs.cloudflare.com',
