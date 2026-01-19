@@ -17,31 +17,24 @@
     <script>
         var tg = window.Telegram.WebApp;
         tg.expand();
+        tg.ready();
 
         var map = L.map('map').setView([47.5, 13.5], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
         var userPos = null;
+        var userMarker = null;
+
         map.locate({watch: true, enableHighAccuracy: true});
-        var userMarker = null; // Змінна для вашого маркера
 
         map.on('locationfound', function(e) { 
             userPos = e.latlng; 
-
-            // Якщо маркер вже є — просто рухаємо його, якщо немає — створюємо
             if (userMarker) {
                 userMarker.setLatLng(e.latlng);
             } else {
                 userMarker = L.circleMarker(e.latlng, {
-                    radius: 8,
-                    color: 'white',
-                    fillColor: '#3388ff',
-                    fillOpacity: 1,
-                    weight: 2
+                    radius: 8, color: 'white', fillColor: '#3388ff', fillOpacity: 1, weight: 2
                 }).addTo(map).bindPopup("Ви тут");
-                
-                // При першому виявленні можна сцентрувати мапу на собі
-                // map.setView(e.latlng, 13); 
             }
         });
 
@@ -85,26 +78,18 @@
             L.circle([l.lt, l.ln], {radius: 1500, color: s.color, fillOpacity: 0.1}).addTo(map);
         });
 
-      window.send = function(id, type) {
-    var webapp = window.Telegram.WebApp; // Використовуємо пряме посилання
-    var data = type + "_" + id;
-    
-    try {
-        webapp.sendData(data); // Відправка даних боту
-    } catch (e) {
-        alert("Помилка відправки: " + e);
-    }
-    
-    setTimeout(function() {
-        webapp.close();
-    }, 150);
-};
+        // ВИПРАВЛЕНА ФУНКЦІЯ
+        window.send = function(id, type) {
+            var data = type + "_" + id;
+            try {
+                tg.sendData(data); // Відправка даних боту
+                setTimeout(function() {
+                    tg.close(); // Закриваємо WebApp
+                }, 150);
+            } catch (e) {
+                alert("Помилка відправки: " + e);
+            }
+        };
     </script>
 </body>
 </html>
-
-
-
-
-
-
