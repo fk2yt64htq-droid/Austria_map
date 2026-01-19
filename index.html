@@ -48,7 +48,6 @@
         dots.forEach(function(l) {
             var s = stats[l.id] || {color: 'blue', last_time: 'ніколи', green_pct: 0, red_pct: 0};
             
-            // Виправлений блок іконок з цифрами
             var myIcon = new L.Icon({
                 iconUrl: 'https://raw.githubusercontent.com' + s.color + '.png',
                 shadowUrl: 'https://cdnjs.cloudflare.com',
