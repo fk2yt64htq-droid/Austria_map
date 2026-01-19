@@ -3,13 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Austria Map</title>
+<title>Austria Control Map</title>
 
-<!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<!-- Telegram WebApp -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
@@ -17,40 +14,32 @@ html, body {
     margin: 0;
     padding: 0;
     height: 100%;
-    width: 100%;
 }
-
 #map {
     height: 100vh;
-    width: 100vw;
 }
-
 .btn {
     width: 100%;
-    padding: 12px;
+    padding: 10px;
     margin-top: 6px;
     border: none;
     border-radius: 8px;
     color: #fff;
-    font-size: 14px;
     font-weight: bold;
 }
 </style>
 </head>
 <body>
-<h1 style="color:red">СТОРІНКА ЗАВАНТАЖИЛАСЬ</h1>
 
 <div id="map"></div>
 
 <script>
-/* ===== TELEGRAM ===== */
 const tg = window.Telegram ? window.Telegram.WebApp : null;
 if (tg) {
     tg.ready();
     tg.expand();
 }
 
-/* ===== MAP ===== */
 const map = L.map("map").setView([47.5162, 14.5501], 7);
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -58,11 +47,34 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "© OpenStreetMap"
 }).addTo(map);
 
-/* ===== POINTS ===== */
+/* ===== ВСІ ТОЧКИ ===== */
 const points = [
-    { id: 1, name: "Hörbranz A14", lat: 47.5446, lng: 9.7407 },
-    { id: 5, name: "Wels A8", lat: 48.1790, lng: 13.8623 },
-    { id: 13, name: "Arnoldstein A2", lat: 46.5492, lng: 13.7042 }
+    // Німеччина
+    { id: 1, name: "Hörbranz A14 (DE)", lat: 47.5446, lng: 9.7407 },
+    { id: 2, name: "Walserberg A1 (DE)", lat: 47.7925, lng: 12.9772 },
+    { id: 3, name: "Suben A8 (DE)", lat: 48.4112, lng: 13.4393 },
+    { id: 4, name: "Passau Nord A3 (DE)", lat: 48.5742, lng: 13.4663 },
+
+    // Чехія
+    { id: 5, name: "Wullowitz A7 (CZ)", lat: 48.5541, lng: 14.5706 },
+    { id: 6, name: "Kleinhaugsdorf (CZ)", lat: 48.7293, lng: 16.0463 },
+
+    // Словаччина
+    { id: 7, name: "Kittsee A6 (SK)", lat: 48.0924, lng: 17.0641 },
+
+    // Угорщина
+    { id: 8, name: "Nickelsdorf A4 (HU)", lat: 47.9357, lng: 17.0695 },
+
+    // Словенія
+    { id: 9, name: "Spielfeld A9 (SI)", lat: 46.7081, lng: 15.6377 },
+    { id: 10, name: "Karawankentunnel A11 (SI)", lat: 46.5316, lng: 14.0174 },
+
+    // Італія
+    { id: 11, name: "Brenner A13 (IT)", lat: 47.0020, lng: 11.5050 },
+    { id: 12, name: "Arnoldstein A2 (IT)", lat: 46.5492, lng: 13.7042 },
+
+    // Швейцарія
+    { id: 13, name: "St. Margrethen A14 (CH)", lat: 47.4554, lng: 9.6384 }
 ];
 
 points.forEach(p => {
@@ -75,7 +87,6 @@ points.forEach(p => {
     `);
 });
 
-/* ===== SEND TO TELEGRAM ===== */
 function sendData(id, status) {
     if (!tg) {
         alert("Відкрий у Telegram");
@@ -88,4 +99,3 @@ function sendData(id, status) {
 
 </body>
 </html>
-
