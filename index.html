@@ -10,7 +10,7 @@
     <style>
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: #f0f0f0; }
         #map { height: 100vh; width: 100vw; }
-        .btn { padding: 15px; width: 100%; margin-top: 10px; color: white; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 16px; }
+        .btn { padding: 15px; width: 100%; margin-top: 10px; color: white; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 16px; display: block; text-align: center; text-decoration: none; }
     </style>
 </head>
 <body>
@@ -20,50 +20,27 @@
         tg.ready();
         tg.expand();
 
-        // Ініціалізація карти
         var map = L.map('map').setView([47.5, 13.5], 7);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        // Дані з URL
         var params = new URLSearchParams(window.location.search);
         var stats = {};
         try {
             var sData = params.get('stats');
             if (sData) stats = JSON.parse(decodeURIComponent(sData));
-        } catch(e) { console.error("Stats parse error"); }
+        } catch(e) { console.error("Error stats"); }
 
         var dots = [
             {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
-            {id: 2, n: "Nuziders A14", lt: 47.1731, ln: 9.7737},
-            {id: 3, n: "Rabfeld A12", lt: 47.4574, ln: 11.9196},
-            {id: 4, n: "Kundl A12", lt: 47.4734, ln: 11.9693},
             {id: 5, n: "Wels A8", lt: 48.1790, ln: 13.8623},
-            {id: 6, n: "Wolfsbach A1 (1)", lt: 48.1120, ln: 14.6761},
-            {id: 7, n: "Wolfsbach A1 (2)", lt: 48.1123, ln: 14.6786},
-            {id: 8, n: "Mistelbach A5", lt: 48.5389, ln: 16.6259},
-            {id: 9, n: "Bruck an der Leitha A4", lt: 48.0431, ln: 16.7791},
-            {id: 10, n: "Pernau A2", lt: 47.0900, ln: 15.8511},
-            {id: 11, n: "Strass in Steiermark A9", lt: 46.7317, ln: 15.6436},
-            {id: 12, n: "Hainburg A2", lt: 46.6845, ln: 14.6591},
             {id: 13, n: "Arnoldstein A2", lt: 46.5492, ln: 13.7042}
         ];
 
         dots.forEach(function(l) {
             var s = stats[l.id] || {color: 'blue', last_time: 'немає'};
             
-            // Використовуємо стандартне коло замість іконки для тесту
-            var markerColor = s.color === 'red' ? '#ff0000' : (s.color === 'green' ? '#00ff00' : '#0000ff');
-
-            var marker = L.circleMarker([l.lt, l.ln], {
-                radius: 10,
-                fillColor: markerColor,
-                color: "#fff",
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.8
-            }).addTo(map);
+            // Використовуємо стандартну синю мітку Leaflet
+            var marker = L.marker([l.lt, l.ln]).addTo(map);
 
             var html = '<b>' + l.n + '</b><br><small>Оновлено: ' + s.last_time + '</small><br>' +
                        '<button class="btn" style="background:green" onclick="sendData(\''+l.id+'\',\'green\')">ЧИСТО</button>' +
