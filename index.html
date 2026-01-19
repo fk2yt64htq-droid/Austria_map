@@ -1,62 +1,95 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Austria Map 2026</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Austria Map 2026</title>
 
-    <!-- Leaflet CSS -->
-    <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
+<!-- Leaflet CSS (jsDelivr) -->
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
 
-    <!-- Leaflet JS -->
-    <script
-        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-    </script>
+<!-- Leaflet JS (jsDelivr) -->
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <!-- Telegram WebApp -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<!-- Telegram WebApp -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            width: 100%;
-            background: #ffffff;
-        }
-
-        #map {
-            height: 100vh;
-            width: 100vw;
-        }
-
-        .btn {
-            padding: 14px;
-            width: 100%;
-            margin-top: 8px;
-            color: white;
-            border: none;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 15px;
-        }
-    </style>
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+}
+#map {
+    height: 100vh;
+    width: 100vw;
+}
+.btn {
+    width: 100%;
+    padding: 14px;
+    margin-top: 8px;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+}
+</style>
 </head>
 <body>
 
 <div id="map"></div>
 
 <script>
-    // Telegram WebApp (без падіння поза Telegram)
-    const tg = window.Telegram?.WebApp;
-    if (tg) {
-        tg.ready();
-        tg.expand();
-    }
+/* ====== ЗАХИСТ ВІД БІЛОГО ЕКРАНУ ====== */
+if (typeof L === "undefined") {
+    document.body.innerHTML =
+        "<h2 style='color:red;padding:20px'>❌ Leaflet не завантажився</h2>";
+    throw new Error("Leaflet missing");
+}
 
-    // Створення мапи (центр Австрії)
-    const map = L.map('map').
+/* ====== TELEGRAM ====== */
+const tg = window.Telegram?.WebApp;
+if (tg) {
+    tg.ready();
+    tg.expand();
+}
+
+/* ====== MAP ====== */
+const map = L.map("map").setView([47.5162, 14.5501], 7);
+
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap",
+    maxZoom: 18
+}).addTo(map);
+
+/* ====== POINTS ====== */
+const dots = [
+    { id: 1, name: "Hörbranz A14", lat: 47.5446, lng: 9.7407 },
+    { id: 5, name: "Wels A8", lat: 48.1790, lng: 13.8623 },
+    { id: 13, name: "Arnoldstein A2", lat: 46.5492, lng: 13.7042 }
+];
+
+dots.forEach(p => {
+    const marker = L.marker([p.lat, p.lng]).addTo(map);
+
+    marker.bindPopup(`
+        <b>${p.name}</b><br>
+        <button class="btn" style="background:green"
+            onclick="sendData('${p.id}','green')">ЧИСТО</button>
+        <button class="btn" style="background:red"
+            onclick="sendData('${p.id}','red')">КОНТРОЛЬ</button>
+    `);
+});
+
+/* ====== SEND DATA ====== */
+window.sendData = function(id, status) {
+    if (!tg) {
+        alert("Відкрий у Telegram");
+        return;
+    }
+    tg.sendData(status + "_" + id);
+    setTimeout(() => tg.close(),
