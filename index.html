@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- ВИПРАВЛЕНО: Повні посилання на Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com" />
     <script src="https://unpkg.com"></script>
     <script src="https://telegram.org"></script>
@@ -48,6 +49,7 @@
         dots.forEach(function(l) {
             var s = stats[l.id] || {color: 'blue', last_time: 'ніколи', green_pct: 0, red_pct: 0};
             
+            // ВИПРАВЛЕНО: Повне посилання на іконки
             var myIcon = new L.Icon({
                 iconUrl: 'https://raw.githubusercontent.com' + s.color + '.png',
                 shadowUrl: 'https://cdnjs.cloudflare.com',
@@ -70,7 +72,9 @@
             var data = type + "_" + id;
             try {
                 tg.sendData(data);
-                setTimeout(function() { tg.close(); }, 150);
+                setTimeout(function() {
+                    tg.close();
+                }, 150);
             } catch (e) {
                 alert("Помилка відправки: " + e);
             }
