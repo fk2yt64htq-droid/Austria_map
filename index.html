@@ -19,24 +19,24 @@
         tg.expand();
         tg.ready();
 
-        // Налаштування кнопки "Оновити" в інтерфейсі Telegram
+        // Кнопка оновлення в інтерфейсі Telegram
         tg.MainButton.setText("ОНОВИТИ МАПУ");
         tg.MainButton.show();
         tg.MainButton.onClick(function() { location.reload(); });
 
-        // Авто-оновлення сторінки кожні 5 хвилин
+        // Авто-оновлення кожні 5 хв
         setTimeout(function() { location.reload(); }, 300000);
 
         var map = L.map('map').setView([47.5, 13.5], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        // Читання статистики з URL (те, що передає Python-бот)
+        // Читання статистики з URL
         var params = new URLSearchParams(window.location.search);
         var stats = {};
         try {
             var sData = params.get('stats');
             if (sData) stats = JSON.parse(decodeURIComponent(sData));
-        } catch(e) { console.error("Помилка парсингу статистики:", e); }
+        } catch(e) { console.error(e); }
 
         var dots = [
             {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
@@ -55,13 +55,15 @@
         ];
 
         dots.forEach(function(l) {
-            // Отримуємо дані для конкретної точки або ставимо стандартні (сині)
             var s = stats[l.id] || {color: 'blue', green_pct: 0, red_pct: 0, last_time: 'немає даних'};
             
             var icon = new L.Icon({
                 iconUrl: 'https://raw.githubusercontent.com' + s.color + '.png',
                 shadowUrl: 'https://cdnjs.cloudflare.com',
-                iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+                iconSize: [25, 41], 
+                iconAnchor: [12, 41], 
+                popupAnchor: [1, -34], 
+                shadowSize: [41, 41]
             });
 
             var html = '<b>' + l.n + '</b><br><small>Оновлено: ' + s.last_time + '</small><br>' +
@@ -73,13 +75,12 @@
             L.circle([l.lt, l.ln], {radius: 1500, color: s.color, fillOpacity: 0.1}).addTo(map);
         });
 
-        // Функція відправки даних у бот
         window.send = function(id, type) {
             var data = type + "_" + id;
             try {
                 tg.sendData(data);
                 setTimeout(function() { tg.close(); }, 150);
-            } catch (e) { alert("Помилка: " + e); }
+            } catch (e) { alert("Error: " + e); }
         };
     </script>
 </body>
