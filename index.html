@@ -48,7 +48,8 @@
         dots.forEach(function(l) {
             var s = stats[l.id] || {color: 'blue', green_pct: 0, red_pct: 0, last_time: 'немає'};
             
-            var myIcon = new L.Icon({
+            // Ось виправлений шматочок з іконкою
+            var myIcon = L.icon({
                 iconUrl: 'https://raw.githubusercontent.com' + s.color + '.png',
                 shadowUrl: 'https://cdnjs.cloudflare.com',
                 iconSize: [25, 41],
