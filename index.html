@@ -19,13 +19,9 @@
         tg.ready();
         tg.expand();
 
-        // Ініціалізація карти
         var map = L.map('map').setView([47.5, 13.5], 7);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        // Обробка статистики з URL
         var params = new URLSearchParams(window.location.search);
         var stats = {};
         try {
@@ -52,10 +48,8 @@
         dots.forEach(function(l) {
             var s = stats[l.id] || {color: 'blue', green_pct: 0, red_pct: 0, last_time: 'немає'};
             
-            // Спрощене створення іконки без порожніх значень
-            var iconUrl = 'https://raw.githubusercontent.com' + s.color + '.png';
             var myIcon = new L.Icon({
-                iconUrl: iconUrl,
+                iconUrl: 'https://raw.githubusercontent.com' + s.color + '.png',
                 shadowUrl: 'https://cdnjs.cloudflare.com',
                 iconSize: [25, 41],
                 iconAnchor: [12, 41],
