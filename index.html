@@ -1,49 +1,62 @@
 <!DOCTYPE html>
-<html>
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- ПРАВИЛЬНІ ПОВНІ ПОСИЛАННЯ -->
-    <link rel="stylesheet" href="https://unpkg.com" />
-    <script src="https://unpkg.com"></script>
-    <script src="https://telegram.org"></script>
+    <title>Austria Map 2026</title>
+
+    <!-- Leaflet CSS -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <!-- Leaflet JS -->
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+    </script>
+
+    <!-- Telegram WebApp -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: white; }
-        #map { height: 100vh; width: 100vw; }
-        .btn { padding: 15px; width: 100%; margin-top: 10px; color: white; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 16px; display: block; }
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            background: #ffffff;
+        }
+
+        #map {
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .btn {
+            padding: 14px;
+            width: 100%;
+            margin-top: 8px;
+            color: white;
+            border: none;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+        }
     </style>
 </head>
 <body>
-    <div id="map"></div>
-    <script>
-        const tg = window.Telegram.WebApp;
+
+<div id="map"></div>
+
+<script>
+    // Telegram WebApp (без падіння поза Telegram)
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
         tg.ready();
         tg.expand();
+    }
 
-        // Створюємо карту
-        var map = L.map('map').setView([47.5, 13.5], 7);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
-
-        var dots = [
-            {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
-            {id: 5, n: "Wels A8", lt: 48.1790, ln: 13.8623},
-            {id: 13, n: "Arnoldstein A2", lt: 46.5492, ln: 13.7042}
-        ];
-
-        dots.forEach(function(l) {
-            var marker = L.marker([l.lt, l.ln]).addTo(map);
-            var html = '<b>' + l.n + '</b><br>' +
-                       '<button class="btn" style="background:green" onclick="sendData(\'' + l.id + '\',\'green\')">ЧИСТО</button>' +
-                       '<button class="btn" style="background:red" onclick="sendData(\'' + l.id + '\',\'red\')">КОНТРОЛЬ</button>';
-            marker.bindPopup(html);
-        });
-
-        window.sendData = function(id, type) {
-            tg.sendData(type + "_" + id);
-            setTimeout(function() { tg.close(); }, 100);
-        };
-    </script>
-</body>
-</html>
+    // Створення мапи (центр Австрії)
+    const map = L.map('map').
