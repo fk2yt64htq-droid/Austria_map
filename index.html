@@ -3,56 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Austria Map</title>
     <link rel="stylesheet" href="https://unpkg.com" />
     <script src="https://unpkg.com"></script>
     <script src="https://telegram.org"></script>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: #f0f0f0; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: white; }
         #map { height: 100vh; width: 100vw; }
-        .btn { padding: 15px; width: 100%; margin-top: 10px; color: white; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 16px; display: block; text-align: center; text-decoration: none; }
+        .btn { padding: 15px; width: 100%; margin-top: 10px; color: white; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 16px; }
     </style>
 </head>
 <body>
     <div id="map"></div>
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
+        var tg = window.Telegram.WebApp;
         tg.expand();
+        tg.ready();
 
         var map = L.map('map').setView([47.5, 13.5], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        var dots = [
+            {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
+            {id: 2, n: "Nuziders A14", lt: 47.1731, ln: 9.7737},
+            {id: 3, n: "Rabfeld A12", lt: 47.4574, ln: 11.9196},
+            {id: 4, n: "Kundl A12", lt: 47.4734, ln: 11.9693},
+            {id: 5, n: "Wels A8", lt: 48.1790, ln: 13.8623},
+            {id: 6, n: "Wolfsbach A1 (1)", lt: 48.1120, ln: 14.6761},
+            {id: 7, n: "Wolfsbach A1 (2)", lt: 48.1123, ln: 14.6786},
+            {id: 8, n: "Mistelbach A5", lt: 48.5389, ln: 16.6259},
+            {id: 9, n: "Bruck an der Leitha A4", lt: 48.0431, ln: 16.7791},
+            {id: 10, n: "Pernau A2", lt: 47.0900, ln: 15.8511},
+            {id: 11, n: "Strass in Steiermark A9", lt: 46.7317, ln: 15.6436},
+            {id: 12, n: "Hainburg A2", lt: 46.6845, ln: 14.6591},
+            {id: 13, n: "Arnoldstein A2", lt: 46.5492, ln: 13.7042}
+        ];
 
         var params = new URLSearchParams(window.location.search);
         var stats = {};
         try {
             var sData = params.get('stats');
             if (sData) stats = JSON.parse(decodeURIComponent(sData));
-        } catch(e) { console.error("Error stats"); }
-
-        var dots = [
-            {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
-            {id: 5, n: "Wels A8", lt: 48.1790, ln: 13.8623},
-            {id: 13, n: "Arnoldstein A2", lt: 46.5492, ln: 13.7042}
-        ];
+        } catch(e) {}
 
         dots.forEach(function(l) {
-            var s = stats[l.id] || {color: 'blue', last_time: 'немає'};
+            var s = stats[l.id] || {color: 'blue', last_time: 'ніколи', green_pct: 0, red_pct: 0};
             
-            // Використовуємо стандартну синю мітку Leaflet
-            var marker = L.marker([l.lt, l.ln]).addTo(map);
+            // Виправлений блок іконок з цифрами
+            var myIcon = new L.Icon({
+                iconUrl: 'https://raw.githubusercontent.com' + s.color + '.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
 
             var html = '<b>' + l.n + '</b><br><small>Оновлено: ' + s.last_time + '</small><br>' +
-                       '<button class="btn" style="background:green" onclick="sendData(\''+l.id+'\',\'green\')">ЧИСТО</button>' +
-                       '<button class="btn" style="background:red" onclick="sendData(\''+l.id+'\',\'red\')">КОНТРОЛЬ</button>';
+                       '🟢 ' + s.green_pct + '% | 🔴 ' + s.red_pct + '%<br>' +
+                       '<button class="btn" style="background:green" onclick="send(' + l.id + ',\'green\')">ЧИСТО</button>' +
+                       '<button class="btn" style="background:red" onclick="send(' + l.id + ',\'red\')">КОНТРОЛЬ</button>';
 
-            marker.bindPopup(html);
+            L.marker([l.lt, l.ln], {icon: myIcon}).addTo(map).bindPopup(html);
+            L.circle([l.lt, l.ln], {radius: 1500, color: s.color, fillOpacity: 0.1}).addTo(map);
         });
 
-        function sendData(id, type) {
-            tg.sendData(type + "_" + id);
-            setTimeout(function() { tg.close(); }, 100);
-        }
+        window.send = function(id, type) {
+            var data = type + "_" + id;
+            try {
+                tg.sendData(data);
+                setTimeout(function() { tg.close(); }, 150);
+            } catch (e) {
+                alert("Помилка відправки: " + e);
+            }
+        };
     </script>
 </body>
 </html>
