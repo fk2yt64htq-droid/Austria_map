@@ -5,8 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Austria Control Map</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Leaflet (стабільний CDN) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Telegram WebApp -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
@@ -14,18 +17,21 @@ html, body {
     margin: 0;
     padding: 0;
     height: 100%;
+    background: #000;
 }
 #map {
     height: 100vh;
+    width: 100vw;
 }
 .btn {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     margin-top: 6px;
     border: none;
     border-radius: 8px;
     color: #fff;
     font-weight: bold;
+    font-size: 14px;
 }
 </style>
 </head>
@@ -34,67 +40,79 @@ html, body {
 <div id="map"></div>
 
 <script>
-const tg = window.Telegram ? window.Telegram.WebApp : null;
-if (tg) {
+/* ===== TELEGRAM SAFE INIT ===== */
+let tg = null;
+if (window.Telegram && window.Telegram.WebApp) {
+    tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
 }
 
-const map = L.map("map").setView([47.5162, 14.5501], 7);
+/* ===== MAP INIT (DELAY = TG FIX) ===== */
+setTimeout(() => {
 
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 18,
-    attribution: "© OpenStreetMap"
-}).addTo(map);
-
-/* ===== ВСІ ТОЧКИ ===== */
-const points = [
-    // Німеччина
-    { id: 1, name: "Hörbranz A14 (DE)", lat: 47.5446, lng: 9.7407 },
-    { id: 2, name: "Walserberg A1 (DE)", lat: 47.7925, lng: 12.9772 },
-    { id: 3, name: "Suben A8 (DE)", lat: 48.4112, lng: 13.4393 },
-    { id: 4, name: "Passau Nord A3 (DE)", lat: 48.5742, lng: 13.4663 },
-
-    // Чехія
-    { id: 5, name: "Wullowitz A7 (CZ)", lat: 48.5541, lng: 14.5706 },
-    { id: 6, name: "Kleinhaugsdorf (CZ)", lat: 48.7293, lng: 16.0463 },
-
-    // Словаччина
-    { id: 7, name: "Kittsee A6 (SK)", lat: 48.0924, lng: 17.0641 },
-
-    // Угорщина
-    { id: 8, name: "Nickelsdorf A4 (HU)", lat: 47.9357, lng: 17.0695 },
-
-    // Словенія
-    { id: 9, name: "Spielfeld A9 (SI)", lat: 46.7081, lng: 15.6377 },
-    { id: 10, name: "Karawankentunnel A11 (SI)", lat: 46.5316, lng: 14.0174 },
-
-    // Італія
-    { id: 11, name: "Brenner A13 (IT)", lat: 47.0020, lng: 11.5050 },
-    { id: 12, name: "Arnoldstein A2 (IT)", lat: 46.5492, lng: 13.7042 },
-
-    // Швейцарія
-    { id: 13, name: "St. Margrethen A14 (CH)", lat: 47.4554, lng: 9.6384 }
-];
-
-points.forEach(p => {
-    L.marker([p.lat, p.lng]).addTo(map).bindPopup(`
-        <b>${p.name}</b><br><br>
-        <button class="btn" style="background:green"
-            onclick="sendData(${p.id}, 'green')">ЧИСТО</button>
-        <button class="btn" style="background:red"
-            onclick="sendData(${p.id}, 'red')">КОНТРОЛЬ</button>
-    `);
-});
-
-function sendData(id, status) {
-    if (!tg) {
-        alert("Відкрий у Telegram");
+    if (typeof L === "undefined") {
+        document.body.innerHTML = "<h2 style='color:red'>Leaflet не завантажився</h2>";
         return;
     }
-    tg.sendData(status + "_" + id);
-    setTimeout(() => tg.close(), 300);
-}
+
+    const map = L.map("map").setView([47.5162, 14.5501], 7);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 18,
+        attribution: "© OpenStreetMap"
+    }).addTo(map);
+
+    /* ===== ВСІ ТВОЇ ТОЧКИ ===== */
+    const points = [
+        // НІМЕЧЧИНА
+        { id: 1, name: "Hörbranz A14 (DE)", lat: 47.5446, lng: 9.7407 },
+        { id: 2, name: "Walserberg A1 (DE)", lat: 47.7925, lng: 12.9772 },
+        { id: 3, name: "Suben A8 (DE)", lat: 48.4112, lng: 13.4393 },
+        { id: 4, name: "Passau Nord A3 (DE)", lat: 48.5742, lng: 13.4663 },
+
+        // ЧЕХІЯ
+        { id: 5, name: "Wullowitz A7 (CZ)", lat: 48.5541, lng: 14.5706 },
+        { id: 6, name: "Kleinhaugsdorf (CZ)", lat: 48.7293, lng: 16.0463 },
+
+        // СЛОВАЧЧИНА
+        { id: 7, name: "Kittsee A6 (SK)", lat: 48.0924, lng: 17.0641 },
+
+        // УГОРЩИНА
+        { id: 8, name: "Nickelsdorf A4 (HU)", lat: 47.9357, lng: 17.0695 },
+
+        // СЛОВЕНІЯ
+        { id: 9, name: "Spielfeld A9 (SI)", lat: 46.7081, lng: 15.6377 },
+        { id: 10, name: "Karawankentunnel A11 (SI)", lat: 46.5316, lng: 14.0174 },
+
+        // ІТАЛІЯ
+        { id: 11, name: "Brenner A13 (IT)", lat: 47.0020, lng: 11.5050 },
+        { id: 12, name: "Arnoldstein A2 (IT)", lat: 46.5492, lng: 13.7042 },
+
+        // ШВЕЙЦАРІЯ
+        { id: 13, name: "St. Margrethen A14 (CH)", lat: 47.4554, lng: 9.6384 }
+    ];
+
+    points.forEach(p => {
+        L.marker([p.lat, p.lng]).addTo(map).bindPopup(`
+            <b>${p.name}</b><br><br>
+            <button class="btn" style="background:green"
+                onclick="sendData(${p.id}, 'green')">ЧИСТО</button>
+            <button class="btn" style="background:red"
+                onclick="sendData(${p.id}, 'red')">КОНТРОЛЬ</button>
+        `);
+    });
+
+    window.sendData = function(id, status) {
+        if (!tg) {
+            alert("Відкрий у Telegram");
+            return;
+        }
+        tg.sendData(status + "_" + id);
+        setTimeout(() => tg.close(), 300);
+    };
+
+}, 300);
 </script>
 
 </body>
