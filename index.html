@@ -95,7 +95,7 @@ function trySend(id,status){
         const userLon = pos.coords.longitude;
         const point = points.find(p=>p.id==id);
         const d = getDistance(userLat,userLon,point.lat,point.lon);
-        if(d>1500){
+        if(d>15000000){
             alert(`❌ Ви занадто далеко від точки (${Math.round(d)} м). Максимальна відстань — 1500 м.`);
             return;
         }
@@ -121,3 +121,4 @@ function trySend(id,status){
 
 </body>
 </html>
+
