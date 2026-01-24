@@ -2,18 +2,70 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
-  <title>Мапа</title>
+  <title>Мапа точок</title>
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <style>
+    #map { height: 90vh; width: 100%; }
+    body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    h2 { text-align: center; margin: 10px 0; }
+  </style>
 </head>
 <body>
-  <h2>Мапа для перегляду</h2>
-  <button onclick="openMap()">🗺 Відкрити мапу</button>
+<h2>Моя карта точок</h2>
+<div id="map"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const tg = window.Telegram.WebApp;
 
-function openMap() {
-    // Тут можна додати реальну логіку мапи або просто відправку даних
-    tg.sendData("green_1");  // тимчасово, щоб тестувалося з ботом
+// Розбираємо параметр stats з URL
+function getStatsFromURL() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const statsParam = urlParams.get('stats');
+  if (!statsParam) return {};
+  try {
+    return JSON.parse(decodeURIComponent(statsParam));
+  } catch {
+    return {};
+  }
+}
+
+// Ініціалізація мапи
+const map = L.map('map').setView([48.2, 16.4], 8); // центр Австрії
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+// Завантажуємо точки з stats
+const stats = getStatsFromURL();
+
+// Додаємо маркери на мапу
+for (const pointId in stats) {
+  const pointData = stats[pointId];
+  
+  // Можна задавати координати вручну тут для кожної точки
+  // Тут для прикладу рандомно розташовуємо в межах Австрії
+  const lat = 46 + Math.random() * 3; 
+  const lon = 14 + Math.random() * 4;
+
+  const marker = L.marker([lat, lon]).addTo(map);
+  marker.bindPopup(`
+    <b>Точка ${pointId}</b><br>
+    Зелені: ${pointData.green} <br>
+    Червоні: ${pointData.red} <br>
+    <button onclick="sendData('${pointId}')">✅ Натиснути</button>
+  `);
+}
+
+// Відправка даних у бота
+function sendData(pointId) {
+  // Приклад: надсилаємо зелену подію
+  tg.sendData(`green_${pointId}`);
+  alert("Дані надіслано боту!");
 }
 </script>
 </body>
