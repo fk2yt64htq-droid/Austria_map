@@ -16,12 +16,18 @@
 <div id="map"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <script>
+// Telegram WebApp
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
+
 // Ініціалізація мапи
 const map = L.map('map').setView([47.5162, 14.5501], 7);
 
-// Додаємо плитки OpenStreetMap
+// Плитки OpenStreetMap
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
@@ -42,20 +48,25 @@ const points = [
     {id: 12, name: "Hainburg A2", lat: 46.6845, lon: 14.6591},
     {id: 13, name: "Arnoldstein A2", lat: 46.5492, lon: 13.7042}
 ];
-  
-// Додаємо маркери
+
+// Додаємо маркери з кнопками
 points.forEach(p => {
   const marker = L.marker([p.lat, p.lon]).addTo(map);
   marker.bindPopup(`
     <div style="text-align:center;">
       <b>${p.name}</b><br>
-      <button class="btn" style="background:green" onclick="alert('ЧИСТО: ${p.name}')">ЧИСТО</button>
-      <button class="btn" style="background:red" onclick="alert('КОНТРОЛЬ: ${p.name}')">КОНТРОЛЬ</button>
+      <button class="btn" style="background:green" onclick="send('${p.id}','green')">ЧИСТО</button>
+      <button class="btn" style="background:red" onclick="send('${p.id}','red')">КОНТРОЛЬ</button>
     </div>
   `);
 });
+
+// Функція відправки у бота
+function send(id, status) {
+  tg.sendData(`${status}_${id}`);
+  alert(`Відправлено: ${status} для точки ${id}`);
+}
 </script>
 
 </body>
 </html>
-
