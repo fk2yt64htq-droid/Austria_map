@@ -1,74 +1,20 @@
 <!DOCTYPE html>
-<html>
+<html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <link rel="stylesheet" href="https://unpkg.com" />
-    <style>
-        body, html { margin: 0; padding: 0; height: 100%; background: #222; }
-        #map { height: 100vh; width: 100vw; }
-        .btn { width: 100%; padding: 10px; margin-top: 5px; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Мапа</title>
 </head>
 <body>
-    <div id="map"></div>
-    <script src="https://unpkg.com"></script>
-    <script src="https://telegram.org"></script>
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+  <h2>Оберіть варіант</h2>
+  <button onclick="send('green')">✅ Добре</button>
+  <button onclick="send('red')">❌ Погано</button>
 
-        const map = L.map('map').setView([47.5162, 14.5501], 7);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+<script>
+const tg = window.Telegram.WebApp;
 
-        // Безпечне отримання даних
-        let stats = {};
-        try {
-            const params = new URLSearchParams(window.location.search);
-            const raw = params.get('stats');
-            if (raw) stats = JSON.parse(decodeURIComponent(raw));
-        } catch (e) { console.log("Data error"); }
-
-        const points = [
-            {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
-            {id: 2, n: "Walserberg A1", lt: 47.7925, ln: 12.9772},
-            {id: 3, n: "Suben A8", lt: 48.4112, ln: 13.4393},
-            {id: 8, n: "Nickelsdorf A4", lt: 47.9357, ln: 17.0695},
-            {id: 11, n: "Brenner A13", lt: 47.0020, ln: 11.5050},
-            {id: 12, n: "Arnoldstein A2", lt: 46.5492, ln: 13.7042},
-            {id: 13, n: "St. Margrethen", lt: 47.4554, ln: 9.6384}
-        ];
-
-        points.forEach(p => {
-            const s = stats[p.id] || { green: 0, red: 0 };
-            const total = s.green + s.red;
-            const rP = total > 0 ? Math.round((s.red / total) * 100) : 0;
-            const gP = total > 0 ? 100 - rP : 0;
-            
-            let color = 'blue';
-            if (total > 0) color = rP >= 50 ? 'red' : 'green';
-
-            const icon = new L.Icon({
-                iconUrl: `https://raw.githubusercontent.com{color}.png`,
-                shadowUrl: 'https://cdnjs.cloudflare.com',
-                iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-            });
-
-            L.marker([p.lt, p.ln], {icon: icon}).addTo(map).bindPopup(`
-                <div style="text-align:center;">
-                    <b>${p.n}</b><br>
-                    🔴 ${rP}% | 🟢 ${gP}%<br>
-                    <button class="btn" style="background:green" onclick="send('${p.id}','green')">ЧИСТО</button>
-                    <button class="btn" style="background:red" onclick="send('${p.id}','red')">КОНТРОЛЬ</button>
-                </div>
-            `);
-        });
-
-        function send(id, res) {
-            tg.sendData(res + "_" + id);
-            tg.close();
-        }
-    </script>
+function send(type) {
+  tg.sendData(type + "_1");
+}
+</script>
 </body>
 </html>
