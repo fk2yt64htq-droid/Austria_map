@@ -2,71 +2,70 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Мапа точок</title>
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
-  />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
-    #map { height: 90vh; width: 100%; }
-    body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
-    h2 { text-align: center; margin: 10px 0; }
+    body, html { margin: 0; padding: 0; height: 100%; background: #222; }
+    #map { height: 100vh; width: 100vw; }
+    .btn { width: 100%; padding: 8px; margin-top: 5px; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
   </style>
 </head>
 <body>
-<h2>Моя карта точок</h2>
 <div id="map"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const tg = window.Telegram.WebApp;
+  const tg = window.Telegram.WebApp;
+  tg.ready();
+  tg.expand();
 
-// Розбираємо параметр stats з URL
-function getStatsFromURL() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const statsParam = urlParams.get('stats');
-  if (!statsParam) return {};
+  // Створюємо мапу
+  const map = L.map('map').setView([47.5162, 14.5501], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  // Отримуємо stats з URL
+  let stats = {};
   try {
-    return JSON.parse(decodeURIComponent(statsParam));
-  } catch {
-    return {};
+      const params = new URLSearchParams(window.location.search);
+      const raw = params.get('stats');
+      if (raw) stats = JSON.parse(decodeURIComponent(raw));
+  } catch (e) { console.log("Data error", e); }
+
+  // Список точок
+  const points = [
+    {id: 1, name: "Hörbranz A14", lat: 47.5446, lon: 9.7407},
+    {id: 2, name: "Walserberg A1", lat: 47.7925, lon: 12.9772},
+    {id: 3, name: "Suben A8", lat: 48.4112, lon: 13.4393},
+    {id: 8, name: "Nickelsdorf A4", lat: 47.9357, lon: 17.0695},
+    {id: 11, name: "Brenner A13", lat: 47.0020, lon: 11.5050},
+    {id: 12, name: "Arnoldstein A2", lat: 46.5492, lon: 13.7042},
+    {id: 13, name: "St. Margrethen", lat: 47.4554, lon: 9.6384}
+  ];
+
+  points.forEach(p => {
+    const s = stats[p.id] || { green: 0, red: 0 };
+    const total = s.green + s.red;
+    const rP = total > 0 ? Math.round((s.red / total) * 100) : 0;
+    const gP = total > 0 ? 100 - rP : 0;
+
+    const marker = L.marker([p.lat, p.lon]).addTo(map);
+    marker.bindPopup(`
+      <div style="text-align:center;">
+        <b>${p.name}</b><br>
+        🔴 ${rP}% | 🟢 ${gP}%<br>
+        <button class="btn" style="background:green" onclick="send('${p.id}','green')">ЧИСТО</button>
+        <button class="btn" style="background:red" onclick="send('${p.id}','red')">КОНТРОЛЬ</button>
+      </div>
+    `);
+  });
+
+  function send(id, res) {
+    tg.sendData(res + "_" + id);
+    tg.close();
   }
-}
-
-// Ініціалізація мапи
-const map = L.map('map').setView([48.2, 16.4], 8); // центр Австрії
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
-
-// Завантажуємо точки з stats
-const stats = getStatsFromURL();
-
-// Додаємо маркери на мапу
-for (const pointId in stats) {
-  const pointData = stats[pointId];
-  
-  // Можна задавати координати вручну тут для кожної точки
-  // Тут для прикладу рандомно розташовуємо в межах Австрії
-  const lat = 46 + Math.random() * 3; 
-  const lon = 14 + Math.random() * 4;
-
-  const marker = L.marker([lat, lon]).addTo(map);
-  marker.bindPopup(`
-    <b>Точка ${pointId}</b><br>
-    Зелені: ${pointData.green} <br>
-    Червоні: ${pointData.red} <br>
-    <button onclick="sendData('${pointId}')">✅ Натиснути</button>
-  `);
-}
-
-// Відправка даних у бота
-function sendData(pointId) {
-  // Приклад: надсилаємо зелену подію
-  tg.sendData(`green_${pointId}`);
-  alert("Дані надіслано боту!");
-}
 </script>
 </body>
 </html>
