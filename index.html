@@ -28,47 +28,45 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
-// Дані точок
+// Точки
 const points = [
-    {id: 1, name: "Hörbranz A14", lat: 47.5446, lon: 9.7407},
-    {id: 2, name: "Nuziders A14", lat: 47.1731, lon: 9.7737},
-    {id: 3, name: "Rabfeld A12", lat: 47.4574, lon: 11.9196},
-    {id: 4, name: "Kundl A12", lat: 47.4734, lon: 11.9693},
-    {id: 5, name: "Wels A8", lat: 48.1790, lon: 13.8623},
-    {id: 6, name: "Wolfsbach A1 (1)", lat: 48.1120, lon: 14.6761},
-    {id: 7, name: "Wolfsbach A1 (2)", lat: 48.1123, lon: 14.6786},
-    {id: 8, name: "Mistelbach A5", lat: 48.5389, lon: 16.6259},
-    {id: 9, name: "Bruck an der Leitha A4", lat: 48.0431, lon: 16.7791},
-    {id: 10, name: "Pernau A2", lat: 47.0900, lon: 15.8511},
-    {id: 11, name: "Strass in Steiermark A9", lat: 46.7317, lon: 15.6436},
-    {id: 12, name: "Hainburg A2", lat: 46.6845, lon: 14.6591},
-    {id: 13, name: "Arnoldstein A2", lat: 46.5492, lon: 13.7042}
+    {id:1,name:"Hörbranz A14",lat:47.5446,lon:9.7407},
+    {id:2,name:"Nuziders A14",lat:47.1731,lon:9.7737},
+    {id:3,name:"Rabfeld A12",lat:47.4574,lon:11.9196},
+    {id:4,name:"Kundl A12",lat:47.4734,lon:11.9693},
+    {id:5,name:"Wels A8",lat:48.1790,lon:13.8623},
+    {id:6,name:"Wolfsbach A1 (1)",lat:48.1120,lon:14.6761},
+    {id:7,name:"Wolfsbach A1 (2)",lat:48.1123,lon:14.6786},
+    {id:8,name:"Mistelbach A5",lat:48.5389,lon:16.6259},
+    {id:9,name:"Bruck an der Leitha A4",lat:48.0431,lon:16.7791},
+    {id:10,name:"Pernau A2",lat:47.0900,lon:15.8511},
+    {id:11,name:"Strass in Steiermark A9",lat:46.7317,lon:15.6436},
+    {id:12,name:"Hainburg A2",lat:46.6845,lon:14.6591},
+    {id:13,name:"Arnoldstein A2",lat:46.5492,lon:13.7042}
 ];
 
-// Завантаження stats з параметра URL (як у попередніх версіях)
+// Завантаження stats з URL
 let stats = {};
-try {
+try{
     const params = new URLSearchParams(window.location.search);
     const raw = params.get('stats');
-    if (raw) stats = JSON.parse(decodeURIComponent(raw));
-} catch(e){ console.log("Stats parse error"); }
+    if(raw) stats = JSON.parse(decodeURIComponent(raw));
+}catch(e){console.log("Stats parse error");}
 
 // Маркери
 const markers = {};
-const now = Math.floor(Date.now()/1000); // поточний timestamp
-
 function updatePopup(id){
     const marker = markers[id];
     let s = stats[id] || {green:0, red:0, last_update:0};
-    // якщо останнє оновлення старше 30 хв, скидаємо статистику
+    const now = Math.floor(Date.now()/1000);
     if(now - s.last_update > 30*60){
         s = {green:0, red:0, last_update:0};
     }
     stats[id] = s;
 
     const total = s.green + s.red;
-    const rP = total>0? Math.round((s.red/total)*100) : 0;
-    const gP = total>0? 100 - rP : 0;
+    const rP = total>0? Math.round((s.red/total)*100):0;
+    const gP = total>0? 100-rP:0;
 
     marker.getPopup().setContent(`
         <div style="text-align:center;">
@@ -79,11 +77,8 @@ function updatePopup(id){
         </div>
     `);
 
-    // Змінюємо колір маркера
     let color='blue';
-    if(total>0){
-        color = rP>=50?'red':'green';
-    }
+    if(total>0){color = rP>=50?'red':'green';}
     const icon = L.icon({
         iconUrl:`https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
         shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
@@ -99,22 +94,23 @@ points.forEach(p=>{
     marker.bindPopup('');
     updatePopup(p.id);
 
-    // Коло 1.5 км
-    L.circle([p.lat,p.lon], {radius:1500, color:'blue', fillOpacity:0.1}).addTo(map);
+    L.circle([p.lat,p.lon],{radius:1500,color:'blue',fillOpacity:0.1}).addTo(map);
 });
 
 // Відправка на бота
 function send(id,status){
     const point = points.find(p=>p.id==id);
     const s = stats[id];
-    s[status] += 1;
-    s.last_update = Math.floor(Date.now()/1000); // оновлюємо час
+    s[status]+=1;
+    s.last_update = Math.floor(Date.now()/1000);
     stats[id] = s;
 
     updatePopup(id);
     tg.sendData(`${status}_${id}_${point.lat}_${point.lon}`);
-    alert(`✅ Відправлено: ${status.toUpperCase()} для точки ${point.name}`);
 }
+
+// Автооновлення кожні 5 секунд
+setInterval(()=>{points.forEach(p=>updatePopup(p.id))},5000);
 </script>
 
 </body>
