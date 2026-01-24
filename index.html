@@ -5,15 +5,15 @@
   <title>Мапа</title>
 </head>
 <body>
-  <h2>Оберіть варіант</h2>
-  <button onclick="send('green')">✅ Добре</button>
-  <button onclick="send('red')">❌ Погано</button>
+  <h2>Мапа для перегляду</h2>
+  <button onclick="openMap()">🗺 Відкрити мапу</button>
 
 <script>
 const tg = window.Telegram.WebApp;
 
-function send(type) {
-  tg.sendData(type + "_1");
+function openMap() {
+    // Тут можна додати реальну логіку мапи або просто відправку даних
+    tg.sendData("green_1");  // тимчасово, щоб тестувалося з ботом
 }
 </script>
 </body>
