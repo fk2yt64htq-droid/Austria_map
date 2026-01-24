@@ -1,65 +1,100 @@
-import asyncio
-import json
-import os
-import urllib.parse
-from aiogram import Bot, Dispatcher, types, F
-from aiogram.filters import Command
-from aiogram.types import WebAppInfo, ReplyKeyboardMarkup, KeyboardButton
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Austria Control Map</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net">
+    <style>
+        html, body { margin: 0; padding: 0; height: 100%; background: #000; }
+        #map { height: 100vh; width: 100vw; }
+        .btn { width: 100%; padding: 12px; margin-top: 6px; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .popup-content { font-family: sans-serif; min-width: 180px; text-align: center; }
+        .stat-line { font-size: 13px; color: #333; margin: 8px 0; font-weight: bold; }
+    </style>
+</head>
+<body>
 
-TOKEN = "8106544754:AAGdcip8weOAYiCYARU3eatZuKjk2a6FePA"
-URL_MAP = "https://fk2yt64htq-droid.github.io/Austria_map/" 
-DB_FILE = "stats.json"
+<div id="map"></div>
 
-# Функції для збереження та завантаження статистики
-def load_stats():
-    if not os.path.exists(DB_FILE):
-        return {}
-    with open(DB_FILE, "r") as f:
-        try:
-            return json.load(f)
-        except: return {}
+<!-- Leaflet JS & Telegram WebApp SDK -->
+<script src="https://cdn.jsdelivr.net"></script>
+<script src="https://telegram.org"></script>
 
-def save_stats(stats):
-    with open(DB_FILE, "w") as f:
-        json.dump(stats, f)
+<script>
+    // Ініціалізація Telegram WebApp
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
 
-bot = Bot(token=TOKEN)
-dp = Dispatcher()
+    // Отримання статистики з URL
+    const urlParams = new URLSearchParams(window.location.search);
+    let statsData = {};
+    try {
+        const rawStats = urlParams.get('stats');
+        if (rawStats) {
+            statsData = JSON.parse(decodeURIComponent(rawStats));
+        }
+    } catch (e) {
+        console.error("Помилка парсингу статистики:", e);
+    }
 
-@dp.message(Command("start"))
-async def start_cmd(message: types.Message):
-    stats = load_stats()
-    # Кодуємо статистику, щоб передати її мапі через URL
-    encoded_stats = urllib.parse.quote(json.dumps(stats))
-    final_url = f"{URL_MAP}?stats={encoded_stats}"
-    
-    kb = ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text="🗺 Відкрити мапу", web_app=WebAppInfo(url=final_url))]],
-        resize_keyboard=True
-    )
-    await message.answer("Мапа з актуальною статистикою готова:", reply_markup=kb)
+    // Створення карти
+    const map = L.map("map").setView([47.5162, 14.5501], 7);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap"
+    }).addTo(map);
 
-@dp.message(F.web_app_data)
-async def get_data(message: types.Message):
-    try:
-        # Отримуємо дані від мапи, наприклад "red_1"
-        status, point_id = message.web_app_data.data.split("_")
-        stats = load_stats()
+    // Список точок
+    const points = [
+        { id: 1, name: "Hörbranz A14 (DE)", lat: 47.5446, lng: 9.7407 },
+        { id: 2, name: "Walserberg A1 (DE)", lat: 47.7925, lng: 12.9772 },
+        { id: 3, name: "Suben A8 (DE)", lat: 48.4112, lng: 13.4393 },
+        { id: 4, name: "Passau Nord A3 (DE)", lat: 48.5742, lng: 13.4663 },
+        { id: 5, name: "Wullowitz A7 (CZ)", lat: 48.5541, lng: 14.5706 },
+        { id: 8, name: "Nickelsdorf A4 (HU)", lat: 47.9357, lng: 17.0695 },
+        { id: 11, name: "Brenner A13 (IT)", lat: 47.0020, lng: 11.5050 },
+        { id: 12, name: "Arnoldstein A2 (IT)", lat: 46.5492, lng: 13.7042 },
+        { id: 13, name: "St. Margrethen A14 (CH)", lat: 47.4554, lng: 9.6384 }
+    ];
 
-        if point_id not in stats:
-            stats[point_id] = {"green": 0, "red": 0}
+    points.forEach(p => {
+        // Отримуємо дані для конкретної точки (якщо вони є)
+        const s = statsData[p.id] || { color: "blue", red_pct: 0, green_pct: 0, last_time: "немає даних" };
         
-        stats[point_id][status] += 1
-        save_stats(stats)
+        // Вибір іконки за кольором
+        const markerColor = s.color || "blue";
+        const icon = new L.Icon({
+            iconUrl: `https://raw.githubusercontent.com{markerColor}.png`,
+            shadowUrl: 'https://cdnjs.cloudflare.com',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
 
-        await message.answer(f"✅ Статус оновлено! Дякуємо за інформацію.")
-    except Exception as e:
-        print(f"Помилка: {e}")
+        // Додавання маркера на карту
+        L.marker([p.lat, p.lng], { icon: icon }).addTo(map).bindPopup(`
+            <div class="popup-content">
+                <b>${p.name}</b>
+                <div class="stat-line">
+                    🔴 Контроль: ${s.red_pct}%<br>
+                    🟢 Чисто: ${s.green_pct}%
+                </div>
+                <div style="font-size:10px; color:#666; margin-bottom:10px;">Час: ${s.last_time || ''}</div>
+                <button class="btn" style="background:#28a745" onclick="sendData(${p.id}, 'green')">ЧИСТО</button>
+                <button class="btn" style="background:#dc3545" onclick="sendData(${p.id}, 'red')">КОНТРОЛЬ</button>
+            </div>
+        `);
+    });
 
-async def main():
-    print("--- БОТ ПРАЦЮЄ ---")
-    await dp.start_polling(bot)
+    // Функція відправки даних у бот
+    window.sendData = function(id, status) {
+        tg.sendData(status + "_" + id);
+        tg.close(); // Закрити мапу після вибору
+    };
+</script>
 
-if __name__ == "__main__":
-    asyncio.run(main())
-
+</body>
+</html>
