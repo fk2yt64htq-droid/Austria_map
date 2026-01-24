@@ -3,98 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Austria Control Map</title>
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net">
+    <title>Карта Контролю</title>
+    <link rel="stylesheet" href="https://unpkg.com" />
     <style>
-        html, body { margin: 0; padding: 0; height: 100%; background: #000; }
+        body, html { margin: 0; padding: 0; height: 100%; background: #1a1a1a; }
         #map { height: 100vh; width: 100vw; }
-        .btn { width: 100%; padding: 12px; margin-top: 6px; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; font-size: 14px; }
-        .popup-content { font-family: sans-serif; min-width: 180px; text-align: center; }
-        .stat-line { font-size: 13px; color: #333; margin: 8px 0; font-weight: bold; }
+        .btn { width: 100%; padding: 12px; margin-top: 8px; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
+    <div id="map"></div>
 
-<div id="map"></div>
+    <script src="https://unpkg.com"></script>
+    <script src="https://telegram.org"></script>
 
-<!-- Leaflet JS & Telegram WebApp SDK -->
-<script src="https://cdn.jsdelivr.net"></script>
-<script src="https://telegram.org"></script>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
 
-<script>
-    // Ініціалізація Telegram WebApp
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
+        // Створення карти
+        const map = L.map('map').setView([47.5162, 14.5501], 7);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    // Отримання статистики з URL
-    const urlParams = new URLSearchParams(window.location.search);
-    let statsData = {};
-    try {
-        const rawStats = urlParams.get('stats');
-        if (rawStats) {
-            statsData = JSON.parse(decodeURIComponent(rawStats));
-        }
-    } catch (e) {
-        console.error("Помилка парсингу статистики:", e);
-    }
+        // Отримання даних з URL
+        const urlParams = new URLSearchParams(window.location.search);
+        let stats = {};
+        try {
+            const raw = urlParams.get('stats');
+            if (raw) stats = JSON.parse(decodeURIComponent(raw));
+        } catch (e) { console.error("Помилка статистики", e); }
 
-    // Створення карти
-    const map = L.map("map").setView([47.5162, 14.5501], 7);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "© OpenStreetMap"
-    }).addTo(map);
+        const points = [
+            {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
+            {id: 2, n: "Walserberg A1", lt: 47.7925, ln: 12.9772},
+            {id: 3, n: "Suben A8", lt: 48.4112, ln: 13.4393},
+            {id: 8, n: "Nickelsdorf A4", lt: 47.9357, ln: 17.0695},
+            {id: 11, n: "Brenner A13", lt: 47.0020, ln: 11.5050},
+            {id: 12, n: "Arnoldstein A2", lt: 46.5492, ln: 13.7042}
+        ];
 
-    // Список точок
-    const points = [
-        { id: 1, name: "Hörbranz A14 (DE)", lat: 47.5446, lng: 9.7407 },
-        { id: 2, name: "Walserberg A1 (DE)", lat: 47.7925, lng: 12.9772 },
-        { id: 3, name: "Suben A8 (DE)", lat: 48.4112, lng: 13.4393 },
-        { id: 4, name: "Passau Nord A3 (DE)", lat: 48.5742, lng: 13.4663 },
-        { id: 5, name: "Wullowitz A7 (CZ)", lat: 48.5541, lng: 14.5706 },
-        { id: 8, name: "Nickelsdorf A4 (HU)", lat: 47.9357, lng: 17.0695 },
-        { id: 11, name: "Brenner A13 (IT)", lat: 47.0020, lng: 11.5050 },
-        { id: 12, name: "Arnoldstein A2 (IT)", lat: 46.5492, lng: 13.7042 },
-        { id: 13, name: "St. Margrethen A14 (CH)", lat: 47.4554, lng: 9.6384 }
-    ];
+        points.forEach(p => {
+            const s = stats[p.id] || { color: 'blue', red_pct: 0, green_pct: 0 };
+            const markerColor = s.color || 'blue';
 
-    points.forEach(p => {
-        // Отримуємо дані для конкретної точки (якщо вони є)
-        const s = statsData[p.id] || { color: "blue", red_pct: 0, green_pct: 0, last_time: "немає даних" };
-        
-        // Вибір іконки за кольором
-        const markerColor = s.color || "blue";
-        const icon = new L.Icon({
-            iconUrl: `https://raw.githubusercontent.com{markerColor}.png`,
-            shadowUrl: 'https://cdnjs.cloudflare.com',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41]
+            const icon = new L.Icon({
+                iconUrl: `https://raw.githubusercontent.com{markerColor}.png`,
+                shadowUrl: 'https://cdnjs.cloudflare.com',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
+
+            L.marker([p.lt, p.ln], {icon: icon}).addTo(map).bindPopup(`
+                <div style="text-align:center; min-width:150px;">
+                    <b style="font-size:14px;">${p.n}</b><br>
+                    <div style="margin: 8px 0;">🔴 ${s.red_pct || 0}% | 🟢 ${s.green_pct || 0}%</div>
+                    <button class="btn" style="background:#28a745" onclick="send('${p.id}','green')">ЧИСТО</button>
+                    <button class="btn" style="background:#dc3545" onclick="send('${p.id}','red')">КОНТРОЛЬ</button>
+                </div>
+            `);
         });
 
-        // Додавання маркера на карту
-        L.marker([p.lat, p.lng], { icon: icon }).addTo(map).bindPopup(`
-            <div class="popup-content">
-                <b>${p.name}</b>
-                <div class="stat-line">
-                    🔴 Контроль: ${s.red_pct}%<br>
-                    🟢 Чисто: ${s.green_pct}%
-                </div>
-                <div style="font-size:10px; color:#666; margin-bottom:10px;">Час: ${s.last_time || ''}</div>
-                <button class="btn" style="background:#28a745" onclick="sendData(${p.id}, 'green')">ЧИСТО</button>
-                <button class="btn" style="background:#dc3545" onclick="sendData(${p.id}, 'red')">КОНТРОЛЬ</button>
-            </div>
-        `);
-    });
-
-    // Функція відправки даних у бот
-    window.sendData = function(id, status) {
-        tg.sendData(status + "_" + id);
-        tg.close(); // Закрити мапу після вибору
-    };
-</script>
-
+        function send(id, res) {
+            tg.sendData(res + "_" + id);
+            tg.close();
+        }
+    </script>
 </body>
 </html>
