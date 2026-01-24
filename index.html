@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Мапа точок</title>
-  <!-- CSS Leaflet -->
+  <title>Моя мапа</title>
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -13,73 +12,23 @@
   />
   <style>
     html, body { margin:0; padding:0; height:100%; }
-    #map { height: 100%; width: 100%; }
-    .btn { width: 100%; padding: 8px; margin-top: 5px; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+    #map { height:100%; width:100%; }
   </style>
 </head>
 <body>
-
 <div id="map"></div>
 
-<!-- JS Leaflet -->
-<script
-  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  integrity="sha256-o9N1j6nMj3ZfSov0B+0V4e2F0BjMZkWocp2yXg6tYxo="
-  crossorigin=""
-></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-o9N1j6nMj3ZfSov0B+0V4e2F0BjMZkWocp2yXg6tYxo=" crossorigin=""></script>
 
 <script>
-const tg = window.Telegram.WebApp;
-tg.ready();
-tg.expand();
+  // Ініціалізуємо мапу
+  const map = L.map('map').setView([47.5162, 14.5501], 7);
 
-// Ініціалізація мапи
-const map = L.map('map').setView([47.5162, 14.5501], 7);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
-
-// Отримання stats з URL
-let stats = {};
-try {
-  const params = new URLSearchParams(window.location.search);
-  const raw = params.get('stats');
-  if (raw) stats = JSON.parse(decodeURIComponent(raw));
-} catch (e) { console.log("Data error", e); }
-
-// Точки
-const points = [
-  {id: 1, name: "Hörbranz A14", lat: 47.5446, lon: 9.7407},
-  {id: 2, name: "Walserberg A1", lat: 47.7925, lon: 12.9772},
-  {id: 3, name: "Suben A8", lat: 48.4112, lon: 13.4393},
-  {id: 8, name: "Nickelsdorf A4", lat: 47.9357, lon: 17.0695},
-  {id: 11, name: "Brenner A13", lat: 47.0020, lon: 11.5050},
-  {id: 12, name: "Arnoldstein A2", lat: 46.5492, lon: 13.7042},
-  {id: 13, name: "St. Margrethen", lat: 47.4554, lon: 9.6384}
-];
-
-points.forEach(p => {
-  const s = stats[p.id] || { green: 0, red: 0 };
-  const total = s.green + s.red;
-  const rP = total > 0 ? Math.round((s.red / total) * 100) : 0;
-  const gP = total > 0 ? 100 - rP : 0;
-
-  const marker = L.marker([p.lat, p.lon]).addTo(map);
-  marker.bindPopup(`
-    <div style="text-align:center;">
-      <b>${p.name}</b><br>
-      🔴 ${rP}% | 🟢 ${gP}%<br>
-      <button class="btn" style="background:green" onclick="send('${p.id}','green')">ЧИСТО</button>
-      <button class="btn" style="background:red" onclick="send('${p.id}','red')">КОНТРОЛЬ</button>
-    </div>
-  `);
-});
-
-function send(id, res) {
-  tg.sendData(res + "_" + id);
-  tg.close();
-}
+  // Додаємо OpenStreetMap плитки
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
 </script>
-
 </body>
 </html>
