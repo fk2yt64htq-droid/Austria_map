@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Мапа точок</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<!-- CSS Leaflet -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
   html, body { margin:0; padding:0; height:100%; }
   #map { height:100%; width:100%; }
@@ -15,14 +16,14 @@
 
 <div id="map"></div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-const tg = window.Telegram.WebApp;
-tg.ready();
-tg.expand();
+<!-- JS Leaflet -->
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 
+<script>
 // Ініціалізація мапи
 const map = L.map('map').setView([47.5162, 14.5501], 7);
+
+// Додаємо плитки OpenStreetMap
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
@@ -38,23 +39,17 @@ const points = [
   {id: 13, name: "St. Margrethen", lat: 47.4554, lon: 9.6384}
 ];
 
-// Додаємо маркери на мапу
+// Додаємо маркери
 points.forEach(p => {
   const marker = L.marker([p.lat, p.lon]).addTo(map);
   marker.bindPopup(`
     <div style="text-align:center;">
       <b>${p.name}</b><br>
-      <button class="btn" style="background:green" onclick="send('${p.id}','green')">ЧИСТО</button>
-      <button class="btn" style="background:red" onclick="send('${p.id}','red')">КОНТРОЛЬ</button>
+      <button class="btn" style="background:green" onclick="alert('ЧИСТО: ${p.name}')">ЧИСТО</button>
+      <button class="btn" style="background:red" onclick="alert('КОНТРОЛЬ: ${p.name}')">КОНТРОЛЬ</button>
     </div>
   `);
 });
-
-// Функція надсилання даних у бота
-function send(id, res) {
-  tg.sendData(res + "_" + id);
-  tg.close();
-}
 </script>
 
 </body>
