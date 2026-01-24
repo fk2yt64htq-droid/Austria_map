@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Мапа точок</title>
-<!-- CSS Leaflet -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
   html, body { margin:0; padding:0; height:100%; }
@@ -16,7 +15,6 @@
 
 <div id="map"></div>
 
-<!-- JS Leaflet -->
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
@@ -30,20 +28,19 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 // Точки
 const points = [
-  var dots = [
-    {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
-    {id: 2, n: "Nuziders A14", lt: 47.1731, ln: 9.7737},
-    {id: 3, n: "Rabfeld A12", lt: 47.4574, ln: 11.9196},
-    {id: 4, n: "Kundl A12", lt: 47.4734, ln: 11.9693},
-    {id: 5, n: "Wels A8", lt: 48.1790, ln: 13.8623},
-    {id: 6, n: "Wolfsbach A1 (1)", lt: 48.1120, ln: 14.6761},
-    {id: 7, n: "Wolfsbach A1 (2)", lt: 48.1123, ln: 14.6786},
-    {id: 8, n: "Mistelbach A5", lt: 48.5389, ln: 16.6259},
-    {id: 9, n: "Bruck an der Leitha A4", lt: 48.0431, ln: 16.7791},
-    {id: 10, n: "Pernau A2", lt: 47.0900, ln: 15.8511},
-    {id: 11, n: "Strass in Steiermark A9", lt: 46.7317, ln: 15.6436},
-    {id: 12, n: "Hainburg A2", lt: 46.6845, ln: 14.6591},
-    {id: 13, n: "Arnoldstein A2", lt: 46.5492, ln: 13.7042}
+    {id: 1, name: "Hörbranz A14", lat: 47.5446, lon: 9.7407},
+    {id: 2, name: "Nuziders A14", lat: 47.1731, lon: 9.7737},
+    {id: 3, name: "Rabfeld A12", lat: 47.4574, lon: 11.9196},
+    {id: 4, name: "Kundl A12", lat: 47.4734, lon: 11.9693},
+    {id: 5, name: "Wels A8", lat: 48.1790, lon: 13.8623},
+    {id: 6, name: "Wolfsbach A1 (1)", lat: 48.1120, lon: 14.6761},
+    {id: 7, name: "Wolfsbach A1 (2)", lat: 48.1123, lon: 14.6786},
+    {id: 8, name: "Mistelbach A5", lat: 48.5389, lon: 16.6259},
+    {id: 9, name: "Bruck an der Leitha A4", lat: 48.0431, lon: 16.7791},
+    {id: 10, name: "Pernau A2", lat: 47.0900, lon: 15.8511},
+    {id: 11, name: "Strass in Steiermark A9", lat: 46.7317, lon: 15.6436},
+    {id: 12, name: "Hainburg A2", lat: 46.6845, lon: 14.6591},
+    {id: 13, name: "Arnoldstein A2", lat: 46.5492, lon: 13.7042}
 ];
 // Додаємо маркери
 points.forEach(p => {
@@ -60,4 +57,3 @@ points.forEach(p => {
 
 </body>
 </html>
-
