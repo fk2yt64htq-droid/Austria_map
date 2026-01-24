@@ -49,19 +49,8 @@ const points = [
 
 // Маркери та статистика
 const markers = {};
-const stats = {}; // локальна статистика, для кольорів
+const stats = {}; // локальна статистика для кольорів
 
-function getDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371000; 
-    const toRad = x => x * Math.PI/180;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-}
-
-// Функція для оновлення popup
 function updatePopup(id) {
     const marker = markers[id];
     const s = stats[id] || {green:0, red:0};
@@ -73,52 +62,46 @@ function updatePopup(id) {
         <div style="text-align:center;">
             <b>${marker.options.title}</b><br>
             🔴 ${rP}% | 🟢 ${gP}%<br>
-            <button class="btn" style="background:green" onclick="trySend('${id}','green')">ЧИСТО</button>
-            <button class="btn" style="background:red" onclick="trySend('${id}','red')">КОНТРОЛЬ</button>
+            <button class="btn" style="background:green" onclick="send('${id}','green')">ЧИСТО</button>
+            <button class="btn" style="background:red" onclick="send('${id}','red')">КОНТРОЛЬ</button>
         </div>
     `);
 }
 
-// Додаємо маркери
+// Додаємо маркери та кола
 points.forEach(p=>{
     const marker = L.marker([p.lat,p.lon],{title:p.name}).addTo(map);
     markers[p.id] = marker;
     stats[p.id] = {green:0, red:0};
     marker.bindPopup('');
     updatePopup(p.id);
+
+    // Коло радіусом 1.5 км
+    L.circle([p.lat, p.lon], {radius:1500, color:'blue', fillOpacity:0.1}).addTo(map);
 });
 
-// Функція для відправки
-function trySend(id,status){
-    navigator.geolocation.getCurrentPosition(pos=>{
-        const userLat = pos.coords.latitude;
-        const userLon = pos.coords.longitude;
-        const point = points.find(p=>p.id==id);
-        const d = getDistance(userLat,userLon,point.lat,point.lon);
-        if(d>15000000){
-            alert(`❌ Ви занадто далеко від точки (${Math.round(d)} м). Максимальна відстань — 1500 м.`);
-            return;
-        }
-        // Відправка на бот
-        tg.sendData(`${status}_${id}_${userLat}_${userLon}`);
-        // Змінюємо колір
-        const color = status==='green'?'green':'red';
-        markerIcon = L.icon({
-            iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-            iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
-        });
-        markers[id].setIcon(markerIcon);
-        // Локальна статистика
-        stats[id][status] += 1;
-        updatePopup(id);
-        alert(`✅ Відправлено: ${status.toUpperCase()} для точки ${point.name}`);
-    }, err=>{
-        alert("❌ Не вдалося отримати вашу геопозицію.");
+// Функція відправки (без перевірки відстані)
+function send(id,status){
+    const point = points.find(p=>p.id==id);
+
+    // Змінюємо колір маркера
+    const color = status==='green'?'green':'red';
+    const markerIcon = L.icon({
+        iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+        iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
     });
+    markers[id].setIcon(markerIcon);
+
+    // Оновлюємо локальну статистику
+    stats[id][status] += 1;
+    updatePopup(id);
+
+    // Відправляємо дані на бот
+    tg.sendData(`${status}_${id}_${point.lat}_${point.lon}`);
+    alert(`✅ Відправлено: ${status.toUpperCase()} для точки ${point.name}`);
 }
 </script>
 
 </body>
 </html>
-
