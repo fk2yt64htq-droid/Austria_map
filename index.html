@@ -30,15 +30,21 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 // Точки
 const points = [
-  {id: 1, name: "Hörbranz A14", lat: 47.5446, lon: 9.7407},
-  {id: 2, name: "Walserberg A1", lat: 47.7925, lon: 12.9772},
-  {id: 3, name: "Suben A8", lat: 48.4112, lon: 13.4393},
-  {id: 8, name: "Nickelsdorf A4", lat: 47.9357, lon: 17.0695},
-  {id: 11, name: "Brenner A13", lat: 47.0020, lon: 11.5050},
-  {id: 12, name: "Arnoldstein A2", lat: 46.5492, lon: 13.7042},
-  {id: 13, name: "St. Margrethen", lat: 47.4554, lon: 9.6384}
+  var dots = [
+    {id: 1, n: "Hörbranz A14", lt: 47.5446, ln: 9.7407},
+    {id: 2, n: "Nuziders A14", lt: 47.1731, ln: 9.7737},
+    {id: 3, n: "Rabfeld A12", lt: 47.4574, ln: 11.9196},
+    {id: 4, n: "Kundl A12", lt: 47.4734, ln: 11.9693},
+    {id: 5, n: "Wels A8", lt: 48.1790, ln: 13.8623},
+    {id: 6, n: "Wolfsbach A1 (1)", lt: 48.1120, ln: 14.6761},
+    {id: 7, n: "Wolfsbach A1 (2)", lt: 48.1123, ln: 14.6786},
+    {id: 8, n: "Mistelbach A5", lt: 48.5389, ln: 16.6259},
+    {id: 9, n: "Bruck an der Leitha A4", lt: 48.0431, ln: 16.7791},
+    {id: 10, n: "Pernau A2", lt: 47.0900, ln: 15.8511},
+    {id: 11, n: "Strass in Steiermark A9", lt: 46.7317, ln: 15.6436},
+    {id: 12, n: "Hainburg A2", lt: 46.6845, ln: 14.6591},
+    {id: 13, n: "Arnoldstein A2", lt: 46.5492, ln: 13.7042}
 ];
-
 // Додаємо маркери
 points.forEach(p => {
   const marker = L.marker([p.lat, p.lon]).addTo(map);
@@ -54,3 +60,4 @@ points.forEach(p => {
 
 </body>
 </html>
+
