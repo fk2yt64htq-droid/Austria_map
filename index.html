@@ -19,18 +19,16 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <script>
-// Telegram WebApp
 const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-// Ініціалізація мапи
 const map = L.map('map').setView([47.5162, 14.5501], 7);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
-// Точки
+// Дані точок
 const points = [
     {id: 1, name: "Hörbranz A14", lat: 47.5446, lon: 9.7407},
     {id: 2, name: "Nuziders A14", lat: 47.1731, lon: 9.7737},
@@ -47,13 +45,27 @@ const points = [
     {id: 13, name: "Arnoldstein A2", lat: 46.5492, lon: 13.7042}
 ];
 
-// Маркери та статистика
-const markers = {};
-const stats = {}; // локальна статистика для кольорів
+// Завантаження stats з параметра URL (як у попередніх версіях)
+let stats = {};
+try {
+    const params = new URLSearchParams(window.location.search);
+    const raw = params.get('stats');
+    if (raw) stats = JSON.parse(decodeURIComponent(raw));
+} catch(e){ console.log("Stats parse error"); }
 
-function updatePopup(id) {
+// Маркери
+const markers = {};
+const now = Math.floor(Date.now()/1000); // поточний timestamp
+
+function updatePopup(id){
     const marker = markers[id];
-    const s = stats[id] || {green:0, red:0};
+    let s = stats[id] || {green:0, red:0, last_update:0};
+    // якщо останнє оновлення старше 30 хв, скидаємо статистику
+    if(now - s.last_update > 30*60){
+        s = {green:0, red:0, last_update:0};
+    }
+    stats[id] = s;
+
     const total = s.green + s.red;
     const rP = total>0? Math.round((s.red/total)*100) : 0;
     const gP = total>0? 100 - rP : 0;
@@ -66,38 +78,40 @@ function updatePopup(id) {
             <button class="btn" style="background:red" onclick="send('${id}','red')">КОНТРОЛЬ</button>
         </div>
     `);
+
+    // Змінюємо колір маркера
+    let color='blue';
+    if(total>0){
+        color = rP>=50?'red':'green';
+    }
+    const icon = L.icon({
+        iconUrl:`https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
+        shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+        iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
+    });
+    marker.setIcon(icon);
 }
 
 // Додаємо маркери та кола
 points.forEach(p=>{
     const marker = L.marker([p.lat,p.lon],{title:p.name}).addTo(map);
-    markers[p.id] = marker;
-    stats[p.id] = {green:0, red:0};
+    markers[p.id]=marker;
     marker.bindPopup('');
     updatePopup(p.id);
 
-    // Коло радіусом 1.5 км
-    L.circle([p.lat, p.lon], {radius:1500, color:'blue', fillOpacity:0.1}).addTo(map);
+    // Коло 1.5 км
+    L.circle([p.lat,p.lon], {radius:1500, color:'blue', fillOpacity:0.1}).addTo(map);
 });
 
-// Функція відправки (без перевірки відстані)
+// Відправка на бота
 function send(id,status){
     const point = points.find(p=>p.id==id);
+    const s = stats[id];
+    s[status] += 1;
+    s.last_update = Math.floor(Date.now()/1000); // оновлюємо час
+    stats[id] = s;
 
-    // Змінюємо колір маркера
-    const color = status==='green'?'green':'red';
-    const markerIcon = L.icon({
-        iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-        iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
-    });
-    markers[id].setIcon(markerIcon);
-
-    // Оновлюємо локальну статистику
-    stats[id][status] += 1;
     updatePopup(id);
-
-    // Відправляємо дані на бот
     tg.sendData(`${status}_${id}_${point.lat}_${point.lon}`);
     alert(`✅ Відправлено: ${status.toUpperCase()} для точки ${point.name}`);
 }
