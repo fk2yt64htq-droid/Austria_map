@@ -1,119 +1,64 @@
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Austria Control Map</title>
+import asyncio
+import json
+import os
+import urllib.parse
+from aiogram import Bot, Dispatcher, types, F
+from aiogram.filters import Command
+from aiogram.types import WebAppInfo, ReplyKeyboardMarkup, KeyboardButton
 
-<!-- Leaflet (стабільний CDN) -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+TOKEN = "8106544754:AAGdcip8weOAYiCYARU3eatZuKjk2a6FePA"
+URL_MAP = "https://fk2yt64htq-droid.github.io" 
+DB_FILE = "stats.json"
 
-<!-- Telegram WebApp -->
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+# Функції для збереження та завантаження статистики
+def load_stats():
+    if not os.path.exists(DB_FILE):
+        return {}
+    with open(DB_FILE, "r") as f:
+        try:
+            return json.load(f)
+        except: return {}
 
-<style>
-html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    background: #000;
-}
-#map {
-    height: 100vh;
-    width: 100vw;
-}
-.btn {
-    width: 100%;
-    padding: 12px;
-    margin-top: 6px;
-    border: none;
-    border-radius: 8px;
-    color: #fff;
-    font-weight: bold;
-    font-size: 14px;
-}
-</style>
-</head>
-<body>
+def save_stats(stats):
+    with open(DB_FILE, "w") as f:
+        json.dump(stats, f)
 
-<div id="map"></div>
+bot = Bot(token=TOKEN)
+dp = Dispatcher()
 
-<script>
-/* ===== TELEGRAM SAFE INIT ===== */
-let tg = null;
-if (window.Telegram && window.Telegram.WebApp) {
-    tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
-}
+@dp.message(Command("start"))
+async def start_cmd(message: types.Message):
+    stats = load_stats()
+    # Кодуємо статистику, щоб передати її мапі через URL
+    encoded_stats = urllib.parse.quote(json.dumps(stats))
+    final_url = f"{URL_MAP}?stats={encoded_stats}"
+    
+    kb = ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text="🗺 Відкрити мапу", web_app=WebAppInfo(url=final_url))]],
+        resize_keyboard=True
+    )
+    await message.answer("Мапа з актуальною статистикою готова:", reply_markup=kb)
 
-/* ===== MAP INIT (DELAY = TG FIX) ===== */
-setTimeout(() => {
+@dp.message(F.web_app_data)
+async def get_data(message: types.Message):
+    try:
+        # Отримуємо дані від мапи, наприклад "red_1"
+        status, point_id = message.web_app_data.data.split("_")
+        stats = load_stats()
 
-    if (typeof L === "undefined") {
-        document.body.innerHTML = "<h2 style='color:red'>Leaflet не завантажився</h2>";
-        return;
-    }
+        if point_id not in stats:
+            stats[point_id] = {"green": 0, "red": 0}
+        
+        stats[point_id][status] += 1
+        save_stats(stats)
 
-    const map = L.map("map").setView([47.5162, 14.5501], 7);
+        await message.answer(f"✅ Статус оновлено! Дякуємо за інформацію.")
+    except Exception as e:
+        print(f"Помилка: {e}")
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 18,
-        attribution: "© OpenStreetMap"
-    }).addTo(map);
+async def main():
+    print("--- БОТ ПРАЦЮЄ ---")
+    await dp.start_polling(bot)
 
-    /* ===== ВСІ ТВОЇ ТОЧКИ ===== */
-    const points = [
-        // НІМЕЧЧИНА
-        { id: 1, name: "Hörbranz A14 (DE)", lat: 47.5446, lng: 9.7407 },
-        { id: 2, name: "Walserberg A1 (DE)", lat: 47.7925, lng: 12.9772 },
-        { id: 3, name: "Suben A8 (DE)", lat: 48.4112, lng: 13.4393 },
-        { id: 4, name: "Passau Nord A3 (DE)", lat: 48.5742, lng: 13.4663 },
-
-        // ЧЕХІЯ
-        { id: 5, name: "Wullowitz A7 (CZ)", lat: 48.5541, lng: 14.5706 },
-        { id: 6, name: "Kleinhaugsdorf (CZ)", lat: 48.7293, lng: 16.0463 },
-
-        // СЛОВАЧЧИНА
-        { id: 7, name: "Kittsee A6 (SK)", lat: 48.0924, lng: 17.0641 },
-
-        // УГОРЩИНА
-        { id: 8, name: "Nickelsdorf A4 (HU)", lat: 47.9357, lng: 17.0695 },
-
-        // СЛОВЕНІЯ
-        { id: 9, name: "Spielfeld A9 (SI)", lat: 46.7081, lng: 15.6377 },
-        { id: 10, name: "Karawankentunnel A11 (SI)", lat: 46.5316, lng: 14.0174 },
-
-        // ІТАЛІЯ
-        { id: 11, name: "Brenner A13 (IT)", lat: 47.0020, lng: 11.5050 },
-        { id: 12, name: "Arnoldstein A2 (IT)", lat: 46.5492, lng: 13.7042 },
-
-        // ШВЕЙЦАРІЯ
-        { id: 13, name: "St. Margrethen A14 (CH)", lat: 47.4554, lng: 9.6384 }
-    ];
-
-    points.forEach(p => {
-        L.marker([p.lat, p.lng]).addTo(map).bindPopup(`
-            <b>${p.name}</b><br><br>
-            <button class="btn" style="background:green"
-                onclick="sendData(${p.id}, 'green')">ЧИСТО</button>
-            <button class="btn" style="background:red"
-                onclick="sendData(${p.id}, 'red')">КОНТРОЛЬ</button>
-        `);
-    });
-
-    window.sendData = function(id, status) {
-        if (!tg) {
-            alert("Відкрий у Telegram");
-            return;
-        }
-        tg.sendData(status + "_" + id);
-        setTimeout(() => tg.close(), 300);
-    };
-
-}, 300);
-</script>
-
-</body>
-</html>
+if __name__ == "__main__":
+    asyncio.run(main())
