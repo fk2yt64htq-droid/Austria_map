@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Austria Map</title>
 
-<!-- Leaflet (реальні файли) -->
+<!-- Leaflet -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -13,8 +13,8 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
-html, body { margin: 0; padding: 0; height: 100%; background: #fff; }
-#map { height: 100vh; width: 100vw; }
+html, body { margin:0; padding:0; height:100%; background:#fff; }
+#map { height:100vh; width:100vw; }
 .btn { width: 100%; padding: 12px; margin-top: 6px; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; }
 .leaflet-popup-content { color: #000 !important; text-align: center; }
 </style>
@@ -24,12 +24,10 @@ html, body { margin: 0; padding: 0; height: 100%; background: #fff; }
 <div id="map"></div>
 
 <script>
-const tg = window.Telegram.WebApp;
-tg.ready();
-tg.expand();
+const tg = window.Telegram?.WebApp || null;
+if(tg){ tg.ready(); tg.expand(); }
 
-// твій бекенд (поки може не існувати — тоді просто не буде статистики)
-const API_URL = "https://austria-map.onrender.com"; 
+const API_URL = "https://austria-map.onrender.com"; // твій бекенд
 
 const dots = [
  {id:1,n:"Hörbranz A14",lt:47.5446,ln:9.7407},
@@ -49,76 +47,84 @@ const dots = [
 
 let map, markers = {}, stats = {};
 
-function init() {
-  map = L.map("map").setView([47.5162, 14.5501], 7);
-
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: '&copy; OpenStreetMap'
-  }).addTo(map);
-
-  loadStats();
-  setInterval(loadStats, 10000); // автооновлення кожні 10с
+function createPopup(p, redPerc, greenPerc, total) {
+    return `
+        <div style="text-align:center; min-width:150px; color:#000;">
+            <b>${p.n}</b><br>
+            🔴 ${redPerc}% | 🟢 ${greenPerc}%<br>
+            <small>Всього: ${total}</small><br>
+            <button class="btn" style="background:green" onclick="sendVote(${p.id},'green')">ЧИСТО</button>
+            <button class="btn" style="background:red" onclick="sendVote(${p.id},'red')">КОНТРОЛЬ</button>
+        </div>
+    `;
 }
 
-async function loadStats() {
-  try {
-    const res = await fetch(API_URL + "/stats");
-    stats = await res.json();
-  } catch {
-    stats = {};
-  }
+async function loadStats(){
+    try {
+        const res = await fetch(API_URL + "/stats");
+        stats = await res.json();
+    } catch { stats = {}; }
 
-  dots.forEach(p => {
-    const s = stats[p.id] || {green:0, red:0};
-    const total = s.green + s.red;
-    const redP = total ? Math.round((s.red/total)*100) : 0;
+    dots.forEach(p=>{
+        const s = stats[p.id] || {green:0, red:0};
+        const total = s.green + s.red;
+        const redP = total ? Math.round((s.red/total)*100) : 0;
+        const greenP = total ? 100 - redP : 0;
 
-    let color = "blue";
-    if (total > 0) color = redP >= 50 ? "red" : "green";
+        // колір маркера
+        let color = "blue";
+        if(total > 0) color = redP >= 50 ? "red" : "green";
 
-    const iconUrl = `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`;
+        const iconUrl = `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`;
 
-    if (!markers[p.id]) {
-      markers[p.id] = L.marker([p.lt, p.ln]).addTo(map);
-      L.circle([p.lt, p.ln], {
-        radius: 1500,
-        color: "blue",
-        weight: 1,
-        fillOpacity: 0.1
-      }).addTo(map);
-    }
+        if(!markers[p.id]){
+            markers[p.id] = L.marker([p.lt,p.ln]).addTo(map)
+                .bindPopup(createPopup(p, redP, greenP, total));
 
-    markers[p.id].setIcon(new L.Icon({
-      iconUrl: iconUrl,
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-      iconSize: [25,41],
-      iconAnchor: [12,41],
-      popupAnchor: [1,-34],
-      shadowSize: [41,41]
-    }));
-
-    markers[p.id].bindPopup(`
-      <b>${p.n}</b><br>
-      🔴 Контроль: ${redP}%<br>
-      🟢 Чисто: ${100-redP}%<br>
-      <button class="btn" style="background:green" onclick="sendVote(${p.id},'green')">ЧИСТО</button>
-      <button class="btn" style="background:red" onclick="sendVote(${p.id},'red')">КОНТРОЛЬ</button>
-    `);
-  });
-}
-
-window.sendVote = async (id, status) => {
-  try {
-    await fetch(API_URL + "/update", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({id, status})
+            L.circle([p.lt,p.ln],{
+                radius:1500,
+                color:"blue",
+                weight:1,
+                fillOpacity:0.1
+            }).addTo(map);
+        } else {
+            markers[p.id].setIcon(new L.Icon({
+                iconUrl: iconUrl,
+                shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                iconSize:[25,41],
+                iconAnchor:[12,41],
+                popupAnchor:[1,-34],
+                shadowSize:[41,41]
+            }));
+            markers[p.id].setPopupContent(createPopup(p, redP, greenP, total));
+        }
     });
-  } catch {}
+}
 
-  tg.sendData(status + "_" + id);
-  loadStats();
+window.sendVote = (id,status)=>{
+    if(tg){
+        // Telegram WebApp
+        tg.sendData(`${status}_${id}`);
+    } else {
+        // ПК
+        fetch(API_URL + "/update",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({id,status})
+        }).then(()=>loadStats()).catch(e=>console.error(e));
+    }
+    loadStats();
 };
+
+function init(){
+    map = L.map("map").setView([47.5162,14.5501],7);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+        attribution:'© OpenStreetMap'
+    }).addTo(map);
+
+    loadStats();
+    setInterval(loadStats,10000); // автооновлення
+}
 
 init();
 </script>
