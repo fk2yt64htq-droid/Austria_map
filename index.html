@@ -78,28 +78,37 @@ async function loadStats(){
     const redP = total ? Math.round((s.red/total)*100) : 0;
     const greenP = total ? 100 - redP : 0;
 
-    // Якщо останнє оновлення >30 хв => синій
-    let color = (now - (s.timestamp || 0)) > 30*60*1000 ? "blue" : (total ? (redP >=50 ? "red" : "green") : "blue");
+    // Визначаємо колір точки за статистикою
+    let color = "blue"; // дефолтний колір
+    if(total > 0){
+        if(s.red > s.green) color = "red";
+        else if(s.green > s.red) color = "green";
+        else color = "orange"; // якщо рівно 50/50, можна поставити оранжевий
+    }
 
     const iconUrl = `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`;
 
     if(!markers[dot.id]){
-      markers[dot.id] = L.marker([dot.lt,dot.ln],{icon:new L.Icon({
-        iconUrl: iconUrl,
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-        iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
-      })}).addTo(map).bindPopup(createPopup(dot,redP,greenP,total));
+        markers[dot.id] = L.marker([dot.lt,dot.ln],{
+            icon: new L.Icon({
+                iconUrl: iconUrl,
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
+            })
+        }).addTo(map).bindPopup(createPopup(dot,redP,greenP,total));
 
-      L.circle([dot.lt,dot.ln],{radius:1500,color:"blue",weight:1,fillOpacity:0.1}).addTo(map);
+        L.circle([dot.lt,dot.ln],{radius:1500,color:"blue",weight:1,fillOpacity:0.1}).addTo(map);
     } else {
-      markers[dot.id].setIcon(new L.Icon({
-        iconUrl: iconUrl,
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-        iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
-      }));
-      markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total));
+        // оновлюємо іконку та попап
+        markers[dot.id].setIcon(new L.Icon({
+            iconUrl: iconUrl,
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+            iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
+        }));
+        markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total));
     }
-  });
+});
+
 }
 
 window.sendVote = async (id,status)=>{
@@ -122,4 +131,5 @@ setInterval(loadStats,2000); // автооновлення кожні 2 сек
 
 </body>
 </html>
+
 
