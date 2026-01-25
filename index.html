@@ -16,7 +16,7 @@ html, body { margin:0; padding:0; height:100%; }
 <div id="map"></div>
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const API_URL = "https://austria-map.onrender.com"; // <-- встав свій сервер
+const API_URL = "https://austria-map.onrender.com"; // <-- твій сервер з main.py
 
 const dots = [
   {id:1,n:"Hörbranz A14",lat:47.5446,lon:9.7407},
@@ -43,6 +43,8 @@ async function loadStats(){
     try{
         const response = await fetch(API_URL + "/stats");
         const stats = await response.json();
+        const now = new Date();
+
         dots.forEach(p=>{
             const s = stats[p.id] || {green:0, red:0};
             const total = s.green + s.red;
