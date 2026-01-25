@@ -83,7 +83,7 @@ async function loadStats(){
     if(total > 0){
         if(s.red > s.green) color = "red";
         else if(s.green > s.red) color = "green";
-        else color = "orange"; // якщо рівно 50/50, можна поставити оранжевий
+        else color = "yellow"; // якщо рівно 50/50, можна поставити оранжевий
     }
 
     const iconUrl = `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`;
@@ -131,5 +131,6 @@ setInterval(loadStats,2000); // автооновлення кожні 2 сек
 
 </body>
 </html>
+
 
 
