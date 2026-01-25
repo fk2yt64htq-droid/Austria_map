@@ -4,123 +4,111 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Austria Map</title>
-    
-    <!-- Підключаємо стилі Leaflet -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com" />
-    
+    <!-- Підключення стилів та скриптів карти -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net">
+    <script src="https://cdn.jsdelivr.net"></script>
+    <!-- Скрипт Телеграм -->
+    <script src="https://telegram.org"></script>
+
     <style>
         html, body { margin: 0; padding: 0; height: 100%; background: #ffffff; }
-        #map { height: 100vh; width: 100vw; background: #f0f0f0; }
+        #map { height: 100vh; width: 100vw; background: #ffffff; }
         .btn { width: 100%; padding: 12px; margin-top: 6px; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; }
+        .leaflet-popup-content { color: #000 !important; text-align: center; }
     </style>
 </head>
 <body>
     <div id="map"></div>
 
-    <!-- ПІДКЛЮЧАЄМО СКРИПТИ ВНИЗУ ТІЛА -->
-    <script src="https://cdnjs.cloudflare.com"></script>
-    <script src="https://telegram.org"></script>
-
     <script>
-        // Функція запуску мапи
-        function startApp() {
-            // Перевірка чи завантажився Leaflet (L)
-            if (typeof L === 'undefined') {
-                console.error("Помилка: Leaflet все ще не завантажено.");
-                return;
-            }
+        // Ініціалізація Telegram
+        const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+        if (tg) { tg.ready(); tg.expand(); }
 
-            const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-            if (tg) { tg.ready(); tg.expand(); }
+        // ВСТАВТЕ ВАШЕ ПОСИЛАННЯ З RENDER (ОБОВ'ЯЗКОВО HTTPS)
+        const API_URL = "https://austria-map.onrender.com"; 
 
-            // ВСТАВТЕ ВАШЕ ПОСИЛАННЯ З RENDER (https)
-            const API_URL = "https://austria-map.onrender.com"; 
+        // Координати точок
+        const dots = [
+            {"id": 1, "n": "Hörbranz A14", "lt": 47.5446, "ln": 9.7407},
+            {"id": 2, "n": "Nuziders A14", "lt": 47.1731, "ln": 9.7737},
+            {"id": 3, "n": "Rabfeld A12", "lt": 47.4574, "ln": 11.9196},
+            {"id": 4, "n": "Kundl A12", "lt": 47.4734, "ln": 11.9693},
+            {"id": 5, "n": "Wels A8", "lt": 48.1790, "ln": 13.8623},
+            {"id": 6, "n": "Wolfsbach A1 (1)", "lt": 48.1120, "ln": 14.6761},
+            {"id": 7, "n": "Wolfsbach A1 (2)", "lt": 48.1123, "ln": 14.6786},
+            {"id": 8, "n": "Mistelbach A5", "lt": 48.5389, "ln": 16.6259},
+            {"id": 9, "n": "Bruck an der Leitha A4", "lt": 48.0431, "ln": 16.7791},
+            {"id": 10, "n": "Pernau A2", "lt": 47.0900, "ln": 15.8511},
+            {"id": 11, "n": "Strass in Steiermark A9", "lt": 46.7317, "ln": 15.6436},
+            {"id": 12, "n": "Hainburg A2", "lt": 46.6845, "ln": 14.6591},
+            {"id": 13, "n": "Arnoldstein A2", "lt": 46.5492, "ln": 13.7042}
+        ];
 
-            const map = L.map("map").setView([47.5162, 14.5501], 7);
-            L.tileLayer("https://tile.openstreetmap.org{z}/{x}/{y}.png", {
-                attribution: '&copy; OpenStreetMap contributors'
+        let map, markers = {}, stats = {};
+
+        // Функція створення мапи
+        function init() {
+            map = L.map("map").setView([47.5162, 14.5501], 7);
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                attribution: '&copy; OpenStreetMap'
             }).addTo(map);
 
-            const dots = [
-                {"id": 1, "n": "Hörbranz A14", "lt": 47.5446, "ln": 9.7407},
-                {"id": 2, "n": "Nuziders A14", "lt": 47.1731, "ln": 9.7737},
-                {"id": 3, "n": "Rabfeld A12", "lt": 47.4574, "ln": 11.9196},
-                {"id": 4, "n": "Kundl A12", "lt": 47.4734, "ln": 11.9693},
-                {"id": 5, "n": "Wels A8", "lt": 48.1790, "ln": 13.8623},
-                {"id": 6, "n": "Wolfsbach A1 (1)", "lt": 48.1120, "ln": 14.6761},
-                {"id": 7, "n": "Wolfsbach A1 (2)", "lt": 48.1123, "ln": 14.6786},
-                {"id": 8, "n": "Mistelbach A5", "lt": 48.5389, "ln": 16.6259},
-                {"id": 9, "n": "Bruck an der Leitha A4", "lt": 48.0431, "ln": 16.7791},
-                {"id": 10, "n": "Pernau A2", "lt": 47.0900, "ln": 15.8511},
-                {"id": 11, "n": "Strass in Steiermark A9", "lt": 46.7317, "ln": 15.6436},
-                {"id": 12, "n": "Hainburg A2", "lt": 46.6845, "ln": 14.6591},
-                {"id": 13, "n": "Arnoldstein A2", "lt": 46.5492, "ln": 13.7042}
-            ];
-
-            const markers = {};
-            let stats = {};
-
-            async function loadStats() {
-                try {
-                    const response = await fetch(`${API_URL}/stats`);
-                    stats = await response.json();
-                    
-                    dots.forEach(p => {
-                        const s = stats[p.id] || { green: 0, red: 0 };
-                        const total = s.green + s.red;
-                        const rPerc = total > 0 ? Math.round((s.red / total) * 100) : 0;
-                        
-                        let color = "blue";
-                        if (total > 0) color = rPerc >= 50 ? "red" : "green";
-
-                        const icon = L.icon({
-                            iconUrl: `https://raw.githubusercontent.com{color}.png`,
-                            shadowUrl: 'https://cdnjs.cloudflare.com',
-                            iconSize: [25, 41],
-                            iconAnchor: [12, 41],
-                            popupAnchor: [1, -34],
-                            shadowSize: [41, 41]
-                        });
-
-                        if (markers[p.id]) {
-                            markers[p.id].setIcon(icon);
-                        } else {
-                            markers[p.id] = L.marker([p.lt, p.ln], { icon: icon }).addTo(map);
-                            L.circle([p.lt, p.ln], { radius: 1500, color: 'blue', weight: 1, fillOpacity: 0.1 }).addTo(map);
-                        }
-
-                        markers[p.id].bindPopup(`
-                            <div style="text-align:center; color:#000; min-width:140px;">
-                                <b>${p.n}</b><br>
-                                🔴 ${rPerc}% | 🟢 ${100-rPerc}%<br>
-                                <button class="btn" style="background:green" onclick="sendVote(${p.id}, 'green')">ЧИСТО</button>
-                                <button class="btn" style="background:red" onclick="sendVote(${p.id}, 'red')">КОНТРОЛЬ</button>
-                            </div>
-                        `);
-                    });
-                } catch (e) { console.log("Помилка отримання статистики з сервера."); }
-            }
-
-            window.sendVote = async (id, status) => {
-                try {
-                    await fetch(`${API_URL}/update`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id: id, status: status })
-                    });
-                    loadStats();
-                    if (tg) tg.sendData(status + "_" + id);
-                } catch (e) { alert("Немає зв'язку із сервером Render."); }
-            };
-
             loadStats();
-            setInterval(loadStats, 10000);
+            setInterval(loadStats, 10000); // Оновлення кожні 10 сек
         }
 
-        // Запускаємо додаток через секунду, щоб скрипти точно підвантажились
-        window.onload = function() {
-            setTimeout(startApp, 500);
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_URL}/stats`);
+                stats = await response.json();
+                
+                dots.forEach(p => {
+                    const s = stats[p.id] || { green: 0, red: 0 };
+                    const total = s.green + s.red;
+                    const rPerc = total > 0 ? Math.round((s.red / total) * 100) : 0;
+                    let color = total === 0 ? "blue" : (rPerc >= 50 ? "red" : "green");
+
+                    const iconUrl = `https://raw.githubusercontent.com{color}.png`;
+
+                    if (!markers[p.id]) {
+                        markers[p.id] = L.marker([p.lt, p.ln]).addTo(map);
+                        L.circle([p.lt, p.ln], { radius: 1500, color: 'blue', weight: 1, fillOpacity: 0.1 }).addTo(map);
+                    }
+
+                    markers[p.id].setIcon(new L.Icon({
+                        iconUrl: iconUrl,
+                        iconSize: [25, 41],
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34],
+                        shadowUrl: 'https://cdnjs.cloudflare.com',
+                        shadowSize: [41, 41]
+                    }));
+
+                    markers[p.id].bindPopup(`
+                        <b>${p.n}</b><br>
+                        🔴 Контроль: ${rPerc}% | 🟢 Чисто: ${100-rPerc}%<br>
+                        <button class="btn" style="background:green" onclick="sendVote(${p.id}, 'green')">ЧИСТО</button>
+                        <button class="btn" style="background:red" onclick="sendVote(${p.id}, 'red')">КОНТРОЛЬ</button>
+                    `);
+                });
+            } catch (e) { console.log("Помилка зв'язку з Render"); }
+        }
+
+        window.sendVote = async (id, status) => {
+            try {
+                await fetch(`${API_URL}/update`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id, status: status })
+                });
+                loadStats();
+                if (tg) tg.sendData(status + "_" + id);
+            } catch (e) { alert("Сервер Render не відповідає"); }
         };
+
+        // Запуск після завантаження сторінки
+        window.onload = init;
     </script>
 </body>
 </html>
