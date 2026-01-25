@@ -6,7 +6,7 @@
     <title>Austria Map</title>
     <link rel="stylesheet" href="https://unpkg.com" />
     <style>
-        html, body { margin: 0; padding: 0; height: 100%; background: #ffffff; }
+        html, body { margin: 0; padding: 0; height: 100%; background: #fff; }
         #map { height: 100vh; width: 100vw; }
         .btn { width: 100%; padding: 12px; margin-top: 6px; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; }
     </style>
@@ -18,15 +18,20 @@
     <script src="https://telegram.org"></script>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+        // Перевірка наявності Telegram WebApp
+        const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+        if (tg) {
+            tg.ready();
+            tg.expand();
+        }
 
-        // СЮДИ ВСТАВИТЕ ВАШЕ ПОСИЛАННЯ З RENDER
+        // ВАЖЛИВО: Вставте сюди ваше посилання з Render (https)
         const API_URL = "https://austria-map.onrender.com"; 
 
         const map = L.map("map").setView([47.5162, 14.5501], 7);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
 
         const dots = [
             {"id": 1, "n": "Hörbranz A14", "lt": 47.5446, "ln": 9.7407},
@@ -45,46 +50,47 @@
         ];
 
         const markers = {};
-        let stats = {};
 
         async function loadStats() {
             try {
                 const response = await fetch(`${API_URL}/stats`);
-                stats = await response.json();
+                const statsData = await response.json();
                 
                 dots.forEach(p => {
-                    const s = stats[p.id] || { green: 0, red: 0 };
+                    const s = statsData[p.id] || { green: 0, red: 0 };
                     const total = s.green + s.red;
                     const rPerc = total > 0 ? Math.round((s.red / total) * 100) : 0;
                     
                     let color = "blue";
                     if (total > 0) color = rPerc >= 50 ? "red" : "green";
 
-                    const iconUrl = `https://raw.githubusercontent.com{color}.png`;
-
-                    if (!markers[p.id]) {
-                        markers[p.id] = L.marker([p.lt, p.ln]).addTo(map);
-                    }
-                    
-                    markers[p.id].setIcon(new L.Icon({
-                        iconUrl: iconUrl,
+                    const icon = L.icon({
+                        iconUrl: `https://raw.githubusercontent.com{color}.png`,
+                        shadowUrl: 'https://cdnjs.cloudflare.com',
                         iconSize: [25, 41],
                         iconAnchor: [12, 41],
                         popupAnchor: [1, -34],
-                        shadowUrl: 'https://cdnjs.cloudflare.com',
                         shadowSize: [41, 41]
-                    }));
+                    });
+
+                    if (markers[p.id]) {
+                        markers[p.id].setIcon(icon);
+                    } else {
+                        markers[p.id] = L.marker([p.lt, p.ln], { icon: icon }).addTo(map);
+                        L.circle([p.lt, p.ln], { radius: 1500, color: 'blue', weight: 1, fillOpacity: 0.1 }).addTo(map);
+                    }
 
                     markers[p.id].bindPopup(`
                         <div style="text-align:center; color:#000;">
                             <b>${p.n}</b><br>
                             🔴 Контроль: ${rPerc}% | 🟢 Чисто: ${100-rPerc}%<br>
+                            <small>Всього: ${total}</small><br>
                             <button class="btn" style="background:green" onclick="sendVote(${p.id}, 'green')">ЧИСТО</button>
                             <button class="btn" style="background:red" onclick="sendVote(${p.id}, 'red')">КОНТРОЛЬ</button>
                         </div>
                     `);
                 });
-            } catch (e) { console.error("Stats error"); }
+            } catch (e) { console.error("Stats server error"); }
         }
 
         window.sendVote = async (id, status) => {
@@ -95,12 +101,12 @@
                     body: JSON.stringify({ id: id, status: status })
                 });
                 loadStats();
-                tg.sendData(status + "_" + id);
-            } catch (e) { alert("Помилка!"); }
+                if (tg) tg.sendData(status + "_" + id);
+            } catch (e) { alert("Помилка зв'язку!"); }
         };
 
         loadStats();
-        setInterval(loadStats, 10000);
+        setInterval(loadStats, 15000);
     </script>
 </body>
 </html>
