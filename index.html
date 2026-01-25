@@ -4,31 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Austria Map</title>
-    <!-- Підключення стилів та скриптів карти -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net">
-    <script src="https://cdn.jsdelivr.net"></script>
-    <!-- Скрипт Телеграм -->
-    <script src="https://telegram.org"></script>
-
+    
+    <!-- Підключаємо стилі Leaflet -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com" />
+    
     <style>
         html, body { margin: 0; padding: 0; height: 100%; background: #ffffff; }
         #map { height: 100vh; width: 100vw; background: #ffffff; }
         .btn { width: 100%; padding: 12px; margin-top: 6px; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; }
-        .leaflet-popup-content { color: #000 !important; text-align: center; }
+        .leaflet-popup-content { color: #000 !important; text-align: center; width: 160px !important; }
     </style>
 </head>
 <body>
     <div id="map"></div>
+
+    <!-- Підключаємо скрипти (Cloudflare працює найстабільніше) -->
+    <script src="https://cdnjs.cloudflare.com"></script>
+    <script src="https://telegram.org"></script>
 
     <script>
         // Ініціалізація Telegram
         const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
         if (tg) { tg.ready(); tg.expand(); }
 
-        // ВСТАВТЕ ВАШЕ ПОСИЛАННЯ З RENDER (ОБОВ'ЯЗКОВО HTTPS)
+        // ВАШЕ ПОСИЛАННЯ (ВЖЕ ВСТАВЛЕНО)
         const API_URL = "https://austria-map.onrender.com"; 
 
-        // Координати точок
         const dots = [
             {"id": 1, "n": "Hörbranz A14", "lt": 47.5446, "ln": 9.7407},
             {"id": 2, "n": "Nuziders A14", "lt": 47.1731, "ln": 9.7737},
@@ -47,15 +48,21 @@
 
         let map, markers = {}, stats = {};
 
-        // Функція створення мапи
-        function init() {
+        function initMap() {
+            // Перевірка чи завантажився Leaflet
+            if (typeof L === 'undefined') {
+                console.log("Retry loading...");
+                setTimeout(initMap, 500);
+                return;
+            }
+
             map = L.map("map").setView([47.5162, 14.5501], 7);
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                attribution: '&copy; OpenStreetMap'
+                attribution: '&copy; OSM'
             }).addTo(map);
 
             loadStats();
-            setInterval(loadStats, 10000); // Оновлення кожні 10 сек
+            setInterval(loadStats, 10000);
         }
 
         async function loadStats() {
@@ -92,7 +99,7 @@
                         <button class="btn" style="background:red" onclick="sendVote(${p.id}, 'red')">КОНТРОЛЬ</button>
                     `);
                 });
-            } catch (e) { console.log("Помилка зв'язку з Render"); }
+            } catch (e) { console.log("Render offline"); }
         }
 
         window.sendVote = async (id, status) => {
@@ -107,8 +114,8 @@
             } catch (e) { alert("Сервер Render не відповідає"); }
         };
 
-        // Запуск після завантаження сторінки
-        window.onload = init;
+        // Стартуємо тільки після завантаження всього вікна
+        window.onload = initMap;
     </script>
 </body>
 </html>
