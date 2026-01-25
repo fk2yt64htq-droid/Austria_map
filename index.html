@@ -55,7 +55,8 @@ let markers = {}, stats = {}, lastUpdate = {};
 function createPopup(dot, redP, greenP, total){
     return `
       <b>${dot.n}</b><br>
-      🔴 ${redP}% | 🟢 ${greenP}%<br>
+      <span style="display:inline-block; width:16px; height:16px; background-color:red; border-radius:50%;"></span> ${redP}% | 
+      <span style="display:inline-block; width:16px; height:16px; background-color:green; border-radius:50%;"></span> ${greenP}%<br>
       <small>Всього: ${total}</small><br>
       <button class="btn" style="background:green" onclick="sendVote(${dot.id},'green')">ЧИСТО</button>
       <button class="btn" style="background:red" onclick="sendVote(${dot.id},'red')">КОНТРОЛЬ</button>
@@ -116,8 +117,9 @@ window.sendVote = async (id,status)=>{
 };
 
 loadStats();
-setInterval(loadStats,5000); // автооновлення кожні 5 сек
+setInterval(loadStats,2000); // автооновлення кожні 2 сек
 </script>
 
 </body>
 </html>
+
