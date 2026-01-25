@@ -4,7 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Austria Map</title>
+    
+    <!-- 1. Спочатку завантажуємо стилі та скрипти карти -->
     <link rel="stylesheet" href="https://unpkg.com" />
+    <script src="https://unpkg.com"></script>
+    
+    <!-- 2. Потім скрипт Телеграм -->
+    <script src="https://telegram.org"></script>
+
     <style>
         html, body { margin: 0; padding: 0; height: 100%; background: #fff; }
         #map { height: 100vh; width: 100vw; }
@@ -14,11 +21,8 @@
 <body>
     <div id="map"></div>
 
-    <script src="https://unpkg.com"></script>
-    <script src="https://telegram.org"></script>
-
     <script>
-        // ЗАХИСТ: Перевіряємо, чи ми в Telegram
+        // Перевірка Telegram
         let tg = null;
         if (window.Telegram && window.Telegram.WebApp) {
             tg = window.Telegram.WebApp;
@@ -26,88 +30,96 @@
             tg.expand();
         }
 
-        // ВАЖЛИВО: Вставте сюди ваше посилання з Render (має бути https)
+        // ВСТАВТЕ ВАШЕ ПОСИЛАННЯ З RENDER (https)
         const API_URL = "https://austria-map.onrender.com"; 
 
-        const map = L.map("map").setView([47.5162, 14.5501], 7);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            attribution: '&copy; OpenStreetMap'
-        }).addTo(map);
+        // Чекаємо, поки Leaflet завантажиться повністю
+        document.addEventListener("DOMContentLoaded", function() {
+            if (typeof L === 'undefined') {
+                console.error("Leaflet не завантажився!");
+                return;
+            }
 
-        const dots = [
-            {"id": 1, "n": "Hörbranz A14", "lt": 47.5446, "ln": 9.7407},
-            {"id": 2, "n": "Nuziders A14", "lt": 47.1731, "ln": 9.7737},
-            {"id": 3, "n": "Rabfeld A12", "lt": 47.4574, "ln": 11.9196},
-            {"id": 4, "n": "Kundl A12", "lt": 47.4734, "ln": 11.9693},
-            {"id": 5, "n": "Wels A8", "lt": 48.1790, "ln": 13.8623},
-            {"id": 6, "n": "Wolfsbach A1 (1)", "lt": 48.1120, "ln": 14.6761},
-            {"id": 7, "n": "Wolfsbach A1 (2)", "lt": 48.1123, "ln": 14.6786},
-            {"id": 8, "n": "Mistelbach A5", "lt": 48.5389, "ln": 16.6259},
-            {"id": 9, "n": "Bruck an der Leitha A4", "lt": 48.0431, "ln": 16.7791},
-            {"id": 10, "n": "Pernau A2", "lt": 47.0900, "ln": 15.8511},
-            {"id": 11, "n": "Strass in Steiermark A9", "lt": 46.7317, "ln": 15.6436},
-            {"id": 12, "n": "Hainburg A2", "lt": 46.6845, "ln": 14.6591},
-            {"id": 13, "n": "Arnoldstein A2", "lt": 46.5492, "ln": 13.7042}
-        ];
+            const map = L.map("map").setView([47.5162, 14.5501], 7);
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(map);
 
-        const markers = {};
+            const dots = [
+                {"id": 1, "n": "Hörbranz A14", "lt": 47.5446, "ln": 9.7407},
+                {"id": 2, "n": "Nuziders A14", "lt": 47.1731, "ln": 9.7737},
+                {"id": 3, "n": "Rabfeld A12", "lt": 47.4574, "ln": 11.9196},
+                {"id": 4, "n": "Kundl A12", "lt": 47.4734, "ln": 11.9693},
+                {"id": 5, "n": "Wels A8", "lt": 48.1790, "ln": 13.8623},
+                {"id": 6, "n": "Wolfsbach A1 (1)", "lt": 48.1120, "ln": 14.6761},
+                {"id": 7, "n": "Wolfsbach A1 (2)", "lt": 48.1123, "ln": 14.6786},
+                {"id": 8, "n": "Mistelbach A5", "lt": 48.5389, "ln": 16.6259},
+                {"id": 9, "n": "Bruck an der Leitha A4", "lt": 48.0431, "ln": 16.7791},
+                {"id": 10, "n": "Pernau A2", "lt": 47.0900, "ln": 15.8511},
+                {"id": 11, "n": "Strass in Steiermark A9", "lt": 46.7317, "ln": 15.6436},
+                {"id": 12, "n": "Hainburg A2", "lt": 46.6845, "ln": 14.6591},
+                {"id": 13, "n": "Arnoldstein A2", "lt": 46.5492, "ln": 13.7042}
+            ];
 
-        async function loadStats() {
-            try {
-                const response = await fetch(`${API_URL}/stats`);
-                const statsData = await response.json();
-                
-                dots.forEach(p => {
-                    const s = statsData[p.id] || { green: 0, red: 0 };
-                    const total = s.green + s.red;
-                    const rPerc = total > 0 ? Math.round((s.red / total) * 100) : 0;
+            const markers = {};
+            let stats = {};
+
+            async function loadStats() {
+                try {
+                    const response = await fetch(`${API_URL}/stats`);
+                    stats = await response.json();
                     
-                    let color = "blue";
-                    if (total > 0) color = rPerc >= 50 ? "red" : "green";
+                    dots.forEach(p => {
+                        const s = stats[p.id] || { green: 0, red: 0 };
+                        const total = s.green + s.red;
+                        const rPerc = total > 0 ? Math.round((s.red / total) * 100) : 0;
+                        
+                        let color = "blue";
+                        if (total > 0) color = rPerc >= 50 ? "red" : "green";
 
-                    const icon = L.icon({
-                        iconUrl: `https://raw.githubusercontent.com{color}.png`,
-                        shadowUrl: 'https://cdnjs.cloudflare.com',
-                        iconSize: [25, 41],
-                        iconAnchor: [12, 41],
-                        popupAnchor: [1, -34],
-                        shadowSize: [41, 41]
+                        const icon = L.icon({
+                            iconUrl: `https://raw.githubusercontent.com{color}.png`,
+                            shadowUrl: 'https://cdnjs.cloudflare.com',
+                            iconSize: [25, 41],
+                            iconAnchor: [12, 41],
+                            popupAnchor: [1, -34],
+                            shadowSize: [41, 41]
+                        });
+
+                        if (markers[p.id]) {
+                            markers[p.id].setIcon(icon);
+                        } else {
+                            markers[p.id] = L.marker([p.lt, p.ln], { icon: icon }).addTo(map);
+                            L.circle([p.lt, p.ln], { radius: 1500, color: 'blue', weight: 1, fillOpacity: 0.1 }).addTo(map);
+                        }
+
+                        markers[p.id].bindPopup(`
+                            <div style="text-align:center; color:#000;">
+                                <b>${p.n}</b><br>
+                                🔴 Контроль: ${rPerc}% | 🟢 Чисто: ${100-rPerc}%<br>
+                                <button class="btn" style="background:green" onclick="sendVote(${p.id}, 'green')">ЧИСТО</button>
+                                <button class="btn" style="background:red" onclick="sendVote(${p.id}, 'red')">КОНТРОЛЬ</button>
+                            </div>
+                        `);
                     });
+                } catch (e) { console.log("Stats error"); }
+            }
 
-                    if (markers[p.id]) {
-                        markers[p.id].setIcon(icon);
-                    } else {
-                        markers[p.id] = L.marker([p.lt, p.ln], { icon: icon }).addTo(map);
-                        L.circle([p.lt, p.ln], { radius: 1500, color: 'blue', weight: 1, fillOpacity: 0.1 }).addTo(map);
-                    }
+            window.sendVote = async (id, status) => {
+                try {
+                    await fetch(`${API_URL}/update`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: id, status: status })
+                    });
+                    loadStats();
+                    if (tg) tg.sendData(status + "_" + id);
+                } catch (e) { alert("Помилка зв'язку!"); }
+            };
 
-                    markers[p.id].bindPopup(`
-                        <div style="text-align:center; color:#000;">
-                            <b>${p.n}</b><br>
-                            🔴 Контроль: ${rPerc}% | 🟢 Чисто: ${100-rPerc}%<br>
-                            <small>Всього: ${total}</small><br>
-                            <button class="btn" style="background:green" onclick="sendVote(${p.id}, 'green')">ЧИСТО</button>
-                            <button class="btn" style="background:red" onclick="sendVote(${p.id}, 'red')">КОНТРОЛЬ</button>
-                        </div>
-                    `);
-                });
-            } catch (e) { console.log("Stats server offline"); }
-        }
-
-        window.sendVote = async (id, status) => {
-            try {
-                await fetch(`${API_URL}/update`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: id, status: status })
-                });
-                loadStats();
-                if (tg) tg.sendData(status + "_" + id);
-            } catch (e) { alert("Помилка зв'язку!"); }
-        };
-
-        loadStats();
-        setInterval(loadStats, 15000);
+            loadStats();
+            setInterval(loadStats, 15000);
+        });
     </script>
 </body>
 </html>
