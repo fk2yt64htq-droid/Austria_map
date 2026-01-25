@@ -5,16 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Austria Map</title>
     
-    <!-- 1. Спочатку завантажуємо стилі та скрипти карти -->
+    <!-- Підключаємо стилі та скрипти з атрибутом defer -->
     <link rel="stylesheet" href="https://unpkg.com" />
     <script src="https://unpkg.com"></script>
-    
-    <!-- 2. Потім скрипт Телеграм -->
     <script src="https://telegram.org"></script>
 
     <style>
         html, body { margin: 0; padding: 0; height: 100%; background: #fff; }
-        #map { height: 100vh; width: 100vw; }
+        #map { height: 100vh; width: 100vw; background: #eee; }
         .btn { width: 100%; padding: 12px; margin-top: 6px; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; }
     </style>
 </head>
@@ -22,27 +20,23 @@
     <div id="map"></div>
 
     <script>
-        // Перевірка Telegram
-        let tg = null;
-        if (window.Telegram && window.Telegram.WebApp) {
-            tg = window.Telegram.WebApp;
-            tg.ready();
-            tg.expand();
-        }
-
-        // ВСТАВТЕ ВАШЕ ПОСИЛАННЯ З RENDER (https)
-        const API_URL = "https://austria-map.onrender.com"; 
-
-        // Чекаємо, поки Leaflet завантажиться повністю
-        document.addEventListener("DOMContentLoaded", function() {
+        // Функція ініціалізації карти
+        function initMap() {
             if (typeof L === 'undefined') {
-                console.error("Leaflet не завантажився!");
+                console.log("Очікування завантаження Leaflet...");
+                setTimeout(initMap, 100); // Пробуємо знову через 100мс
                 return;
             }
 
+            const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+            if (tg) { tg.ready(); tg.expand(); }
+
+            // ВСТАВТЕ ВАШЕ ПОСИЛАННЯ З RENDER ТУТ
+            const API_URL = "https://austria-map.onrender.com"; 
+
             const map = L.map("map").setView([47.5162, 14.5501], 7);
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                attribution: '&copy; OpenStreetMap'
+                attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
 
             const dots = [
@@ -94,9 +88,9 @@
                         }
 
                         markers[p.id].bindPopup(`
-                            <div style="text-align:center; color:#000;">
+                            <div style="text-align:center; color:#000; min-width:140px;">
                                 <b>${p.n}</b><br>
-                                🔴 Контроль: ${rPerc}% | 🟢 Чисто: ${100-rPerc}%<br>
+                                🔴 ${rPerc}% | 🟢 ${100-rPerc}%<br>
                                 <button class="btn" style="background:green" onclick="sendVote(${p.id}, 'green')">ЧИСТО</button>
                                 <button class="btn" style="background:red" onclick="sendVote(${p.id}, 'red')">КОНТРОЛЬ</button>
                             </div>
@@ -119,7 +113,10 @@
 
             loadStats();
             setInterval(loadStats, 15000);
-        });
+        }
+
+        // Запуск ініціалізації
+        window.onload = initMap;
     </script>
 </body>
 </html>
