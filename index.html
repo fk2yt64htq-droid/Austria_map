@@ -18,19 +18,20 @@
     <script src="https://telegram.org"></script>
 
     <script>
-        // Перевірка наявності Telegram WebApp
-        const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-        if (tg) {
+        // ЗАХИСТ: Перевіряємо, чи ми в Telegram
+        let tg = null;
+        if (window.Telegram && window.Telegram.WebApp) {
+            tg = window.Telegram.WebApp;
             tg.ready();
             tg.expand();
         }
 
-        // ВАЖЛИВО: Вставте сюди ваше посилання з Render (https)
+        // ВАЖЛИВО: Вставте сюди ваше посилання з Render (має бути https)
         const API_URL = "https://austria-map.onrender.com"; 
 
         const map = L.map("map").setView([47.5162, 14.5501], 7);
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            attribution: '&copy; OpenStreetMap contributors'
+            attribution: '&copy; OpenStreetMap'
         }).addTo(map);
 
         const dots = [
@@ -90,7 +91,7 @@
                         </div>
                     `);
                 });
-            } catch (e) { console.error("Stats server error"); }
+            } catch (e) { console.log("Stats server offline"); }
         }
 
         window.sendVote = async (id, status) => {
