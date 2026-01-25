@@ -5,29 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Austria Map</title>
     
-    <!-- Підключаємо стилі Leaflet -->
+    <!-- ВИКОРИСТОВУЄМО ТІЛЬКИ НАДІЙНИЙ CLOUDFLARE -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com" />
-    
+    <script src="https://cdnjs.cloudflare.com"></script>
+    <script src="https://telegram.org"></script>
+
     <style>
-        html, body { margin: 0; padding: 0; height: 100%; background: #ffffff; }
-        #map { height: 100vh; width: 100vw; background: #ffffff; }
+        html, body { margin: 0; padding: 0; height: 100%; background: #fff; }
+        #map { height: 100vh; width: 100vw; background: #fff; }
         .btn { width: 100%; padding: 12px; margin-top: 6px; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; }
-        .leaflet-popup-content { color: #000 !important; text-align: center; width: 160px !important; }
+        .leaflet-popup-content { color: #000 !important; text-align: center; }
     </style>
 </head>
 <body>
     <div id="map"></div>
 
-    <!-- Підключаємо скрипти (Cloudflare працює найстабільніше) -->
-    <script src="https://cdnjs.cloudflare.com"></script>
-    <script src="https://telegram.org"></script>
-
     <script>
-        // Ініціалізація Telegram
         const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
         if (tg) { tg.ready(); tg.expand(); }
 
-        // ВАШЕ ПОСИЛАННЯ (ВЖЕ ВСТАВЛЕНО)
+        // ВАШЕ ПОСИЛАННЯ
         const API_URL = "https://austria-map.onrender.com"; 
 
         const dots = [
@@ -43,23 +40,20 @@
             {"id": 10, "n": "Pernau A2", "lt": 47.0900, "ln": 15.8511},
             {"id": 11, "n": "Strass in Steiermark A9", "lt": 46.7317, "ln": 15.6436},
             {"id": 12, "n": "Hainburg A2", "lt": 46.6845, "ln": 14.6591},
-            {"id": 13, "n": "Arnoldstein A2", "lt": 46.5492, "ln": 13.7042}
+            {"id": 13, "n": "Arnoldstein A2", "lat": 46.5492, "lon": 13.7042}
         ];
 
         let map, markers = {}, stats = {};
 
-        function initMap() {
-            // Перевірка чи завантажився Leaflet
+        function init() {
+            // Перевірка чи завантажився скрипт
             if (typeof L === 'undefined') {
-                console.log("Retry loading...");
-                setTimeout(initMap, 500);
+                setTimeout(init, 500);
                 return;
             }
 
             map = L.map("map").setView([47.5162, 14.5501], 7);
-            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                attribution: '&copy; OSM'
-            }).addTo(map);
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
             loadStats();
             setInterval(loadStats, 10000);
@@ -79,8 +73,8 @@
                     const iconUrl = `https://raw.githubusercontent.com{color}.png`;
 
                     if (!markers[p.id]) {
-                        markers[p.id] = L.marker([p.lt, p.ln]).addTo(map);
-                        L.circle([p.lt, p.ln], { radius: 1500, color: 'blue', weight: 1, fillOpacity: 0.1 }).addTo(map);
+                        markers[p.id] = L.marker([p.lt || p.lat, p.ln || p.lon]).addTo(map);
+                        L.circle([p.lt || p.lat, p.ln || p.lon], { radius: 1500, color: 'blue', weight: 1, fillOpacity: 0.1 }).addTo(map);
                     }
 
                     markers[p.id].setIcon(new L.Icon({
@@ -93,7 +87,7 @@
                     }));
 
                     markers[p.id].bindPopup(`
-                        <b>${p.n}</b><br>
+                        <b>${p.n || "Точка"}</b><br>
                         🔴 Контроль: ${rPerc}% | 🟢 Чисто: ${100-rPerc}%<br>
                         <button class="btn" style="background:green" onclick="sendVote(${p.id}, 'green')">ЧИСТО</button>
                         <button class="btn" style="background:red" onclick="sendVote(${p.id}, 'red')">КОНТРОЛЬ</button>
@@ -114,8 +108,7 @@
             } catch (e) { alert("Сервер Render не відповідає"); }
         };
 
-        // Стартуємо тільки після завантаження всього вікна
-        window.onload = initMap;
+        window.onload = init;
     </script>
 </body>
 </html>
