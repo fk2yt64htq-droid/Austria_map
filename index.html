@@ -5,11 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Austria Map</title>
 
-<!-- Leaflet -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<!-- Telegram WebApp -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
@@ -65,15 +62,19 @@ async function loadStats(){
         stats = await res.json();
     } catch { stats = {}; }
 
+    const now = Date.now();
+
     dots.forEach(p=>{
-        const s = stats[p.id] || {green:0, red:0};
+        const s = stats[p.id] || {green:0, red:0, lastUpdated:0};
         const total = s.green + s.red;
         const redP = total ? Math.round((s.red/total)*100) : 0;
         const greenP = total ? 100 - redP : 0;
 
-        // колір маркера
+        // колір маркера: синій, якщо понад 30 хв від останнього голосу
         let color = "blue";
-        if(total > 0) color = redP >= 50 ? "red" : "green";
+        if(total>0 && (now - (s.lastUpdated || 0)) < 30*60*1000){
+            color = redP >= 50 ? "red" : "green";
+        }
 
         const iconUrl = `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`;
 
@@ -102,17 +103,14 @@ async function loadStats(){
 }
 
 window.sendVote = (id,status)=>{
-    if(tg){
-        // Telegram WebApp
-        tg.sendData(`${status}_${id}`);
-    } else {
-        // ПК
-        fetch(API_URL + "/update",{
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({id,status})
-        }).then(()=>loadStats()).catch(e=>console.error(e));
-    }
+    const payload = {id,status,lastUpdated:Date.now()};
+    fetch(API_URL + "/update",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(payload)
+    }).then(()=>loadStats()).catch(e=>console.error(e));
+
+    if(tg) tg.sendData(`${status}_${id}`);
     loadStats();
 };
 
@@ -123,7 +121,7 @@ function init(){
     }).addTo(map);
 
     loadStats();
-    setInterval(loadStats,10000); // автооновлення
+    setInterval(loadStats,10000);
 }
 
 init();
