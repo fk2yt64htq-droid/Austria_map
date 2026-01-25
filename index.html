@@ -1,117 +1,113 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Мапа точок</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
-<style>
-  html, body { margin:0; padding:0; height:100%; }
-  #map { height:100%; width:100%; }
-  .btn { width: 100%; padding: 6px; margin-top: 5px; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Austria Map</title>
+    <!-- Виправлені посилання на бібліотеки -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net">
+    <script src="https://cdn.jsdelivr.net"></script>
+    <script src="https://telegram.org"></script>
+    <style>
+        html, body { margin: 0; padding: 0; height: 100%; background: #000; }
+        #map { height: 100vh; width: 100vw; }
+        .btn { width: 100%; padding: 12px; margin-top: 6px; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; }
+    </style>
 </head>
 <body>
-
 <div id="map"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-
 <script>
-const tg = window.Telegram.WebApp;
-tg.ready();
-tg.expand();
+    let tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
 
-const map = L.map('map').setView([47.5162, 14.5501], 7);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
+    // !!! ВСТАВТЕ ВАШЕ ПОСИЛАННЯ З RENDER НИЖЧЕ !!!
+    const API_URL = "ВСТАВТЕ_ТУТ_ВАШЕ_ПОСИЛАННЯ_З_RENDER"; 
 
-// Точки
-const points = [
-    {id:1,name:"Hörbranz A14",lat:47.5446,lon:9.7407},
-    {id:2,name:"Nuziders A14",lat:47.1731,lon:9.7737},
-    {id:3,name:"Rabfeld A12",lat:47.4574,lon:11.9196},
-    {id:4,name:"Kundl A12",lat:47.4734,lon:11.9693},
-    {id:5,name:"Wels A8",lat:48.1790,lon:13.8623},
-    {id:6,name:"Wolfsbach A1 (1)",lat:48.1120,lon:14.6761},
-    {id:7,name:"Wolfsbach A1 (2)",lat:48.1123,lon:14.6786},
-    {id:8,name:"Mistelbach A5",lat:48.5389,lon:16.6259},
-    {id:9,name:"Bruck an der Leitha A4",lat:48.0431,lon:16.7791},
-    {id:10,name:"Pernau A2",lat:47.0900,lon:15.8511},
-    {id:11,name:"Strass in Steiermark A9",lat:46.7317,lon:15.6436},
-    {id:12,name:"Hainburg A2",lat:46.6845,lon:14.6591},
-    {id:13,name:"Arnoldstein A2",lat:46.5492,lon:13.7042}
-];
+    const map = L.map("map").setView([47.5162, 14.5501], 7);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
-// Завантаження stats з URL
-let stats = {};
-try{
-    const params = new URLSearchParams(window.location.search);
-    const raw = params.get('stats');
-    if(raw) stats = JSON.parse(decodeURIComponent(raw));
-}catch(e){console.log("Stats parse error");}
+    const dots = [
+        {"id": 1, "n": "Hörbranz A14", "lt": 47.5446, "ln": 9.7407},
+        {"id": 2, "n": "Nuziders A14", "lt": 47.1731, "ln": 9.7737},
+        {"id": 3, "n": "Rabfeld A12", "lt": 47.4574, "ln": 11.9196},
+        {"id": 4, "n": "Kundl A12", "lt": 47.4734, "ln": 11.9693},
+        {"id": 5, "n": "Wels A8", "lt": 48.1790, "ln": 13.8623},
+        {"id": 6, "n": "Wolfsbach A1 (1)", "lt": 48.1120, "ln": 14.6761},
+        {"id": 7, "n": "Wolfsbach A1 (2)", "lt": 48.1123, "ln": 14.6786},
+        {"id": 8, "n": "Mistelbach A5", "lt": 48.5389, "ln": 16.6259},
+        {"id": 9, "n": "Bruck an der Leitha A4", "lt": 48.0431, "ln": 16.7791},
+        {"id": 10, "n": "Pernau A2", "lt": 47.0900, "ln": 15.8511},
+        {"id": 11, "n": "Strass in Steiermark A9", "lt": 46.7317, "ln": 15.6436},
+        {"id": 12, "n": "Hainburg A2", "lt": 46.6845, "ln": 14.6591},
+        {"id": 13, "n": "Arnoldstein A2", "lt": 46.5492, "ln": 13.7042}
+    ];
 
-// Маркери
-const markers = {};
-function updatePopup(id){
-    const marker = markers[id];
-    let s = stats[id] || {green:0, red:0, last_update:0};
-    const now = Math.floor(Date.now()/1000);
-    if(now - s.last_update > 30*60){
-        s = {green:0, red:0, last_update:0};
+    const markers = {};
+
+    async function loadStats() {
+        try {
+            const response = await fetch(`${API_URL}/stats`);
+            const statsData = await response.json();
+
+            dots.forEach(p => {
+                const s = statsData[p.id] || { green: 0, red: 0 };
+                const total = s.green + s.red;
+                const redPerc = total > 0 ? Math.round((s.red / total) * 100) : 0;
+                const greenPerc = total > 0 ? 100 - redPerc : 0;
+
+                let color = "blue";
+                if (total > 0) color = redPerc >= 50 ? "red" : "green";
+
+                const icon = new L.Icon({
+                    iconUrl: `https://raw.githubusercontent.com{color}.png`,
+                    shadowUrl: 'https://cdnjs.cloudflare.com',
+                    iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+                });
+
+                if (markers[p.id]) {
+                    markers[p.id].setIcon(icon);
+                    markers[p.id].setPopupContent(createPopupContent(p, redPerc, greenPerc, total));
+                } else {
+                    markers[p.id] = L.marker([p.lt, p.ln], { icon: icon }).addTo(map)
+                        .bindPopup(createPopupContent(p, redPerc, greenPerc, total));
+                }
+            });
+        } catch (e) { console.log("Помилка завантаження статистики"); }
     }
-    stats[id] = s;
 
-    const total = s.green + s.red;
-    const rP = total>0? Math.round((s.red/total)*100):0;
-    const gP = total>0? 100-rP:0;
+    function createPopupContent(p, redPerc, greenPerc, total) {
+        return `
+            <b>${p.n}</b><br>
+            <div style="color:gray; font-size:12px;">🔴 Контроль: ${redPerc}% | 🟢 Чисто: ${greenPerc}%</div>
+            <div style="color:gray; font-size:10px; margin-bottom:5px;">(Всього голосів: ${total})</div>
+            <button class="btn" style="background:green" onclick="sendVote(${p.id}, 'green')">ЧИСТО</button>
+            <button class="btn" style="background:red" onclick="sendVote(${p.id}, 'red')">КОНТРОЛЬ</button>
+        `;
+    }
 
-    marker.getPopup().setContent(`
-        <div style="text-align:center;">
-            <b>${marker.options.title}</b><br>
-            🔴 ${rP}% | 🟢 ${gP}%<br>
-            <button class="btn" style="background:green" onclick="send('${id}','green')">ЧИСТО</button>
-            <button class="btn" style="background:red" onclick="send('${id}','red')">КОНТРОЛЬ</button>
-        </div>
-    `);
+    window.sendVote = async (id, status) => {
+        try {
+            // Відправляємо на ваш новий сервер server.py
+            await fetch(`${API_URL}/update`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id, status: status })
+            });
+            
+            // Відправляємо боту (як і раніше)
+            tg.sendData(status + "_" + id);
+            
+            // Оновлюємо дані на мапі
+            loadStats();
+        } catch (e) {
+            alert("Помилка зв'язку із сервером!");
+        }
+    };
 
-    let color='blue';
-    if(total>0){color = rP>=50?'red':'green';}
-    const icon = L.icon({
-        iconUrl:`https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
-        shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-        iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
-    });
-    marker.setIcon(icon);
-}
-
-// Додаємо маркери та кола
-points.forEach(p=>{
-    const marker = L.marker([p.lat,p.lon],{title:p.name}).addTo(map);
-    markers[p.id]=marker;
-    marker.bindPopup('');
-    updatePopup(p.id);
-
-    L.circle([p.lat,p.lon],{radius:1500,color:'blue',fillOpacity:0.1}).addTo(map);
-});
-
-// Відправка на бота
-function send(id,status){
-    const point = points.find(p=>p.id==id);
-    const s = stats[id];
-    s[status]+=1;
-    s.last_update = Math.floor(Date.now()/1000);
-    stats[id] = s;
-
-    updatePopup(id);
-    tg.sendData(`${status}_${id}_${point.lat}_${point.lon}`);
-}
-
-// Автооновлення кожні 5 секунд
-setInterval(()=>{points.forEach(p=>updatePopup(p.id))},5000);
+    // Оновлювати кожні 15 секунд
+    loadStats();
+    setInterval(loadStats, 15000);
 </script>
-
 </body>
 </html>
