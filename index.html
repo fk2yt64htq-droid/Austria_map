@@ -5,37 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Austria Map</title>
     
-    <!-- Підключаємо стилі та скрипти з атрибутом defer -->
-    <link rel="stylesheet" href="https://unpkg.com" />
-    <script src="https://unpkg.com"></script>
-    <script src="https://telegram.org"></script>
-
+    <!-- Підключаємо стилі Leaflet -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com" />
+    
     <style>
-        html, body { margin: 0; padding: 0; height: 100%; background: #fff; }
-        #map { height: 100vh; width: 100vw; background: #eee; }
+        html, body { margin: 0; padding: 0; height: 100%; background: #ffffff; }
+        #map { height: 100vh; width: 100vw; background: #f0f0f0; }
         .btn { width: 100%; padding: 12px; margin-top: 6px; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
     <div id="map"></div>
 
+    <!-- ПІДКЛЮЧАЄМО СКРИПТИ ВНИЗУ ТІЛА -->
+    <script src="https://cdnjs.cloudflare.com"></script>
+    <script src="https://telegram.org"></script>
+
     <script>
-        // Функція ініціалізації карти
-        function initMap() {
+        // Функція запуску мапи
+        function startApp() {
+            // Перевірка чи завантажився Leaflet (L)
             if (typeof L === 'undefined') {
-                console.log("Очікування завантаження Leaflet...");
-                setTimeout(initMap, 100); // Пробуємо знову через 100мс
+                console.error("Помилка: Leaflet все ще не завантажено.");
                 return;
             }
 
             const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
             if (tg) { tg.ready(); tg.expand(); }
 
-            // ВСТАВТЕ ВАШЕ ПОСИЛАННЯ З RENDER ТУТ
+            // ВСТАВТЕ ВАШЕ ПОСИЛАННЯ З RENDER (https)
             const API_URL = "https://austria-map.onrender.com"; 
 
             const map = L.map("map").setView([47.5162, 14.5501], 7);
-            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            L.tileLayer("https://tile.openstreetmap.org{z}/{x}/{y}.png", {
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
 
@@ -96,7 +98,7 @@
                             </div>
                         `);
                     });
-                } catch (e) { console.log("Stats error"); }
+                } catch (e) { console.log("Помилка отримання статистики з сервера."); }
             }
 
             window.sendVote = async (id, status) => {
@@ -108,15 +110,17 @@
                     });
                     loadStats();
                     if (tg) tg.sendData(status + "_" + id);
-                } catch (e) { alert("Помилка зв'язку!"); }
+                } catch (e) { alert("Немає зв'язку із сервером Render."); }
             };
 
             loadStats();
-            setInterval(loadStats, 15000);
+            setInterval(loadStats, 10000);
         }
 
-        // Запуск ініціалізації
-        window.onload = initMap;
+        // Запускаємо додаток через секунду, щоб скрипти точно підвантажились
+        window.onload = function() {
+            setTimeout(startApp, 500);
+        };
     </script>
 </body>
 </html>
