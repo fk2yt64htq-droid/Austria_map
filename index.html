@@ -1,124 +1,134 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Austria Map</title>
-    <!-- Підключення стилів карти -->
-    <link rel="stylesheet" href="https://unpkg.com" />
-    <style>
-        html, body { margin: 0; padding: 0; height: 100%; background: #000; }
-        #map { height: 100vh; width: 100vw; background: #000; }
-        .btn { width: 100%; padding: 12px; margin-top: 6px; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; }
-        .leaflet-popup-content-wrapper { border-radius: 12px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Austria Map</title>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Telegram WebApp -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+html, body { margin:0; padding:0; height:100%; }
+#map { height:100vh; width:100vw; }
+.btn { width: 100%; padding:10px; margin-top:5px; border:none; border-radius:6px; color:#fff; font-weight:bold; cursor:pointer; }
+.leaflet-popup-content { text-align:center; color:#000 !important; }
+</style>
 </head>
 <body>
-    <div id="map"></div>
 
-    <!-- Підключення скриптів -->
-    <script src="https://unpkg.com"></script>
-    <script src="https://telegram.org"></script>
+<div id="map"></div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+<script>
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
 
-        // ВАЖЛИВО: Вставте сюди ваше посилання з Render (воно має бути LIVE)
-        const API_URL = "https://austria-map.onrender.com"; 
+// Твій бекенд на Render
+const API_URL = "https://austria-map.onrender.com";
 
-        // Ініціалізація карти
-        const map = L.map("map").setView([47.5162, 14.5501], 7);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
+const dots = [
+ {id:1,n:"Hörbranz A14",lt:47.5446,ln:9.7407},
+ {id:2,n:"Nuziders A14",lt:47.1731,ln:9.7737},
+ {id:3,n:"Rabfeld A12",lt:47.4574,ln:11.9196},
+ {id:4,n:"Kundl A12",lt:47.4734,ln:11.9693},
+ {id:5,n:"Wels A8",lt:48.1790,ln:13.8623},
+ {id:6,n:"Wolfsbach A1 (1)",lt:48.1120,ln:14.6761},
+ {id:7,n:"Wolfsbach A1 (2)",lt:48.1123,ln:14.6786},
+ {id:8,n:"Mistelbach A5",lt:48.5389,ln:16.6259},
+ {id:9,n:"Bruck an der Leitha A4",lt:48.0431,ln:16.7791},
+ {id:10,n:"Pernau A2",lt:47.0900,ln:15.8511},
+ {id:11,n:"Strass in Steiermark A9",lt:46.7317,ln:15.6436},
+ {id:12,n:"Hainburg A2",lt:46.6845,ln:14.6591},
+ {id:13,n:"Arnoldstein A2",lt:46.5492,ln:13.7042}
+];
 
-        const dots = [
-            {"id": 1, "n": "Hörbranz A14", "lt": 47.5446, "ln": 9.7407},
-            {"id": 2, "n": "Nuziders A14", "lt": 47.1731, "ln": 9.7737},
-            {"id": 3, "n": "Rabfeld A12", "lt": 47.4574, "ln": 11.9196},
-            {"id": 4, "n": "Kundl A12", "lt": 47.4734, "ln": 11.9693},
-            {"id": 5, "n": "Wels A8", "lt": 48.1790, "ln": 13.8623},
-            {"id": 6, "n": "Wolfsbach A1 (1)", "lt": 48.1120, "ln": 14.6761},
-            {"id": 7, "n": "Wolfsbach A1 (2)", "lt": 48.1123, "ln": 14.6786},
-            {"id": 8, "n": "Mistelbach A5", "lt": 48.5389, "ln": 16.6259},
-            {"id": 9, "n": "Bruck an der Leitha A4", "lt": 48.0431, "ln": 16.7791},
-            {"id": 10, "n": "Pernau A2", "lt": 47.0900, "ln": 15.8511},
-            {"id": 11, "n": "Strass in Steiermark A9", "lt": 46.7317, "ln": 15.6436},
-            {"id": 12, "n": "Hainburg A2", "lt": 46.6845, "ln": 14.6591},
-            {"id": 13, "n": "Arnoldstein A2", "lt": 46.5492, "ln": 13.7042},
-            {"id": 14, "n": "Grassbrunn A99", "lt": 48.0894396, "ln": 11.7446506 }
-        ];
+let map = L.map("map").setView([47.5162, 14.5501], 7);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap'}).addTo(map);
 
-        const markers = {};
-        let stats = {};
+let markers = {}, stats = {}, lastUpdate = {};
 
-        function createPopup(p, redPerc, greenPerc, total) {
-            return `
-                <div style="text-align:center; min-width:150px; color:#000;">
-                    <b>${p.n}</b><br>
-                    🔴 ${redPerc}% | 🟢 ${greenPerc}%<br>
-                    <small>Всього: ${total}</small>
-                    <button class="btn" style="background:green" onclick="sendVote(${p.id}, 'green')">ЧИСТО</button>
-                    <button class="btn" style="background:red" onclick="sendVote(${p.id}, 'red')">КОНТРОЛЬ</button>
-                </div>
-            `;
-        }
+function createPopup(dot, redP, greenP, total){
+    return `
+      <b>${dot.n}</b><br>
+      <span style="display:inline-block; width:16px; height:16px; background-color:red; border-radius:50%;"></span> ${redP}% | 
+      <span style="display:inline-block; width:16px; height:16px; background-color:green; border-radius:50%;"></span> ${greenP}%<br>
+      <small>Всього: ${total}</small><br>
+      <button class="btn" style="background:green" onclick="sendVote(${dot.id},'green')">ЧИСТО</button>
+      <button class="btn" style="background:red" onclick="sendVote(${dot.id},'red')">КОНТРОЛЬ</button>
+    `;
+}
 
-        async function loadStats() {
-            try {
-                const response = await fetch(`${API_URL}/stats`);
-                stats = await response.json();
-                
-                dots.forEach(p => {
-                    const s = stats[p.id] || { green: 0, red: 0 };
-                    const total = s.green + s.red;
-                    const rPerc = total > 0 ? Math.round((s.red / total) * 100) : 0;
-                    const gPerc = total > 0 ? 100 - rPerc : 0;
+// Завантаження статистики та оновлення точок
+async function loadStats(){
+  try{
+    const res = await fetch(`${API_URL}/stats`);
+    stats = await res.json();
+  } catch { stats = {}; }
 
-                    let color = "blue";
-                    if (total > 0) color = rPerc >= 50 ? "red" : "green";
+  const now = Date.now();
 
-                    const icon = L.icon({
-                        iconUrl: `https://raw.githubusercontent.com{color}.png`,
-                        shadowUrl: 'https://cdnjs.cloudflare.com',
-                        iconSize: [25, 41],
-                        iconAnchor: [12, 41],
-                        popupAnchor: [1, -34]
-                    });
+  dots.forEach(dot => {
+    const s = stats[dot.id] || {green:0, red:0, timestamp:0};
+    const total = s.green + s.red;
+    const redP = total ? Math.round((s.red/total)*100) : 0;
+    const greenP = total ? 100 - redP : 0;
 
-                    if (markers[p.id]) {
-                        markers[p.id].setIcon(icon);
-                        markers[p.id].setPopupContent(createPopup(p, rPerc, gPerc, total));
-                    } else {
-                        markers[p.id] = L.marker([p.lt, p.ln], { icon: icon }).addTo(map)
-                            .bindPopup(createPopup(p, rPerc, gPerc, total));
-                        L.circle([p.lt, p.ln], { radius: 1500, color: 'blue', weight: 1, fillOpacity: 0.1 }).addTo(map);
-                    }
-                });
-            } catch (e) {
-                console.error("Помилка сервера:", e);
-            }
-        }
+    // Визначаємо колір точки за статистикою
+    let color = "blue"; // дефолтний колір
+    if(total > 0){
+        if(s.red > s.green) color = "red";
+        else if(s.green > s.red) color = "green";
+        else color = "orange"; // якщо рівно 50/50, можна поставити оранжевий
+    }
 
-        window.sendVote = async (id, status) => {
-            try {
-                await fetch(`${API_URL}/update`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: id, status: status })
-                });
-                loadStats();
-                tg.sendData(status + "_" + id);
-            } catch (e) {
-                alert("Сервер не відповідає");
-            }
-        };
+    const iconUrl = `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`;
 
-        // Старт
-        loadStats();
-        setInterval(loadStats, 10000);
-    </script>
+    if(!markers[dot.id]){
+        markers[dot.id] = L.marker([dot.lt,dot.ln],{
+            icon: new L.Icon({
+                iconUrl: iconUrl,
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
+            })
+        }).addTo(map).bindPopup(createPopup(dot,redP,greenP,total));
+
+        L.circle([dot.lt,dot.ln],{radius:1500,color:"blue",weight:1,fillOpacity:0.1}).addTo(map);
+    } else {
+        // оновлюємо іконку та попап
+        markers[dot.id].setIcon(new L.Icon({
+            iconUrl: iconUrl,
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+            iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
+        }));
+        markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total));
+    }
+});
+
+}
+
+window.sendVote = async (id,status)=>{
+  try{
+    await fetch(`${API_URL}/update`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({id,status})
+    });
+  } catch { console.warn("Сервер не відповідає"); }
+
+  // Відправка через Telegram WebApp
+  tg.sendData(`${status}_${id}`);
+  loadStats(); // миттєве оновлення кольору та статистики
+};
+
+loadStats();
+setInterval(loadStats,2000); // автооновлення кожні 2 сек
+</script>
+
 </body>
 </html>
+
