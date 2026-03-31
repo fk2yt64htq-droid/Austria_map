@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -57,14 +56,11 @@ let myDot = null;
 let myAccuracy = null;
 
 function setMyLocation(lat,lon,acc=200){
-
  if(myDot){
    myDot.setLatLng([lat,lon]);
    myAccuracy.setLatLng([lat,lon]);
    myAccuracy.setRadius(acc);
  }else{
-
-   // синій круг точності
    myAccuracy = L.circle([lat,lon],{
      radius: acc,
      color:"#136AEC",
@@ -73,7 +69,6 @@ function setMyLocation(lat,lon,acc=200){
      weight:1
    }).addTo(map);
 
-   // синя точка як у Google Maps
    myDot = L.circleMarker([lat,lon],{
      radius:7,
      fillColor:"#136AEC",
@@ -87,7 +82,6 @@ function setMyLocation(lat,lon,acc=200){
  }
 }
 
-// Telegram GPS
 if(tg.requestLocation){
  tg.requestLocation((loc)=>{
    if(loc){
@@ -96,7 +90,6 @@ if(tg.requestLocation){
  });
 }
 
-// fallback browser
 if(navigator.geolocation){
  navigator.geolocation.getCurrentPosition(pos=>{
    setMyLocation(
@@ -135,7 +128,7 @@ let color="blue";
 if(total>0){
 if(s.red>s.green) color="red";
 else if(s.green>s.red) color="green";
-else color="orange";
+else color="gold"; // ТУТ ТЕПЕР ЯСКРАВО-ЖОВТИЙ
 }
 
 const iconUrl=`https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`;
@@ -182,4 +175,3 @@ setInterval(loadStats,2000);
 
 </body>
 </html>
-```
