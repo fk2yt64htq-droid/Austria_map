@@ -5,27 +5,86 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Austria Map</title>
 
-<link rel="stylesheet" href="https://jsdelivr.net"/>
-<script src="https://jsdelivr.net"></script>
-<script src="https://telegram.org"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
 html, body { margin:0; padding:0; height:100%; }
 #map { height:100vh; width:100vw; }
-.btn { width:100%; padding:10px; margin-top:5px; border:none; border-radius:6px; color:#fff; font-weight:bold; cursor:pointer; }
+.btn { width: 100%; padding:10px; margin-top:5px; border:none; border-radius:6px; color:#fff; font-weight:bold; cursor:pointer; }
 .leaflet-popup-content { text-align:center; color:#000 !important; }
+
+.langBox{
+position:absolute;
+top:10px;
+right:10px;
+z-index:9999;
+background:white;
+padding:5px;
+border-radius:6px;
+box-shadow:0 2px 6px rgba(0,0,0,.3);
+}
 </style>
 </head>
 <body>
 
 <div id="map"></div>
 
+<div class="langBox">
+<select id="langSelect">
+<option value="uk">🇺🇦</option>
+<option value="pl">🇵🇱</option>
+<option value="sk">🇸🇰</option>
+<option value="en">🇬🇧</option>
+<option value="be">🇧🇾</option>
+</select>
+</div>
+
 <script>
 const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-const API_URL = "https://onrender.com";
+const API_URL = "https://austria-map.onrender.com";
+
+/* ---------------- МОВА ---------------- */
+
+let lang = localStorage.getItem("lang");
+
+if(!lang){
+  const tgLang = tg.initDataUnsafe?.user?.language_code;
+  if(tgLang){
+    if(tgLang.startsWith("pl")) lang="pl";
+    else if(tgLang.startsWith("sk")) lang="sk";
+    else if(tgLang.startsWith("be")) lang="be";
+    else if(tgLang.startsWith("uk")) lang="uk";
+    else lang="en";
+  }else{
+    lang="uk";
+  }
+}
+
+document.getElementById("langSelect").value = lang;
+
+document.getElementById("langSelect").addEventListener("change",(e)=>{
+  lang = e.target.value;
+  localStorage.setItem("lang",lang);
+  loadStats();
+});
+
+const i18n = {
+  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього" },
+  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem" },
+  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu" },
+  en:{ clean:"CLEAR", control:"CONTROL", total:"Total" },
+  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго" }
+};
+
+function t(k){ return i18n[lang][k]; }
+
+/* ---------------- ТОЧКИ ---------------- */
 
 const dots = [
 {"id":1,"n":"Hörbranz A14","lt":47.5446,"ln":9.7407},
@@ -46,105 +105,133 @@ const dots = [
 {"id":16,"n":"Toplitsch/Sud A10","lt":46.654471,"ln":13.739964},
 {"id":17,"n":"Kuchl A10","lt":47.649664,"ln":13.136348},
 {"id":18,"n":"San Vittore A13","lt":46.2313847,"ln":9.1017162},
-{"id":19,"n":"Holztraume A13","lt":46.7635930,"ln":9.4191040},
-// Дві постійно червоні точки (замініть координати на потрібні)
-{"id":100,"n":"Контроль 1","lt":48.2082,"ln":16.3738, "locked": true},
-{"id":101,"n":"Контроль 2","lt":47.0707,"ln":15.4395, "locked": true}
+{"id":19,"n":"Holztraume A13","lt":46.7635930,"ln":9.4191040}
 ];
 
+/* ---------------- MAP ---------------- */
+
 let map = L.map("map").setView([47.5162, 14.5501], 7);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
-// Логіка СИНЬОЇ КРАПКИ (Геопозиція)
-let myDot = null;
-let myAccuracy = null;
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap'}).addTo(map);
 
-function setMyLocation(lat, lon, acc = 150) {
-    if (myDot) {
-        myDot.setLatLng([lat, lon]);
-        myAccuracy.setLatLng([lat, lon]);
-        myAccuracy.setRadius(acc);
-    } else {
-        myAccuracy = L.circle([lat, lon], { radius: acc, color: "#136AEC", fillColor: "#136AEC", fillOpacity: 0.15, weight: 1 }).addTo(map);
-        myDot = L.circleMarker([lat, lon], { radius: 8, fillColor: "#136AEC", color: "#fff", weight: 3, opacity: 1, fillOpacity: 1 }).addTo(map);
-        map.setView([lat, lon], 9);
-    }
+/* ---------------- МОЯ ГЕОЛОКАЦІЯ ---------------- */
+
+let myDot=null;
+let myAccuracy=null;
+
+function setMyLocation(lat,lon,acc=200){
+if(myDot){
+myDot.setLatLng([lat,lon]);
+myAccuracy.setLatLng([lat,lon]);
+myAccuracy.setRadius(acc);
+}else{
+
+myAccuracy=L.circle([lat,lon],{
+radius:acc,
+color:"#136AEC",
+fillColor:"#136AEC",
+fillOpacity:0.15,
+weight:1
+}).addTo(map);
+
+myDot=L.circleMarker([lat,lon],{
+radius:7,
+fillColor:"#136AEC",
+color:"#fff",
+weight:2,
+opacity:1,
+fillOpacity:1
+}).addTo(map);
+
+map.setView([lat,lon],9);
+}
 }
 
-// Запит локації
-if (navigator.geolocation) {
-    navigator.geolocation.watchPosition(pos => {
-        setMyLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
-    }, null, { enableHighAccuracy: true });
+if(navigator.geolocation){
+navigator.geolocation.watchPosition(pos=>{
+setMyLocation(
+pos.coords.latitude,
+pos.coords.longitude,
+pos.coords.accuracy
+);
+},{enableHighAccuracy:true});
 }
+
+/* ---------------- МАРКЕРИ ---------------- */
 
 let markers = {}, stats = {};
 
-function createPopup(dot, redP, greenP, total) {
-    if (dot.locked) return `<b>${dot.n}</b><br><b style="color:red">ПОСТІЙНИЙ КОНТРОЛЬ</b>`;
-    return `
-    <b>${dot.n}</b><br>
-    🔴 ${redP}% | 🟢 ${greenP}%<br>
-    <small>Всього: ${total}</small><br>
-    <button class="btn" style="background:green" onclick="sendVote(${dot.id},'green')">ЧИСТО</button>
-    <button class="btn" style="background:red" onclick="sendVote(${dot.id},'red')">КОНТРОЛЬ</button>
-    `;
+function createPopup(dot, redP, greenP, total){
+return `
+<b>${dot.n}</b><br>
+<span style="display:inline-block;width:16px;height:16px;background:red;border-radius:50%;"></span> ${redP}% |
+<span style="display:inline-block;width:16px;height:16px;background:green;border-radius:50%;"></span> ${greenP}%<br>
+<small>${t("total")}: ${total}</small><br>
+<button class="btn" style="background:green" onclick="sendVote(${dot.id},'green')">${t("clean")}</button>
+<button class="btn" style="background:red" onclick="sendVote(${dot.id},'red')">${t("control")}</button>
+`;
 }
 
-async function loadStats() {
-    try {
-        const res = await fetch(`${API_URL}/stats`);
-        stats = await res.json();
-    } catch { stats = {}; }
+async function loadStats(){
+try{
+const res = await fetch(`${API_URL}/stats`);
+stats = await res.json();
+}catch{ stats = {}; }
 
-    dots.forEach(dot => {
-        const s = stats[dot.id] || { green: 0, red: 0 };
-        const total = s.green + s.red;
-        const redP = total ? Math.round((s.red / total) * 100) : 0;
-        const greenP = total ? 100 - redP : 0;
+dots.forEach(dot=>{
+const s = stats[dot.id] || {green:0,red:0};
+const total = s.green + s.red;
+const redP = total ? Math.round((s.red/total)*100) : 0;
+const greenP = total ? 100-redP : 0;
 
-        let color = "blue";
-        if (dot.locked) {
-            color = "red"; 
-        } else if (total > 0) {
-            if (s.red > s.green) color = "red";
-            else if (s.green > s.red) color = "green";
-            else color = "gold"; // ЯСКРАВО-ЖОВТИЙ
-        }
-
-        const iconConfig = new L.Icon({
-            iconUrl: `https://githubusercontent.com{color}.png`,
-            shadowUrl: 'https://cloudflare.com',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41]
-        });
-
-        if (!markers[dot.id]) {
-            markers[dot.id] = L.marker([dot.lt, dot.ln], { icon: iconConfig }).addTo(map).bindPopup(createPopup(dot, redP, greenP, total));
-            L.circle([dot.lt, dot.ln], { radius: 1500, color: "blue", weight: 1, fillOpacity: 0.1 }).addTo(map);
-        } else {
-            markers[dot.id].setIcon(iconConfig);
-            markers[dot.id].setPopupContent(createPopup(dot, redP, greenP, total));
-        }
-    });
+let color="blue";
+if(total>0){
+if(s.red>s.green) color="red";
+else if(s.green>s.red) color="green";
+else color="yellow"; // ЯСКРАВИЙ ЖОВТИЙ
 }
 
-window.sendVote = async (id, status) => {
-    try {
-        await fetch(`${API_URL}/update`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id, status })
-        });
-    } catch { }
-    tg.sendData(`${status}_${id}`);
-    loadStats();
+const iconUrl=`https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`;
+
+if(!markers[dot.id]){
+markers[dot.id]=L.marker([dot.lt,dot.ln],{
+icon:new L.Icon({
+iconUrl:iconUrl,
+shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]
+})
+}).addTo(map).bindPopup(createPopup(dot,redP,greenP,total));
+
+L.circle([dot.lt,dot.ln],{radius:1500,color:"blue",weight:1,fillOpacity:0.1}).addTo(map);
+
+}else{
+markers[dot.id].setIcon(new L.Icon({
+iconUrl:iconUrl,
+shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]
+}));
+
+markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total));
+}
+});
+}
+
+window.sendVote = async(id,status)=>{
+try{
+await fetch(`${API_URL}/update`,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({id,status})
+});
+}catch{}
+
+tg.sendData(`${status}_${id}`);
+loadStats();
 };
 
 loadStats();
-setInterval(loadStats, 2000);
+setInterval(loadStats,2000);
 </script>
+
 </body>
 </html>
