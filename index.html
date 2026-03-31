@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Austria Map</title>
 
-<link rel="stylesheet" href="https://jsdelivr.net"/>
-<script src="https://jsdelivr.net"></script>
-<script src="https://telegram.org"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
 html, body { margin:0; padding:0; height:100%; }
@@ -45,10 +45,22 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-const API_URL = "https://onrender.com";
+const API_URL = "https://austria-map.onrender.com";
 
-let lang = localStorage.getItem("lang") || "uk";
-
+// визначення мови
+let lang = localStorage.getItem("lang");
+if(!lang){
+  const tgLang = tg.initDataUnsafe?.user?.language_code;
+  if(tgLang){
+    if(tgLang.startsWith("pl")) lang="pl";
+    else if(tgLang.startsWith("sk")) lang="sk";
+    else if(tgLang.startsWith("be")) lang="be";
+    else if(tgLang.startsWith("uk")) lang="uk";
+    else lang="en";
+  }else{
+    lang="uk";
+  }
+}
 document.getElementById("langSelect").value = lang;
 document.getElementById("langSelect").addEventListener("change",(e)=>{
   lang = e.target.value;
@@ -57,11 +69,11 @@ document.getElementById("langSelect").addEventListener("change",(e)=>{
 });
 
 const i18n = {
-  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", permanent:"ПОСТІЙНИЙ КОНТРОЛЬ" },
-  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem", permanent:"STAŁA KONTROLA" },
-  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", permanent:"STÁLA KONTROLA" },
-  en:{ clean:"CLEAR", control:"CONTROL", total:"Total", permanent:"PERMANENT CONTROL" },
-  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", permanent:"ПАСТАЯННЫ КАНТРОЛЬ" }
+  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього" },
+  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem" },
+  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu" },
+  en:{ clean:"CLEAR", control:"CONTROL", total:"Total" },
+  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго" }
 };
 function t(k){ return i18n[lang][k]; }
 
@@ -85,8 +97,8 @@ const dots = [
 {"id":17,"n":"Kuchl A10","lt":47.649664,"ln":13.136348},
 {"id":18,"n":"San Vittore A13","lt":46.2313847,"ln":9.1017162},
 {"id":19,"n":"Holztraume A13","lt":46.7635930,"ln":9.4191040},
-{"id":20,"n":"Erstfeld A2","lt":46.8369363,"ln":8.6352301, "locked": true},
-{"id":21,"n":"Giornoco A2","lt":46.3882186,"ln":8.8929391, "locked": true}
+{"id":20,"n":"Erstfeld A2","lt":46.8369363,"ln":8.6352301,"fix":true},
+{"id":21,"n":"Giornoco A2","lt":46.3882186,"ln":8.8929391,"fix":true}
 ];
 
 let map = L.map("map").setView([47.5162, 14.5501], 7);
@@ -94,10 +106,9 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&
 
 let markers = {}, stats = {};
 
+// створення попапу
 function createPopup(dot, redP, greenP, total){
-if(dot.locked){
-    return `<b>${dot.n}</b><br><span style="color:red; font-weight:bold;">${t("permanent")}</span>`;
-}
+if(dot.fix) return `<b>${dot.n}</b><br><span style="color:red;font-weight:bold;">КОНТРОЛЬ</span>`;
 return `
 <b>${dot.n}</b><br>
 <span style="display:inline-block;width:16px;height:16px;background:red;border-radius:50%;"></span> ${redP}% |
@@ -108,6 +119,7 @@ return `
 `;
 }
 
+// завантаження точок
 async function loadStats(){
 try{
 const res = await fetch(`${API_URL}/stats`);
@@ -121,21 +133,21 @@ const redP = total ? Math.round((s.red/total)*100) : 0;
 const greenP = total ? 100-redP : 0;
 
 let color="blue";
-if(dot.locked){
-    color="red";
+if(dot.fix){
+  color="red";
 } else if(total>0){
-    if(s.red>s.green) color="red";
-    else if(s.green>s.red) color="green";
-    else color="gold";
+  if(s.red>s.green) color="red";
+  else if(s.green>s.red) color="green";
+  else color="gold";
 }
 
-const iconUrl=`https://githubusercontent.com{color}.png`;
+const iconUrl=`https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`;
 
 if(!markers[dot.id]){
 markers[dot.id]=L.marker([dot.lt,dot.ln],{
 icon:new L.Icon({
 iconUrl:iconUrl,
-shadowUrl:'https://cloudflare.com',
+shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]
 })
 }).addTo(map).bindPopup(createPopup(dot,redP,greenP,total));
@@ -145,7 +157,7 @@ L.circle([dot.lt,dot.ln],{radius:1500,color:"blue",weight:1,fillOpacity:0.1}).ad
 }else{
 markers[dot.id].setIcon(new L.Icon({
 iconUrl:iconUrl,
-shadowUrl:'https://cloudflare.com',
+shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]
 }));
 markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total));
@@ -153,6 +165,7 @@ markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total));
 });
 }
 
+// кнопки голосування
 window.sendVote = async(id,status)=>{
 try{
 await fetch(`${API_URL}/update`,{
@@ -168,6 +181,7 @@ loadStats();
 loadStats();
 setInterval(loadStats,2000);
 
+// ------------------- Додана геопозиція -------------------
 let myDot=null, myAccuracy=null;
 
 function setMyLocation(lat, lon, acc=200){
@@ -200,8 +214,9 @@ function setMyLocation(lat, lon, acc=200){
 if(navigator.geolocation){
   navigator.geolocation.watchPosition(pos=>{
     setMyLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
-  }, err=>{ console.log("GPS Error:", err); }, { enableHighAccuracy:true });
+  }, err=>{ console.log("Помилка геолокації:", err); }, { enableHighAccuracy:true });
 }
 </script>
+
 </body>
 </html>
