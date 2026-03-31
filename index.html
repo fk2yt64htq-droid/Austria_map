@@ -32,54 +32,12 @@ box-shadow:0 2px 6px rgba(0,0,0,.3);
 
 <div id="map"></div>
 
-<div class="langBox">
-<select id="langSelect">
-<option value="uk">🇺🇦</option>
-<option value="pl">🇵🇱</option>
-<option value="sk">🇸🇰</option>
-<option value="en">🇬🇧</option>
-<option value="be">🇧🇾</option>
-</select>
-</div>
-
 <script>
 const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
 const API_URL = "https://austria-map.onrender.com";
-
-let lang = localStorage.getItem("lang");
-if(!lang){
-  const tgLang = tg.initDataUnsafe?.user?.language_code;
-  if(tgLang){
-    if(tgLang.startsWith("pl")) lang="pl";
-    else if(tgLang.startsWith("sk")) lang="sk";
-    else if(tgLang.startsWith("be")) lang="be";
-    else if(tgLang.startsWith("uk")) lang="uk";
-    else lang="en";
-  }else{
-    lang="uk";
-  }
-}
-
-document.getElementById("langSelect").value = lang;
-
-document.getElementById("langSelect").addEventListener("change",(e)=>{
-  lang = e.target.value;
-  localStorage.setItem("lang",lang);
-  loadStats();
-});
-
-const i18n = {
-  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", you:"Ви тут" },
-  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem", you:"Jesteś tutaj" },
-  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", you:"Ste tu" },
-  en:{ clean:"CLEAR", control:"CONTROL", total:"Total", you:"You are here" },
-  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", you:"Вы тут" }
-};
-
-function t(k){ return i18n[lang][k]; }
 
 const dots = [
 {"id":1,"n":"Hörbranz A14","lt":47.5446,"ln":9.7407},
@@ -106,62 +64,68 @@ const dots = [
 let map = L.map("map").setView([47.5162, 14.5501], 7);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap'}).addTo(map);
 
-let markers = {}, stats = {};
-let myMarker = null;
-let myCircle = null;
+let myMarker=null;
+let myCircle=null;
 
-function showMyLocation(){
-  if(!navigator.geolocation) return;
-
-  navigator.geolocation.getCurrentPosition(pos=>{
-    const lat = pos.coords.latitude;
-    const lon = pos.coords.longitude;
-    const acc = pos.coords.accuracy;
-
-    if(myMarker){
-      myMarker.setLatLng([lat,lon]);
-      myCircle.setLatLng([lat,lon]);
-      myCircle.setRadius(acc);
-    }else{
-      myMarker = L.marker([lat,lon]).addTo(map).bindPopup("📍 " + t("you"));
-      myCircle = L.circle([lat,lon],{
-        radius: acc,
-        color:"blue",
-        fillOpacity:0.15
-      }).addTo(map);
-
-      map.setView([lat,lon],9);
-    }
-  },{
-    enableHighAccuracy:true
-  });
+function setMyLocation(lat,lon,acc=200){
+ if(myMarker){
+   myMarker.setLatLng([lat,lon]);
+   myCircle.setLatLng([lat,lon]);
+   myCircle.setRadius(acc);
+ }else{
+   myMarker=L.marker([lat,lon]).addTo(map).bindPopup("📍 Ви тут");
+   myCircle=L.circle([lat,lon],{
+     radius:acc,
+     color:"blue",
+     fillOpacity:0.15
+   }).addTo(map);
+   map.setView([lat,lon],9);
+ }
 }
 
-setInterval(showMyLocation,10000);
-showMyLocation();
+// 1️⃣ Telegram location
+if(tg.requestLocation){
+ tg.requestLocation((loc)=>{
+   if(loc){
+     setMyLocation(loc.latitude,loc.longitude,100);
+   }
+ });
+}
+
+// 2️⃣ fallback browser
+if(navigator.geolocation){
+ navigator.geolocation.getCurrentPosition(pos=>{
+   setMyLocation(
+     pos.coords.latitude,
+     pos.coords.longitude,
+     pos.coords.accuracy
+   );
+ });
+}
+
+let markers={},stats={};
 
 function createPopup(dot, redP, greenP, total){
 return `
 <b>${dot.n}</b><br>
-<span style="display:inline-block;width:16px;height:16px;background:red;border-radius:50%;"></span> ${redP}% |
-<span style="display:inline-block;width:16px;height:16px;background:green;border-radius:50%;"></span> ${greenP}%<br>
-<small>${t("total")}: ${total}</small><br>
-<button class="btn" style="background:green" onclick="sendVote(${dot.id},'green')">${t("clean")}</button>
-<button class="btn" style="background:red" onclick="sendVote(${dot.id},'red')">${t("control")}</button>
+🔴 ${redP}% | 🟢 ${greenP}%<br>
+<small>Всього: ${total}</small><br>
+<button class="btn" style="background:green" onclick="sendVote(${dot.id},'green')">ЧИСТО</button>
+<button class="btn" style="background:red" onclick="sendVote(${dot.id},'red')">КОНТРОЛЬ</button>
 `;
 }
 
 async function loadStats(){
 try{
-const res = await fetch(`${API_URL}/stats`);
-stats = await res.json();
-}catch{ stats = {}; }
+const res=await fetch(`${API_URL}/stats`);
+stats=await res.json();
+}catch{ stats={}; }
 
 dots.forEach(dot=>{
-const s = stats[dot.id] || {green:0,red:0};
-const total = s.green + s.red;
-const redP = total ? Math.round((s.red/total)*100) : 0;
-const greenP = total ? 100-redP : 0;
+const s=stats[dot.id]||{green:0,red:0};
+const total=s.green+s.red;
+const redP=total?Math.round((s.red/total)*100):0;
+const greenP=total?100-redP:0;
 
 let color="blue";
 if(total>0){
@@ -195,7 +159,7 @@ markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total));
 });
 }
 
-window.sendVote = async(id,status)=>{
+window.sendVote=async(id,status)=>{
 try{
 await fetch(`${API_URL}/update`,{
 method:"POST",
