@@ -28,8 +28,8 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-// Твій бекенд на Render
-const API_URL = "https://austria-map.onrender.com";
+// Твій бекенд на Railway (замініть назву на свою реальну адресу Railway)
+const API_URL = "https://austria-map.onrender.com"; 
 
 const dots = [
     {"id": 1, "n": "Hörbranz A14", "lt": 47.5446, "ln": 9.7407},
@@ -56,7 +56,7 @@ const dots = [
 let map = L.map("map").setView([47.5162, 14.5501], 7);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap'}).addTo(map);
 
-let markers = {}, stats = {}, lastUpdate = {};
+let markers = {}, stats = {};
 
 function createPopup(dot, redP, greenP, total){
     return `
@@ -69,27 +69,23 @@ function createPopup(dot, redP, greenP, total){
     `;
 }
 
-// Завантаження статистики та оновлення точок
 async function loadStats(){
   try{
     const res = await fetch(`${API_URL}/stats`);
     stats = await res.json();
   } catch { stats = {}; }
 
-  const now = Date.now();
-
   dots.forEach(dot => {
-    const s = stats[dot.id] || {green:0, red:0, timestamp:0};
+    const s = stats[dot.id] || {green:0, red:0};
     const total = s.green + s.red;
     const redP = total ? Math.round((s.red/total)*100) : 0;
     const greenP = total ? 100 - redP : 0;
 
-    // Визначаємо колір точки за статистикою
-    let color = "blue"; // дефолтний колір
+    let color = "blue"; 
     if(total > 0){
         if(s.red > s.green) color = "red";
         else if(s.green > s.red) color = "green";
-        else color = "orange"; // якщо рівно 50/50, можна поставити оранжевий
+        else color = "gold"; // ЗАМІНЕНО orange на gold для яскравості
     }
 
     const iconUrl = `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`;
@@ -105,7 +101,6 @@ async function loadStats(){
 
         L.circle([dot.lt,dot.ln],{radius:1500,color:"blue",weight:1,fillOpacity:0.1}).addTo(map);
     } else {
-        // оновлюємо іконку та попап
         markers[dot.id].setIcon(new L.Icon({
             iconUrl: iconUrl,
             shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
@@ -114,7 +109,6 @@ async function loadStats(){
         markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total));
     }
 });
-
 }
 
 window.sendVote = async (id,status)=>{
@@ -126,15 +120,13 @@ window.sendVote = async (id,status)=>{
     });
   } catch { console.warn("Сервер не відповідає"); }
 
-  // Відправка через Telegram WebApp
   tg.sendData(`${status}_${id}`);
-  loadStats(); // миттєве оновлення кольору та статистики
+  loadStats();
 };
 
 loadStats();
-setInterval(loadStats,2000); // автооновлення кожні 2 сек
+setInterval(loadStats,2000);
 </script>
 
 </body>
 </html>
-
