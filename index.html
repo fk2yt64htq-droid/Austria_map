@@ -5,8 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Austria Map</title>
 
+<!-- Leaflet -->
 <link rel="stylesheet" href="https://jsdelivr.net"/>
 <script src="https://jsdelivr.net"></script>
+
+<!-- Telegram WebApp -->
 <script src="https://telegram.org"></script>
 
 <style>
@@ -45,7 +48,8 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-const API_URL = "https://onrender.com";
+// Вкажіть тут вашу реальну адресу з Render або Railway
+const API_URL = "https://austria-map.onrender.com";
 
 // визначення мови
 let lang = localStorage.getItem("lang") || "uk";
