@@ -69,11 +69,11 @@ document.getElementById("langSelect").addEventListener("change",(e)=>{
 });
 
 const i18n = {
-  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього" },
-  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem" },
-  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu" },
-  en:{ clean:"CLEAR", control:"CONTROL", total:"Total" },
-  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго" }
+  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", permanent:"ПОСТІЙНИЙ КОНТРОЛЬ" },
+  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem", permanent:"STAŁA KONTROLA" },
+  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", permanent:"STÁLA KONTROLA" },
+  en:{ clean:"CLEAR", control:"CONTROL", total:"Total", permanent:"PERMANENT CONTROL" },
+  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", permanent:"ПАСТАЯННЫ КАНТРОЛЬ" }
 };
 function t(k){ return i18n[lang][k]; }
 
@@ -96,7 +96,9 @@ const dots = [
 {"id":16,"n":"Toplitsch/Sud A10","lt":46.654471,"ln":13.739964},
 {"id":17,"n":"Kuchl A10","lt":47.649664,"ln":13.136348},
 {"id":18,"n":"San Vittore A13","lt":46.2313847,"ln":9.1017162},
-{"id":19,"n":"Holztraume A13","lt":46.7635930,"ln":9.4191040}
+{"id":19,"n":"Holztraume A13","lt":46.7635930,"ln":9.4191040},
+{"id":20,"n":"Erstfeld A2","lt":46.8369363,"ln":8.6352301, "locked": true},
+{"id":21,"n":"Giornoco A2","lt":46.3882186,"ln":8.8929391, "locked": true}
 ];
 
 let map = L.map("map").setView([47.5162, 14.5501], 7);
@@ -106,6 +108,9 @@ let markers = {}, stats = {};
 
 // створення попапу
 function createPopup(dot, redP, greenP, total){
+if(dot.locked){
+    return `<b>${dot.n}</b><br><span style="color:red; font-weight:bold;">${t("permanent")}</span>`;
+}
 return `
 <b>${dot.n}</b><br>
 <span style="display:inline-block;width:16px;height:16px;background:red;border-radius:50%;"></span> ${redP}% |
@@ -130,13 +135,15 @@ const redP = total ? Math.round((s.red/total)*100) : 0;
 const greenP = total ? 100-redP : 0;
 
 let color="blue";
-if(total>0){
-if(s.red>s.green) color="red";
-else if(s.green>s.red) color="green";
-else color="gold";
+if(dot.locked){
+    color="red";
+} else if(total>0){
+    if(s.red>s.green) color="red";
+    else if(s.green>s.red) color="green";
+    else color="gold";
 }
 
-const iconUrl=`https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`;
+const iconUrl=`https://githubusercontent.com{color}.png`;
 
 if(!markers[dot.id]){
 markers[dot.id]=L.marker([dot.lt,dot.ln],{
