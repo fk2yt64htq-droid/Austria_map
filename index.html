@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -7,13 +8,12 @@
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
 html, body { margin:0; padding:0; height:100%; }
 #map { height:100vh; width:100vw; }
-.btn { width: 100%; padding:10px; margin-top:5px; border:none; border-radius:6px; color:#fff; font-weight:bold; cursor:pointer; }
+.btn { width:100%; padding:10px; margin-top:5px; border:none; border-radius:6px; color:#fff; font-weight:bold; cursor:pointer; }
 .leaflet-popup-content { text-align:center; color:#000 !important; }
 
 .langBox{
@@ -49,9 +49,7 @@ tg.expand();
 
 const API_URL = "https://austria-map.onrender.com";
 
-// визначення мови
 let lang = localStorage.getItem("lang");
-
 if(!lang){
   const tgLang = tg.initDataUnsafe?.user?.language_code;
   if(tgLang){
@@ -74,11 +72,11 @@ document.getElementById("langSelect").addEventListener("change",(e)=>{
 });
 
 const i18n = {
-  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього" },
-  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem" },
-  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu" },
-  en:{ clean:"CLEAR", control:"CONTROL", total:"Total" },
-  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго" }
+  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", you:"Ви тут" },
+  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem", you:"Jesteś tutaj" },
+  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", you:"Ste tu" },
+  en:{ clean:"CLEAR", control:"CONTROL", total:"Total", you:"You are here" },
+  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", you:"Вы тут" }
 };
 
 function t(k){ return i18n[lang][k]; }
@@ -109,6 +107,38 @@ let map = L.map("map").setView([47.5162, 14.5501], 7);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap'}).addTo(map);
 
 let markers = {}, stats = {};
+let myMarker = null;
+let myCircle = null;
+
+function showMyLocation(){
+  if(!navigator.geolocation) return;
+
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+    const acc = pos.coords.accuracy;
+
+    if(myMarker){
+      myMarker.setLatLng([lat,lon]);
+      myCircle.setLatLng([lat,lon]);
+      myCircle.setRadius(acc);
+    }else{
+      myMarker = L.marker([lat,lon]).addTo(map).bindPopup("📍 " + t("you"));
+      myCircle = L.circle([lat,lon],{
+        radius: acc,
+        color:"blue",
+        fillOpacity:0.15
+      }).addTo(map);
+
+      map.setView([lat,lon],9);
+    }
+  },{
+    enableHighAccuracy:true
+  });
+}
+
+setInterval(showMyLocation,10000);
+showMyLocation();
 
 function createPopup(dot, redP, greenP, total){
 return `
@@ -137,7 +167,7 @@ let color="blue";
 if(total>0){
 if(s.red>s.green) color="red";
 else if(s.green>s.red) color="green";
-else color="gold"; // Змінено з orange на gold для яскраво-жовтого кольору
+else color="orange";
 }
 
 const iconUrl=`https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`;
@@ -184,3 +214,4 @@ setInterval(loadStats,2000);
 
 </body>
 </html>
+```
