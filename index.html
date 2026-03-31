@@ -50,7 +50,6 @@ tg.expand();
 const API_URL = "https://austria-map.onrender.com";
 
 /* ---------------- МОВА ---------------- */
-
 let lang = localStorage.getItem("lang");
 
 if(!lang){
@@ -85,7 +84,6 @@ const i18n = {
 function t(k){ return i18n[lang][k]; }
 
 /* ---------------- ТОЧКИ ---------------- */
-
 const dots = [
 {"id":1,"n":"Hörbranz A14","lt":47.5446,"ln":9.7407},
 {"id":2,"n":"Nuziders A14","lt":47.1731,"ln":9.7737},
@@ -109,13 +107,10 @@ const dots = [
 ];
 
 /* ---------------- MAP ---------------- */
-
 let map = L.map("map").setView([47.5162, 14.5501], 7);
-
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap'}).addTo(map);
 
 /* ---------------- МОЯ ГЕОЛОКАЦІЯ ---------------- */
-
 let myDot=null;
 let myAccuracy=null;
 
@@ -158,7 +153,6 @@ pos.coords.accuracy
 }
 
 /* ---------------- МАРКЕРИ ---------------- */
-
 let markers = {}, stats = {};
 
 function createPopup(dot, redP, greenP, total){
@@ -188,7 +182,7 @@ let color="blue";
 if(total>0){
 if(s.red>s.green) color="red";
 else if(s.green>s.red) color="green";
-else color="yellow"; // ЯСКРАВИЙ ЖОВТИЙ
+else color="yellow"; // яскраво-жовтий
 }
 
 const iconUrl=`https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`;
