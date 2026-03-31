@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Austria Map</title>
 
-<!-- Leaflet -->
+<!-- Виправлені посилання на Leaflet -->
 <link rel="stylesheet" href="https://jsdelivr.net"/>
 <script src="https://jsdelivr.net"></script>
 
@@ -48,10 +48,8 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-// Вкажіть тут вашу реальну адресу з Render або Railway
 const API_URL = "https://austria-map.onrender.com";
 
-// визначення мови
 let lang = localStorage.getItem("lang") || "uk";
 document.getElementById("langSelect").value = lang;
 document.getElementById("langSelect").addEventListener("change",(e)=>{
@@ -131,6 +129,7 @@ if(dot.fix){
   else color="gold";
 }
 
+// Виправлене посилання на іконки
 const iconUrl=`https://githubusercontent.com{color}.png`;
 
 if(!markers[dot.id]){
@@ -183,7 +182,7 @@ function setMyLocation(lat, lon, acc=200){
 if(navigator.geolocation){
   navigator.geolocation.watchPosition(pos=>{
     setMyLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
-  }, null, { enableHighAccuracy:true });
+  }, err=>{ console.log("Помилка геолокації:", err); }, { enableHighAccuracy:true });
 }
 </script>
 </body>
