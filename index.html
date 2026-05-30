@@ -15,7 +15,6 @@ html, body { margin:0; padding:0; height:100%; }
 .btn { width: 100%; padding:10px; margin-top:5px; border:none; border-radius:6px; color:#fff; font-weight:bold; cursor:pointer; }
 .leaflet-popup-content { text-align:center; color:#000 !important; }
 
-/* Готова відкрита таблиця ТОП-5 на мапі */
 .top-permanent-box {
 position: absolute;
 top: 10px;
@@ -57,13 +56,8 @@ border-radius:6px;
 box-shadow:0 2px 6px rgba(0,0,0,.3);
 }
 
-/* Адаптивність для малих екранів смартфонів */
 @media (max-width: 400px) {
-  .top-permanent-box {
-    width: 190px;
-    padding: 8px;
-    font-size: 11px;
-  }
+  .top-permanent-box { width: 190px; padding: 8px; font-size: 11px; }
   .top-permanent-box h3 { font-size: 12px; }
   .top-item { font-size: 11px; padding: 3px 0; }
 }
@@ -74,7 +68,7 @@ box-shadow:0 2px 6px rgba(0,0,0,.3);
 <div id="map"></div>
 
 <div class="top-permanent-box">
-    <h3 id="topTitle">🏆 ТОП-5 активних водіїв</h3>
+    <h3 id="topTitle">🏆 ТОП-5 active drivers</h3>
     <div id="topList">Завантаження рейтингу...</div>
 </div>
 
@@ -97,7 +91,6 @@ if (tg) {
 
 const API_URL = "https://austria-map.onrender.com";
 
-// Визначення мови
 let lang = localStorage.getItem("lang");
 if(!lang){
   const tgLang = tg?.initDataUnsafe?.user?.language_code;
@@ -119,11 +112,11 @@ document.getElementById("langSelect").addEventListener("change",(e)=>{
 });
 
 const i18n = {
-  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього" },
-  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem" },
-  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu" },
-  en:{ clean:"CLEAR", control:"CONTROL", total:"Total" },
-  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго" }
+  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", was_control:"Був КОНТРОЛЬ", was_clean:"Було ЧИСТО", active: "Активно:" },
+  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:" },
+  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", was_control:"Bola KONTROLA", was_clean:"Bolo ČISTÉ", active: "Aktívne:" },
+  en:{ clean:"CLEAR", control:"CONTROL", total:"Total", was_control:"Was CONTROL", was_clean:"Was CLEAR", active: "Active:" },
+  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", was_control:"Быў КАНТРОЛЬ", was_clean:"Было ЧЫСТА", active: "Актыўна:" }
 };
 function t(k){ return i18n[lang][k]; }
 
@@ -156,10 +149,21 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&
 
 let markers = {}, stats = {};
 
-function createPopup(dot, redP, greenP, total){
+function createPopup(dot, redP, greenP, total, color, oldStatus, lastTime){
 if(dot.fix) return `<b>${dot.n}</b><br><span style="color:red;font-weight:bold;">КОНТРОЛЬ</span>`;
+
+let historyHtml = "";
+if (color === "blue" && oldStatus) {
+    let statusText = oldStatus === "red" ? t("was_control") : t("was_clean");
+    let statusColor = oldStatus === "red" ? "red" : "green";
+    historyHtml = `<div style="margin: 5px 0; font-size:12px; color:#555;">⏳ <b>${statusText}</b> (<span style="color:${statusColor}">${lastTime}</span>)</div>`;
+} else if (lastTime) {
+    historyHtml = `<div style="margin: 5px 0; font-size:12px; color:#666;">⏱️ ${t("active")} ${lastTime}</div>`;
+}
+
 return `
 <b>${dot.n}</b><br>
+${historyHtml}
 <span style="display:inline-block;width:16px;height:16px;background:red;border-radius:50%;"></span> ${redP}% |
 <span style="display:inline-block;width:16px;height:16px;background:green;border-radius:50%;"></span> ${greenP}%<br>
 <small>${t("total")}: ${total}</small><br>
@@ -175,17 +179,17 @@ stats = await res.json();
 }catch{ stats = {}; }
 
 dots.forEach(dot=>{
-const s = stats[dot.id] || {green:0,red:0};
+const s = stats[dot.id] || {color:"blue", green:0, red:0, old_status:"", last_time:""};
 const total = s.green + s.red;
 const redP = total ? Math.round((s.red/total)*100) : 0;
 const greenP = total ? 100-redP : 0;
 
-let color="blue";
+let color = s.color || "blue";
 if(dot.fix){
   color="red";
-} else if(total>0){
-  if(s.red>s.green) color="red";
-  else if(s.green>s.red) color="green";
+} else if(color !== "blue" && total > 0){
+  if(s.red > s.green) color="red";
+  else if(s.green > s.red) color="green";
   else color="gold";
 }
 
@@ -198,7 +202,7 @@ iconUrl:iconUrl,
 shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]
 })
-}).addTo(map).bindPopup(createPopup(dot,redP,greenP,total));
+}).addTo(map).bindPopup(createPopup(dot,redP,greenP,total,s.color,s.old_status,s.last_time));
 
 L.circle([dot.lt,dot.ln],{radius:1500,color:"blue",weight:1,fillOpacity:0.1}).addTo(map);
 
@@ -208,7 +212,7 @@ iconUrl:iconUrl,
 shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]
 }));
-markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total));
+markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total,s.color,s.old_status,s.last_time));
 }
 });
 }
@@ -241,12 +245,11 @@ function sendVote(id, status) {
             try { tg.sendData(status + "_" + id); } catch(e){}
         }
         loadStats();
-        loadTopPermanent(); // Оновлюємо віджет після голосу
+        loadTopPermanent();
     })
-    .catch(err => console.error("Помилка відправки:", err));
+    .catch(err => console.error("Помилка:", err));
 }
 
-// --- ЗАВАНТАЖЕННЯ ТОП-5 НАПРЯМУ В БЛОК ---
 async function loadTopPermanent() {
     const listDiv = document.getElementById("topList");
     try {
@@ -260,8 +263,6 @@ async function loadTopPermanent() {
         
         let html = "";
         const medals = ["🥇", "🥈", "🥉"];
-        
-        // Беремо максимум 5 людей для компактності на мапі
         const top5 = topUsers.slice(0, 5);
         
         top5.forEach((user, i) => {
@@ -280,15 +281,12 @@ async function loadTopPermanent() {
     }
 }
 
-// Початкове завантаження даних
 loadStats();
 loadTopPermanent();
 
-// Оновлення кожні 10 секунд для топу і 2 секунди для мапи
 setInterval(loadStats, 2000);
 setInterval(loadTopPermanent, 10000);
 
-// Геопозиція
 let myDot=null, myAccuracy=null;
 function setMyLocation(lat, lon, acc=200){
   if(myDot){
