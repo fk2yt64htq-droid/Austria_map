@@ -165,15 +165,22 @@ markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total));
 });
 }
 
-// кнопки голосування
+// кнопки голосування з передачею даних користувача для ТОПу
 window.sendVote = async(id,status)=>{
 try{
+const user = tg.initDataUnsafe?.user || {};
 await fetch(`${API_URL}/update`,{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({id,status})
+body:JSON.stringify({
+id,
+status,
+user_id: user.id || 0,
+username: user.username || "",
+first_name: user.first_name || "Водій"
+})
 });
-}catch{}
+}catch(e){ console.log("Помилка відправки голосу:", e); }
 tg.sendData(`${status}_${id}`);
 loadStats();
 };
