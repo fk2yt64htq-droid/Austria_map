@@ -14,7 +14,39 @@ html, body { margin:0; padding:0; height:100%; }
 #map { height:100vh; width:100vw; }
 .btn { width: 100%; padding:10px; margin-top:5px; border:none; border-radius:6px; color:#fff; font-weight:bold; cursor:pointer; }
 .leaflet-popup-content { text-align:center; color:#000 !important; }
-.langBox{
+
+/* Готова відкрита таблиця ТОП-5 на мапі */
+.top-permanent-box {
+position: absolute;
+top: 10px;
+left: 10px;
+z-index: 9999;
+background: rgba(255, 255, 255, 0.95);
+width: 240px;
+border-radius: 8px;
+box-shadow: 0 4px 12px rgba(0,0,0,.3);
+padding: 12px;
+font-family: Arial, sans-serif;
+border: 1px solid #ddd;
+}
+.top-permanent-box h3 { 
+margin: 0 0 8px 0; 
+font-size: 14px; 
+text-align: center; 
+color: #222; 
+border-bottom: 2px solid #136AEC;
+padding-bottom: 4px;
+}
+.top-item { 
+display: flex; 
+justify-content: space-between; 
+padding: 5px 0; 
+border-bottom: 1px solid #eee; 
+font-size: 13px; 
+}
+.top-item:last-child { border: none; }
+
+.langBox {
 position:absolute;
 top:10px;
 right:10px;
@@ -24,11 +56,27 @@ padding:5px;
 border-radius:6px;
 box-shadow:0 2px 6px rgba(0,0,0,.3);
 }
+
+/* Адаптивність для малих екранів смартфонів */
+@media (max-width: 400px) {
+  .top-permanent-box {
+    width: 190px;
+    padding: 8px;
+    font-size: 11px;
+  }
+  .top-permanent-box h3 { font-size: 12px; }
+  .top-item { font-size: 11px; padding: 3px 0; }
+}
 </style>
 </head>
 <body>
 
 <div id="map"></div>
+
+<div class="top-permanent-box">
+    <h3 id="topTitle">🏆 ТОП-5 активних водіїв</h3>
+    <div id="topList">Завантаження рейтингу...</div>
+</div>
 
 <div class="langBox">
 <select id="langSelect">
@@ -41,7 +89,7 @@ box-shadow:0 2px 6px rgba(0,0,0,.3);
 </div>
 
 <script>
-const tg = window.Telegram?.WebApp;
+const tg = window.Telegram ? window.Telegram.WebApp : null;
 if (tg) {
     tg.ready();
     tg.expand();
@@ -49,7 +97,7 @@ if (tg) {
 
 const API_URL = "https://austria-map.onrender.com";
 
-// визначення мови
+// Визначення мови
 let lang = localStorage.getItem("lang");
 if(!lang){
   const tgLang = tg?.initDataUnsafe?.user?.language_code;
@@ -108,7 +156,6 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&
 
 let markers = {}, stats = {};
 
-// створення попапу (ВИПРАВЛЕНО ВИКЛИК НА window.sendVote)
 function createPopup(dot, redP, greenP, total){
 if(dot.fix) return `<b>${dot.n}</b><br><span style="color:red;font-weight:bold;">КОНТРОЛЬ</span>`;
 return `
@@ -116,12 +163,11 @@ return `
 <span style="display:inline-block;width:16px;height:16px;background:red;border-radius:50%;"></span> ${redP}% |
 <span style="display:inline-block;width:16px;height:16px;background:green;border-radius:50%;"></span> ${greenP}%<br>
 <small>${t("total")}: ${total}</small><br>
-<button class="btn" style="background:green" onclick="window.sendVote(${dot.id},'green')">${t("clean")}</button>
-<button class="btn" style="background:red" onclick="window.sendVote(${dot.id},'red')">${t("control")}</button>
+<button class="btn" style="background:green" onclick="sendVote(${dot.id},'green')">${t("clean")}</button>
+<button class="btn" style="background:red" onclick="sendVote(${dot.id},'red')">${t("control")}</button>
 `;
 }
 
-// завантаження точок
 async function loadStats(){
 try{
 const res = await fetch(`${API_URL}/stats`);
@@ -167,34 +213,83 @@ markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total));
 });
 }
 
-// кнопки голосування з передачею даних користувача для ТОПу
-window.sendVote = async(id,status)=>{
-try{
-const user = tg?.initDataUnsafe?.user || {};
-await fetch(`${API_URL}/update`,{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-id,
-status,
-user_id: user.id || 0,
-username: user.username || "",
-first_name: user.first_name || "Водій"
-})
-});
-}catch(e){ console.log("Помилка відправки голосу:", e); }
-if (tg && typeof tg.sendData === 'function') {
-    tg.sendData(`${status}_${id}`);
+function sendVote(id, status) {
+    let userId = 0;
+    let username = "";
+    let firstName = "Водій";
+
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        userId = tg.initDataUnsafe.user.id || 0;
+        username = tg.initDataUnsafe.user.username || "";
+        firstName = tg.initDataUnsafe.user.first_name || "Водій";
+    }
+
+    fetch(`${API_URL}/update`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            id: id,
+            status: status,
+            user_id: userId,
+            username: username,
+            first_name: firstName
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (tg) {
+            try { tg.sendData(status + "_" + id); } catch(e){}
+        }
+        loadStats();
+        loadTopPermanent(); // Оновлюємо віджет після голосу
+    })
+    .catch(err => console.error("Помилка відправки:", err));
 }
-loadStats();
-};
 
-loadStats();
-setInterval(loadStats,2000);
+// --- ЗАВАНТАЖЕННЯ ТОП-5 НАПРЯМУ В БЛОК ---
+async function loadTopPermanent() {
+    const listDiv = document.getElementById("topList");
+    try {
+        const res = await fetch(`${API_URL}/top?period=week`);
+        const topUsers = await res.json();
+        
+        if (!topUsers || topUsers.length === 0) {
+            listDiv.innerHTML = "<p style='text-align:center;margin:5px 0;color:#777;font-size:12px;'>Голосів ще немає 🚀</p>";
+            return;
+        }
+        
+        let html = "";
+        const medals = ["🥇", "🥈", "🥉"];
+        
+        // Беремо максимум 5 людей для компактності на мапі
+        const top5 = topUsers.slice(0, 5);
+        
+        top5.forEach((user, i) => {
+            const place = i < 3 ? medals[i] : `${i + 1}.`;
+            const name = user.first_name || "Водій";
+            html += `
+                <div class="top-item">
+                    <span>${place} <b>${name}</b></span>
+                    <span style="color:#136AEC;font-weight:bold;">${user.votes} 🗳️</span>
+                </div>
+            `;
+        });
+        listDiv.innerHTML = html;
+    } catch (e) {
+        listDiv.innerHTML = "<p style='color:red;font-size:12px;'>Помилка рейтингу</p>";
+    }
+}
 
-// ------------------- Додана геопозиція -------------------
+// Початкове завантаження даних
+loadStats();
+loadTopPermanent();
+
+// Оновлення кожні 10 секунд для топу і 2 секунди для мапи
+setInterval(loadStats, 2000);
+setInterval(loadTopPermanent, 10000);
+
+// Геопозиція
 let myDot=null, myAccuracy=null;
-
 function setMyLocation(lat, lon, acc=200){
   if(myDot){
     myDot.setLatLng([lat,lon]);
