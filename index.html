@@ -1,508 +1,326 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Austria Border Control Map</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-        #map {
-            width: 100%;
-            height: 100%;
-        }
-        /* Блок управління у верхньому правому кутку */
-        .control-container {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        /* Кругла кнопка зворотного зв'язку (Лампочка) */
-        .feedback-circle-btn {
-            background-color: #ff9800;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 42px;
-            height: 42px;
-            font-size: 20px;
-            cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.1s ease;
-        }
-        .feedback-circle-btn:active {
-            transform: scale(0.9);
-        }
-        /* Селектор мови */
-        .lang-select {
-            background: white;
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-            outline: none;
-            cursor: pointer;
-        }
-        /* Вікно лідерборду */
-        .top-container {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 1000;
-            background: white;
-            padding: 12px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            max-width: 280px;
-            width: calc(100% - 140px);
-        }
-        .top-title-area {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #0056b3;
-            padding-bottom: 6px;
-            margin-bottom: 8px;
-        }
-        .top-title {
-            font-weight: bold;
-            font-size: 13px;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .toggle-top-btn {
-            background: none;
-            border: none;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            padding: 0 5px;
-            color: #666;
-        }
-        .top-list {
-            margin: 0;
-            padding: 0;
-            list-style: none;
-            max-height: 150px;
-            overflow-y: auto;
-            font-size: 13px;
-        }
-        .top-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 4px 0;
-            border-bottom: 1px solid #eee;
-        }
-        .top-item:last-child { border-bottom: none; }
-        .top-name {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 70%;
-        }
-        .top-count {
-            font-weight: bold;
-            color: #0056b3;
-        }
-        /* Спливаючі вікна маркерів */
-        .popup-title {
-            font-weight: bold;
-            margin-bottom: 8px;
-            font-size: 14px;
-            text-align: center;
-        }
-        .popup-buttons {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-        }
-        .btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 13px;
-        }
-        .btn-green { background-color: #28a745; }
-        .btn-red { background-color: #dc3545; }
-        .popup-time {
-            font-size: 11px;
-            color: #666;
-            margin-top: 6px;
-            text-align: center;
-        }
-        /* Модальне вікно для Ідей/Фідбеку */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 2000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-box {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 360px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            box-sizing: border-box;
-        }
-        .modal-box h3 {
-            margin-top: 0;
-            margin-bottom: 12px;
-            color: #333;
-            font-size: 16px;
-        }
-        .modal-box textarea {
-            width: 100%;
-            height: 100px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            padding: 8px;
-            resize: none;
-            box-sizing: border-box;
-            font-family: inherit;
-            font-size: 14px;
-            outline: none;
-        }
-        .modal-box textarea:focus {
-            border-color: #ff9800;
-        }
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 12px;
-        }
-        .btn-modal {
-            padding: 8px 14px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        .btn-cancel { background: #eee; color: #333; }
-        .btn-submit { background: #ff9800; color: white; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Austria Map</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+html, body { margin:0; padding:0; height:100%; }
+#map { height:100vh; width:100vw; }
+.btn { width: 100%; padding:10px; margin-top:5px; border:none; border-radius:6px; color:#fff; font-weight:bold; cursor:pointer; }
+.leaflet-popup-content { text-align:center; color:#000 !important; }
+
+.top-permanent-box {
+position: absolute;
+top: 10px;
+left: 10px;
+z-index: 9999;
+background: rgba(255, 255, 255, 0.95);
+width: 240px;
+border-radius: 8px;
+box-shadow: 0 4px 12px rgba(0,0,0,.3);
+padding: 12px;
+font-family: Arial, sans-serif;
+border: 1px solid #ddd;
+}
+.top-permanent-box h3 { 
+margin: 0 0 8px 0; 
+font-size: 14px; 
+text-align: center; 
+color: #222; 
+border-bottom: 2px solid #136AEC;
+padding-bottom: 4px;
+}
+.top-item { 
+display: flex; 
+justify-content: space-between; 
+padding: 5px 0; 
+border-bottom: 1px solid #eee; 
+font-size: 13px; 
+}
+.top-item:last-child { border: none; }
+
+.langBox {
+position:absolute;
+top:10px;
+right:10px;
+z-index:9999;
+background:white;
+padding:5px;
+border-radius:6px;
+box-shadow:0 2px 6px rgba(0,0,0,.3);
+}
+
+@media (max-width: 400px) {
+  .top-permanent-box { width: 190px; padding: 8px; font-size: 11px; }
+  .top-permanent-box h3 { font-size: 12px; }
+  .top-item { font-size: 11px; padding: 3px 0; }
+}
+</style>
 </head>
 <body>
 
-    <div class="top-container">
-        <div class="top-title-area">
-            <p class="top-title" id="topTitle">🏆 ТОП-5 активних водіїв</p>
-            <button class="toggle-top-btn" onclick="toggleTop()">−</button>
-        </div>
-        <ul class="top-list" id="topList">
-            <li style="color:#666; font-style:italic;" id="loadingTop">Завантаження...</li>
-        </ul>
-    </div>
+<div id="map"></div>
 
-    <div class="control-container">
-        <button class="feedback-circle-btn" onclick="openFeedbackModal()">💡</button>
-        <select class="lang-select" onchange="changeLang(this.value)" id="langSelect">
-            <option value="uk">🇺🇦 UA</option>
-            <option value="en">🇬🇧 EN</option>
-        </select>
-    </div>
+<div class="top-permanent-box">
+    <h3 id="topTitle">🏆 ТОП-5 active drivers</h3>
+    <div id="topList">Завантаження рейтингу...</div>
+</div>
 
-    <div class="modal-overlay" id="feedbackModal">
-        <div class="modal-box">
-            <h3 id="modalTitle">Запропонувати ідею або покращення</h3>
-            <textarea id="feedbackText" placeholder="Напишіть вашу пропозицію тут..."></textarea>
-            <div class="modal-actions">
-                <button class="btn-modal btn-cancel" onclick="closeFeedbackModal()" id="btnCancel">Скасувати</button>
-                <button class="btn-modal btn-submit" onclick="submitFeedback()" id="btnSend">Надіслати</button>
-            </div>
-        </div>
-    </div>
+<div class="langBox">
+<select id="langSelect">
+<option value="uk">🇺🇦</option>
+<option value="pl">🇵🇱</option>
+<option value="sk">🇸🇰</option>
+<option value="en">🇬🇧</option>
+<option value="be">🇧🇾</option>
+</select>
+</div>
 
-    <div id="map"></div>
+<script>
+const tg = window.Telegram ? window.Telegram.WebApp : null;
+if (tg) {
+    tg.ready();
+    tg.expand();
+}
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+const API_URL = "https://austria-map.onrender.com";
 
-        // ВИПРАВЛЕНО: Встановлено правильну адресу твого сервера Render
-        const API_URL = "https://austria-map.onrender.com";
+let lang = localStorage.getItem("lang");
+if(!lang){
+  const tgLang = tg?.initDataUnsafe?.user?.language_code;
+  if(tgLang){
+    if(tgLang.startsWith("pl")) lang="pl";
+    else if(tgLang.startsWith("sk")) lang="sk";
+    else if(tgLang.startsWith("be")) lang="be";
+    else if(tgLang.startsWith("uk")) lang="uk";
+    else lang="en";
+  }else{
+    lang="uk";
+  }
+}
+document.getElementById("langSelect").value = lang;
+document.getElementById("langSelect").addEventListener("change",(e)=>{
+  lang = e.target.value;
+  localStorage.setItem("lang",lang);
+  loadStats();
+});
 
-        // Локалізація текстових елементів
-        const translations = {
-            uk: {
-                topTitle: "🏆 ТОП-5 активних водіїв",
-                noVotes: "Голосів ще немає 🚀",
-                loading: "Завантаження...",
-                modalTitle: "Запропонувати ідею або покращення",
-                placeholder: "Напишіть вашу пропозицію тут...",
-                btnCancel: "Скасувати",
-                btnSend: "Надіслати",
-                emptyAlert: "Будь ласка, введіть текст пропозиції.",
-                successAlert: "Дякуємо! Вашу пропозицію надіслано розробнику.",
-                errorAlert: "Не вдалося надіслати. Спробуйте пізніше.",
-                popupTitle: "Яка ситуація на контролі?",
-                btnGreen: "Чисто 🟢",
-                btnRed: "Контроль 🔴",
-                lastCheck: "Перевірка:",
-                unknownTime: "щойно"
-            },
-            en: {
-                topTitle: "🏆 TOP-5 active drivers",
-                noVotes: "No votes yet 🚀",
-                loading: "Loading...",
-                modalTitle: "Suggest an idea or improvement",
-                placeholder: "Write your suggestion here...",
-                btnCancel: "Cancel",
-                btnSend: "Send",
-                emptyAlert: "Please enter your suggestion text.",
-                successAlert: "Thank you! Your suggestion has been sent to the developer.",
-                errorAlert: "Failed to send. Please try again later.",
-                popupTitle: "What is the situation?",
-                btnGreen: "Clear 🟢",
-                btnRed: "Control 🔴",
-                lastCheck: "Last check:",
-                unknownTime: "just now"
-            }
-        };
+const i18n = {
+  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", was_control:"Був КОНТРОЛЬ", was_clean:"Було ЧИСТО", active: "Активно:" },
+  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:" },
+  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", was_control:"Bola KONTROLA", was_clean:"Bolo ČISTÉ", active: "Aktívne:" },
+  en:{ clean:"CLEAR", control:"CONTROL", total:"Total", was_control:"Was CONTROL", was_clean:"Was CLEAR", active: "Active:" },
+  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", was_control:"Быў КАНТРОЛЬ", was_clean:"Было ЧЫСТА", active: "Актыўна:" }
+};
+function t(k){ return i18n[lang][k]; }
 
-        let currentLang = 'uk';
+const dots = [
+{"id":1,"n":"Hörbranz A14","lt":47.5446,"ln":9.7407},
+{"id":2,"n":"Nuziders A14","lt":47.1731,"ln":9.7737},
+{"id":3,"n":"Rabfeld A12","lt":47.4574,"ln":11.9196},
+{"id":4,"n":"Kundl A12","lt":47.4734,"ln":11.9693},
+{"id":5,"n":"Wels A8","lt":48.1790,"ln":13.8623},
+{"id":6,"n":"Wolfsbach A1 (1)","lt":48.1120,"ln":14.6761},
+{"id":7,"n":"Wolfsbach A1 (2)","lt":48.1123,"ln":14.6786},
+{"id":8,"n":"Mistelbach A5","lt":48.5389,"ln":16.6259},
+{"id":9,"n":"Bruck an der Leitha A4","lt":48.0431,"ln":16.7791},
+{"id":10,"n":"Pernau A2","lt":47.0900,"ln":15.8511},
+{"id":11,"n":"Strass in Steiermark A9","lt":46.7317,"ln":15.6436},
+{"id":12,"n":"Hainburg A2","lt":46.6845,"ln":14.6591},
+{"id":13,"n":"Arnoldstein A2","lt":46.5410114,"ln":13.6711268},
+{"id":14,"n":"Grassbrunn A99","lt":48.0894396,"ln":11.7446506},
+{"id":15,"n":"Eberstalzell A1","lt":48.038939,"ln":13.988940},
+{"id":16,"n":"Toplitsch/Sud A10","lt":46.654471,"ln":13.739964},
+{"id":17,"n":"Kuchl A10","lt":47.649664,"ln":13.136348},
+{"id":18,"n":"San Vittore A13","lt":46.2313847,"ln":9.1017162},
+{"id":19,"n":"Holztraume A13","lt":46.7635930,"ln":9.4191040},
+{"id":20,"n":"Erstfeld A2","lt":46.8369363,"ln":8.6352301,"fix":true},
+{"id":21,"n":"Giornoco A2","lt":46.3882186,"ln":8.8929391,"fix":true}
+];
 
-        // Координати КПП
-        const points = [
-            { id: 1, name: "Suben (A8)", lat: 48.4115, lng: 13.4310 },
-            { id: 2, name: "Walserberg (A1)", lat: 47.8015, lng: 12.9301 },
-            { id: 3, name: "Kiefersfelden (A12)", lat: 47.6180, lng: 12.1820 },
-            { id: 4, name: "Pocking (A3)", lat: 48.3840, lng: 13.3110 },
-            { id: 5, name: "Passau (A3)", lat: 48.5680, lng: 13.4320 },
-            { id: 6, name: "Salzburg Freeway", lat: 47.8150, lng: 13.0010 },
-            { id: 7, name: "Kufstein Border", lat: 47.5920, lng: 12.1710 },
-            { id: 8, name: "Braunau am Inn", lat: 48.2590, lng: 13.0330 },
-            { id: 9, name: "Schärding", lat: 48.4580, lng: 13.4210 },
-            { id: 10, name: "Spielfeld (Slo-Aut)", lat: 46.7050, lng: 15.6350 },
-            { id: 11, name: "Karawankentunnel", lat: 46.5160, lng: 14.0220 },
-            { id: 12, name: "Loiblpass", lat: 46.4380, lng: 14.2570 },
-            { id: 13, name: "Nickelsdorf (Hun-Aut)", lat: 47.9380, lng: 17.0950 },
-            { id: 14, name: "Heiligenkreuz", lat: 47.0140, lng: 16.2550 },
-            { id: 15, name: "Klingenbach", lat: 47.7850, lng: 16.5380 },
-            { id: 16, name: "Brenner Pass (Ita-Aut)", lat: 47.0060, lng: 11.5060 },
-            { id: 17, name: "Reschenpass", lat: 46.8480, lng: 10.5110 },
-            { id: 18, name: "Thörl-Maglern", lat: 46.5550, lng: 13.6380 }
-        ];
+let map = L.map("map").setView([47.5162, 14.5501], 7);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap'}).addTo(map);
 
-        // Колірні іконки маркерів
-        function createIcon(color) {
-            let iconUrl = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png";
-            if (color === 'green') iconUrl = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png";
-            if (color === 'red') iconUrl = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png";
-            
-            return new L.Icon({
-                iconUrl: iconUrl,
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-            });
+let markers = {}, stats = {};
+
+function createPopup(dot, redP, greenP, total, color, oldStatus, lastTime){
+if(dot.fix) return `<b>${dot.n}</b><br><span style="color:red;font-weight:bold;">КОНТРОЛЬ</span>`;
+
+let historyHtml = "";
+if (color === "blue" && oldStatus) {
+    let statusText = oldStatus === "red" ? t("was_control") : t("was_clean");
+    let statusColor = oldStatus === "red" ? "red" : "green";
+    historyHtml = `<div style="margin: 5px 0; font-size:12px; color:#555;">⏳ <b>${statusText}</b> (<span style="color:${statusColor}">${lastTime}</span>)</div>`;
+} else if (lastTime) {
+    historyHtml = `<div style="margin: 5px 0; font-size:12px; color:#666;">⏱️ ${t("active")} ${lastTime}</div>`;
+}
+
+return `
+<b>${dot.n}</b><br>
+${historyHtml}
+<span style="display:inline-block;width:16px;height:16px;background:red;border-radius:50%;"></span> ${redP}% |
+<span style="display:inline-block;width:16px;height:16px;background:green;border-radius:50%;"></span> ${greenP}%<br>
+<small>${t("total")}: ${total}</small><br>
+<button class="btn" style="background:green" onclick="sendVote(${dot.id},'green')">${t("clean")}</button>
+<button class="btn" style="background:red" onclick="sendVote(${dot.id},'red')">${t("control")}</button>
+`;
+}
+
+async function loadStats(){
+try{
+const res = await fetch(`${API_URL}/stats`);
+stats = await res.json();
+}catch{ stats = {}; }
+
+dots.forEach(dot=>{
+const s = stats[dot.id] || {color:"blue", green:0, red:0, old_status:"", last_time:""};
+const total = s.green + s.red;
+const redP = total ? Math.round((s.red/total)*100) : 0;
+const greenP = total ? 100-redP : 0;
+
+let color = s.color || "blue";
+if(dot.fix){
+  color="red";
+} else if(color !== "blue" && total > 0){
+  if(s.red > s.green) color="red";
+  else if(s.green > s.red) color="green";
+  else color="gold";
+}
+
+const iconUrl=`https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`;
+
+if(!markers[dot.id]){
+markers[dot.id]=L.marker([dot.lt,dot.ln],{
+icon:new L.Icon({
+iconUrl:iconUrl,
+shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]
+})
+}).addTo(map).bindPopup(createPopup(dot,redP,greenP,total,s.color,s.old_status,s.last_time));
+
+L.circle([dot.lt,dot.ln],{radius:1500,color:"blue",weight:1,fillOpacity:0.1}).addTo(map);
+
+}else{
+markers[dot.id].setIcon(new L.Icon({
+iconUrl:iconUrl,
+shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]
+}));
+markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total,s.color,s.old_status,s.last_time));
+}
+});
+}
+
+function sendVote(id, status) {
+    let userId = 0;
+    let username = "";
+    let firstName = "Водій";
+
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        userId = tg.initDataUnsafe.user.id || 0;
+        username = tg.initDataUnsafe.user.username || "";
+        firstName = tg.initDataUnsafe.user.first_name || "Водій";
+    }
+
+    fetch(`${API_URL}/update`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            id: id,
+            status: status,
+            user_id: userId,
+            username: username,
+            first_name: firstName
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (tg) {
+            try { tg.sendData(status + "_" + id); } catch(e){}
         }
+        loadStats();
+        loadTopPermanent();
+    })
+    .catch(err => console.error("Помилка:", err));
+}
 
-        // Ініціалізація мапи Австрії
-        const map = L.map('map', { zoomControl: false }).setView([47.5162, 14.5501], 7);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap'
-        }).addTo(map);
-
-        const markers = {};
-
-        // Відображення маркерів на мапі
-        points.forEach(p => {
-            const marker = L.marker([p.lat, p.lng], { icon: createIcon('blue') }).addTo(map);
-            markers[p.id] = marker;
-            updatePopup(p.id, p.name, "", translations[currentLang].unknownTime);
-        });
-
-        // Формування поп-ап вікон для точок
-        function updatePopup(id, name, oldStatus, lastTime) {
-            const marker = markers[id];
-            if (!marker) return;
-
-            const t = translations[currentLang];
-            let html = `
-                <div class="popup-title">${name}</div>
-                <div style="font-size:12px; margin-bottom:8px; text-align:center; color:#555;">${t.popupTitle}</div>
-                <div class="popup-buttons">
-                    <button class="btn btn-green" onclick="vote(${id}, 'green')">${t.btnGreen}</button>
-                    <button class="btn btn-red" onclick="vote(${id}, 'red')">${t.btnRed}</button>
+async function loadTopPermanent() {
+    const listDiv = document.getElementById("topList");
+    try {
+        const res = await fetch(`${API_URL}/top?period=week`);
+        const topUsers = await res.json();
+        
+        if (!topUsers || topUsers.length === 0) {
+            listDiv.innerHTML = "<p style='text-align:center;margin:5px 0;color:#777;font-size:12px;'>Голосів ще немає 🚀</p>";
+            return;
+        }
+        
+        let html = "";
+        const medals = ["🥇", "🥈", "🥉"];
+        const top5 = topUsers.slice(0, 5);
+        
+        top5.forEach((user, i) => {
+            const place = i < 3 ? medals[i] : `${i + 1}.`;
+            const name = user.first_name || "Водій";
+            html += `
+                <div class="top-item">
+                    <span>${place} <b>${name}</b></span>
+                    <span style="color:#136AEC;font-weight:bold;">${user.votes} 🗳️</span>
                 </div>
             `;
-            if (lastTime) {
-                html += `<div class="popup-time">${t.lastCheck} <b>${lastTime}</b></div>`;
-            }
-            marker.bindPopup(html);
-        }
+        });
+        listDiv.innerHTML = html;
+    } catch (e) {
+        listDiv.innerHTML = "<p style='color:red;font-size:12px;'>Помилка рейтингу</p>";
+    }
+}
 
-        // Надсилання голосу за статус КПП
-        function vote(id, status) {
-            const user = tg.initDataUnsafe?.user || {};
-            
-            fetch(`${API_URL}/update`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    id: id,
-                    status: status,
-                    user_id: user.id || 0,
-                    username: user.username || '',
-                    first_name: user.first_name || 'Водій'
-                })
-            })
-            .then(res => res.json())
-            .then(() => {
-                map.closePopup();
-                loadData();
-            })
-            .catch(err => console.error(err));
-        }
+loadStats();
+loadTopPermanent();
 
-        // Завантаження статусів КПП та топу водіїв
-        function loadData() {
-            fetch(`${API_URL}/stats`)
-                .then(res => res.json())
-                .then(data => {
-                    points.forEach(p => {
-                        const marker = markers[p.id];
-                        if (marker && data[p.id]) {
-                            const info = data[p.id];
-                            marker.setIcon(createIcon(info.color));
-                            updatePopup(p.id, p.name, info.old_status, info.last_time);
-                        }
-                    });
-                })
-                .catch(err => console.error("Помилка завантаження статистики КПП:", err));
+setInterval(loadStats, 2000);
+setInterval(loadTopPermanent, 10000);
 
-            fetch(`${API_URL}/top?period=week`)
-                .then(res => res.json())
-                .then(data => {
-                    const list = document.getElementById('topList');
-                    list.innerHTML = '';
-                    if (data.length === 0) {
-                        list.innerHTML = `<li style="color:#666; font-style:italic;">${translations[currentLang].noVotes}</li>`;
-                        return;
-                    }
-                    data.slice(0, 5).forEach((user, index) => {
-                        let medal = `${index + 1}. `;
-                        if (index === 0) medal = '🥇 ';
-                        if (index === 1) medal = '🥈 ';
-                        if (index === 2) medal = '🥉 ';
-                        
-                        const name = user.first_name || (user.username ? '@' + user.username : 'Driver');
-                        const li = document.createElement('li');
-                        li.className = 'top-item';
-                        li.innerHTML = `<span class="top-name">${medal}${name}</span><span class="top-count">${user.votes} 🗳️</span>`;
-                        list.appendChild(li);
-                    });
-                })
-                .catch(err => {
-                    console.error("Помилка завантаження топу:", err);
-                    document.getElementById('topList').innerHTML = `<li style="color:#dc3545; font-style:italic;">Помилка оновлення ТОП</li>`;
-                });
-        }
+let myDot=null, myAccuracy=null;
+function setMyLocation(lat, lon, acc=200){
+  if(myDot){
+    myDot.setLatLng([lat,lon]);
+    myAccuracy.setLatLng([lat,lon]);
+    myAccuracy.setRadius(acc);
+  } else {
+    myAccuracy = L.circle([lat,lon],{
+      radius: acc,
+      color: "#136AEC",
+      fillColor: "#136AEC",
+      fillOpacity: 0.15,
+      weight: 1
+    }).addTo(map);
 
-        // Зміна мови інтерфейсу
-        function changeLang(lang) {
-            currentLang = lang;
-            document.getElementById('topTitle').innerText = translations[lang].topTitle;
-            document.getElementById('modalTitle').innerText = translations[lang].modalTitle;
-            document.getElementById('feedbackText').placeholder = translations[lang].placeholder;
-            document.getElementById('btnCancel').innerText = translations[lang].btnCancel;
-            document.getElementById('btnSend').innerText = translations[lang].btnSend;
-            loadData();
-        }
+    myDot = L.circleMarker([lat,lon],{
+      radius:7,
+      fillColor:"#136AEC",
+      color:"#fff",
+      weight:2,
+      opacity:1,
+      fillOpacity:1
+    }).addTo(map);
 
-        // Згортання/розгортання лідерборду
-        let isTopOpen = true;
-        function toggleTop() {
-            const list = document.getElementById('topList');
-            const btn = document.querySelector('.toggle-top-btn');
-            if (isTopOpen) {
-                list.style.display = 'none';
-                btn.innerText = '+';
-            } else {
-                list.style.display = 'block';
-                btn.innerText = '−';
-            }
-            isTopOpen = !isTopOpen;
-        }
+    map.setView([lat,lon],9);
+  }
+}
 
-        // Робота з модальним вікном пропозицій
-        function openFeedbackModal() {
-            document.getElementById('feedbackModal').style.display = 'flex';
-        }
+if(navigator.geolocation){
+  navigator.geolocation.watchPosition(pos=>{
+    setMyLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+  }, err=>{ console.log("Помилка геолокації:", err); }, { enableHighAccuracy:true });
+}
+</script>
 
-        function closeFeedbackModal() {
-            document.getElementById('feedbackModal').style.display = 'none';
-            document.getElementById('feedbackText').value = '';
-        }
-
-        // Відправка ідеї на сервер
-        function submitFeedback() {
-            const text = document.getElementById('feedbackText').value.trim();
-            const t = translations[currentLang];
-
-            if (!text) {
-                alert(t.emptyAlert);
-                return;
-            }
-
-            const user = tg.initDataUnsafe?.user || {};
-
-            fetch(`${API_URL}/feedback`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user_id: user.id || 0,
-                    username: user.username || '',
-                    first_name: user.first_name || 'Водій',
-                    text: text
-                })
-            })
-            .then(res => {
-                if (res.ok) {
-                    alert(t.successAlert);
-                    closeFeedbackModal();
-                } else {
-                    alert(t.errorAlert);
-                }
-            })
-            .catch(() => alert(t.errorAlert));
-        }
-
-        // Старт завантаження даних
-        loadData();
-        setInterval(loadData, 30000);
-    </script>
 </body>
 </html>
