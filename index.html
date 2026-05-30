@@ -41,16 +41,18 @@ box-shadow:0 2px 6px rgba(0,0,0,.3);
 </div>
 
 <script>
-const tg = window.Telegram.WebApp;
-tg.ready();
-tg.expand();
+const tg = window.Telegram?.WebApp;
+if (tg) {
+    tg.ready();
+    tg.expand();
+}
 
 const API_URL = "https://austria-map.onrender.com";
 
 // визначення мови
 let lang = localStorage.getItem("lang");
 if(!lang){
-  const tgLang = tg.initDataUnsafe?.user?.language_code;
+  const tgLang = tg?.initDataUnsafe?.user?.language_code;
   if(tgLang){
     if(tgLang.startsWith("pl")) lang="pl";
     else if(tgLang.startsWith("sk")) lang="sk";
@@ -106,7 +108,7 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&
 
 let markers = {}, stats = {};
 
-// створення попапу
+// створення попапу (ВИПРАВЛЕНО ВИКЛИК НА window.sendVote)
 function createPopup(dot, redP, greenP, total){
 if(dot.fix) return `<b>${dot.n}</b><br><span style="color:red;font-weight:bold;">КОНТРОЛЬ</span>`;
 return `
@@ -114,8 +116,8 @@ return `
 <span style="display:inline-block;width:16px;height:16px;background:red;border-radius:50%;"></span> ${redP}% |
 <span style="display:inline-block;width:16px;height:16px;background:green;border-radius:50%;"></span> ${greenP}%<br>
 <small>${t("total")}: ${total}</small><br>
-<button class="btn" style="background:green" onclick="sendVote(${dot.id},'green')">${t("clean")}</button>
-<button class="btn" style="background:red" onclick="sendVote(${dot.id},'red')">${t("control")}</button>
+<button class="btn" style="background:green" onclick="window.sendVote(${dot.id},'green')">${t("clean")}</button>
+<button class="btn" style="background:red" onclick="window.sendVote(${dot.id},'red')">${t("control")}</button>
 `;
 }
 
@@ -168,7 +170,7 @@ markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total));
 // кнопки голосування з передачею даних користувача для ТОПу
 window.sendVote = async(id,status)=>{
 try{
-const user = tg.initDataUnsafe?.user || {};
+const user = tg?.initDataUnsafe?.user || {};
 await fetch(`${API_URL}/update`,{
 method:"POST",
 headers:{"Content-Type":"application/json"},
@@ -181,7 +183,9 @@ first_name: user.first_name || "Водій"
 })
 });
 }catch(e){ console.log("Помилка відправки голосу:", e); }
-tg.sendData(`${status}_${id}`);
+if (tg && typeof tg.sendData === 'function') {
+    tg.sendData(`${status}_${id}`);
+}
 loadStats();
 };
 
