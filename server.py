@@ -111,12 +111,13 @@ def get_top():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     
+    # ТУТ ВИПРАВЛЕНО НА ORDER BY
     cursor.execute('''
         SELECT user_id, username, first_name, COUNT(*) as vote_count
         FROM vote_history
         WHERE voted_at >= ?
         GROUP BY user_id
-        ORDER Bars vote_count DESC
+        ORDER BY vote_count DESC
         LIMIT 10
     ''', (start_date_str,))
     
