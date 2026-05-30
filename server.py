@@ -184,7 +184,7 @@ def save_feedback():
         
     now = datetime.now().isoformat()
     
-    # 1. Збереження в локальну базу даних
+    # 1. Збереження в локальну базу даних австрійської мапи
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('''
@@ -194,22 +194,24 @@ def save_feedback():
     conn.commit()
     conn.close()
     
-    # 2. Автоматичне надсилання повідомлення в твій телеграм
-    tg_user = f"@{username}" if username else f"ID: {user_id}"
-    message_text = f"💡 *Нова пропозиція від водія!*\n\n👤 *Ім'я:* {first_name} ({tg_user})\n📝 *Ідея:* {text}"
-    
-    try:
-        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-        requests.post(url, json={
-            "chat_id": ADMIN_CHAT_ID,
-            "text": message_text,
-            "parse_mode": "Markdown"
-        })
-    except Exception as e:
-        print(f"Помилка відправки в ТГ: {e}")
+    # 2. Перевірка налаштувань та автоматичне надсилання сповіщення адміну
+    if BOT_TOKEN != "ВСТАВ_СЮДИ_ТОКЕН_З_BOT_FATHER" and ADMIN_CHAT_ID != "ВСТАВ_СЮДИ_СВІЙ_ID_ЦИФРАМИ":
+        tg_user = f"@{username}" if username else f"ID: {user_id}"
+        message_text = f"💡 *Нова пропозиція від водія!*\n\n👤 *Ім'я:* {first_name} ({tg_user})\n📝 *Ідея:* {text}"
+        
+        try:
+            url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+            requests.post(url, json={
+                "chat_id": ADMIN_CHAT_ID,
+                "text": message_text,
+                "parse_mode": "Markdown"
+            })
+        except Exception as e:
+            print(f"Помилка відправки в ТГ: {e}")
     
     return jsonify({"status": "success", "message": "Дякуємо за пропозицію!"})
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+
