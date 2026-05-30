@@ -3,3 +3,4 @@ flask-cors
 gunicorn
 aiogram>=3.17.0
 pydantic>=2.10.0
+requests
