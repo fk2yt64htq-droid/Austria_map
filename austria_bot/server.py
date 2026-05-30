@@ -7,13 +7,11 @@ from datetime import datetime, timedelta
 app = Flask(__name__)
 CORS(app)
 
-# База даних створюється в тій же папці
 DB_PATH = os.path.join(os.path.dirname(__file__), "austria_map.db")
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    # Таблиця голосів за точки
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS votes (
             id INTEGER PRIMARY KEY,
@@ -21,7 +19,6 @@ def init_db():
             timestamp TEXT
         )
     ''')
-    # Таблиця для рейтингу водіїв
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS user_votes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,37 +47,82 @@ def update_point():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    # Оновлюємо статус точки
-    cursor.execute('INSERT OR REPLACE INTO votes (id, status, timestamp) VALUES (?, ?, ?)', 
-                   (point_id, status, now))
+    cursor.execute('SELECT status FROM votes WHERE id = ?', (point_id,))
+    current_row = cursor.fetchone()
     
-    # Якщо голосував реальний користувач із Телеграму, записуємо в рейтинг
-    if user_id > 0:
-        cursor.execute('INSERT INTO user_votes (user_id, username, first_name, timestamp) VALUES (?, ?, ?, ?)',
-                       (user_id, username, first_name, now))
+    if current_row is None or current_row[0] != status:
+        cursor.execute('INSERT OR REPLACE INTO votes (id, status, timestamp) VALUES (?, ?, ?)', 
+                       (point_id, status, now))
         
-    conn.commit()
+        if user_id > 0:
+            cursor.execute('INSERT INTO user_votes (user_id, username, first_name, timestamp) VALUES (?, ?, ?, ?)',
+                           (user_id, username, first_name, now))
+            
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "message": "Голос враховано"})
+    
     conn.close()
-    return jsonify({"status": "success"})
+    return jsonify({"status": "ignored", "message": "Статус не змінився"})
 
 @app.route('/stats', methods=['GET'])
 def get_stats():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute('SELECT id, status FROM votes')
+    cursor.execute('SELECT id, status, timestamp FROM votes')
     rows = cursor.fetchall()
     conn.close()
     
     result = {}
+    now = datetime.now()
+    
     for row in rows:
-        # Повертаємо формат, який очікує мапа
-        green_count = 1 if row[1] == 'green' else 0
-        red_count = 1 if row[1] == 'red' else 0
-        result[str(row[0])] = {
-            "color": row[1],
-            "green": green_count,
-            "red": red_count
-        }
+        point_id = str(row[0])
+        status = row[1]
+        timestamp_str = row[2]
+        
+        is_expired = False
+        time_passed_str = ""
+        
+        if timestamp_str:
+            try:
+                vote_time = datetime.fromisoformat(timestamp_str)
+                diff = now - vote_time
+                
+                # Рахуємо час для гарного відображення водіям
+                minutes = int(diff.total_seconds() // 60)
+                if minutes < 60:
+                    time_passed_str = f"{minutes} хв. тому"
+                else:
+                    time_passed_str = f"{minutes // 60} год. {minutes % 60} хв. тому"
+                
+                # Перевірка на тайм-аут: 1.5 години (90 хвилин)
+                if diff > timedelta(hours=1.5):
+                    is_expired = True
+            except Exception:
+                pass
+
+        if is_expired:
+            # Повертаємо синій колір, але зберігаємо історію (статус та час)
+            result[point_id] = {
+                "color": "blue",
+                "green": 0,
+                "red": 0,
+                "old_status": status,
+                "last_time": time_passed_str
+            }
+        else:
+            # Статус ще актуальний
+            green_count = 1 if status == 'green' else 0
+            red_count = 1 if status == 'red' else 0
+            result[point_id] = {
+                "color": status,
+                "green": green_count,
+                "red": red_count,
+                "old_status": "",
+                "last_time": time_passed_str
+            }
+            
     return jsonify(result)
 
 @app.route('/top', methods=['GET'])
@@ -89,7 +131,6 @@ def get_top():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    # Визначаємо фільтр по часу
     if period == 'month':
         limit_date = (datetime.now() - timedelta(days=30)).isoformat()
     else:
