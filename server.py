@@ -111,7 +111,6 @@ def get_top():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     
-    # ТУТ ВИПРАВЛЕНО НА ORDER BY
     cursor.execute('''
         SELECT user_id, username, first_name, COUNT(*) as vote_count
         FROM vote_history
