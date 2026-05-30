@@ -248,7 +248,8 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        const API_URL = "https://austria-map-server.onrender.com";
+        // ВИПРАВЛЕНО: Встановлено правильну адресу твого сервера Render
+        const API_URL = "https://austria-map.onrender.com";
 
         // Локалізація текстових елементів
         const translations = {
@@ -399,7 +400,8 @@
                             updatePopup(p.id, p.name, info.old_status, info.last_time);
                         }
                     });
-                });
+                })
+                .catch(err => console.error("Помилка завантаження статистики КПП:", err));
 
             fetch(`${API_URL}/top?period=week`)
                 .then(res => res.json())
@@ -422,6 +424,10 @@
                         li.innerHTML = `<span class="top-name">${medal}${name}</span><span class="top-count">${user.votes} 🗳️</span>`;
                         list.appendChild(li);
                     });
+                })
+                .catch(err => {
+                    console.error("Помилка завантаження топу:", err);
+                    document.getElementById('topList').innerHTML = `<li style="color:#dc3545; font-style:italic;">Помилка оновлення ТОП</li>`;
                 });
         }
 
