@@ -45,21 +45,122 @@ font-size: 13px;
 }
 .top-item:last-child { border: none; }
 
-.langBox {
-position:absolute;
-top:10px;
-right:10px;
-z-index:9999;
-background:white;
-padding:5px;
-border-radius:6px;
-box-shadow:0 2px 6px rgba(0,0,0,.3);
+/* Об'єднаний контейнер для кнопок у верхньому правому кутку */
+.right-control-box {
+position: absolute;
+top: 10px;
+right: 10px;
+z-index: 9999;
+display: flex;
+align-items: center;
+gap: 6px;
 }
+
+/* Кругла помаранчева кнопка ідей */
+.feedback-circle-btn {
+background: #ff9800;
+color: white;
+border: none;
+width: 34px;
+height: 34px;
+border-radius: 6px;
+font-size: 16px;
+font-weight: bold;
+cursor: pointer;
+box-shadow: 0 2px 6px rgba(0,0,0,.3);
+display: flex;
+align-items: center;
+justify-content: center;
+transition: background 0.2s, transform 0.1s;
+padding: 0;
+}
+.feedback-circle-btn:active {
+transform: scale(0.9);
+}
+
+/* Контейнер вибору мови */
+.langBox {
+background: white;
+padding: 5px;
+border-radius: 6px;
+box-shadow: 0 2px 6px rgba(0,0,0,.3);
+height: 24px;
+display: flex;
+align-items: center;
+}
+.langBox select {
+border: none;
+outline: none;
+background: transparent;
+font-size: 16px;
+cursor: pointer;
+}
+
+/* Модальне вікно для введення пропозицій */
+.modal-overlay {
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: rgba(0,0,0,0.5);
+z-index: 10000;
+display: none;
+align-items: center;
+justify-content: center;
+}
+.modal-box {
+background: white;
+padding: 20px;
+border-radius: 12px;
+width: 90%;
+max-width: 340px;
+box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+box-sizing: border-box;
+font-family: Arial, sans-serif;
+}
+.modal-box h3 {
+margin: 0 0 12px 0;
+color: #333;
+font-size: 16px;
+text-align: center;
+}
+.modal-box textarea {
+width: 100%;
+height: 100px;
+border: 1px solid #ccc;
+border-radius: 6px;
+padding: 8px;
+resize: none;
+box-sizing: border-box;
+font-size: 14px;
+outline: none;
+}
+.modal-box textarea:focus {
+border-color: #ff9800;
+}
+.modal-actions {
+display: flex;
+justify-content: flex-end;
+gap: 10px;
+margin-top: 12px;
+}
+.btn-modal {
+padding: 8px 14px;
+border: none;
+border-radius: 6px;
+cursor: pointer;
+font-weight: bold;
+font-size: 14px;
+}
+.btn-cancel { background: #eee; color: #333; }
+.btn-submit { background: #ff9800; color: white; }
 
 @media (max-width: 400px) {
   .top-permanent-box { width: 190px; padding: 8px; font-size: 11px; }
   .top-permanent-box h3 { font-size: 12px; }
   .top-item { font-size: 11px; padding: 3px 0; }
+  .feedback-circle-btn { width: 30px; height: 30px; font-size: 14px; }
 }
 </style>
 </head>
@@ -72,14 +173,28 @@ box-shadow:0 2px 6px rgba(0,0,0,.3);
     <div id="topList">Завантаження рейтингу...</div>
 </div>
 
-<div class="langBox">
-<select id="langSelect">
-<option value="uk">🇺🇦</option>
-<option value="pl">🇵🇱</option>
-<option value="sk">🇸🇰</option>
-<option value="en">🇬🇧</option>
-<option value="be">🇧🇾</option>
-</select>
+<div class="right-control-box">
+    <button class="feedback-circle-btn" onclick="openFeedbackModal()" title="💡 Запропонувати ідею">💡</button>
+    <div class="langBox">
+        <select id="langSelect">
+            <option value="uk">🇺🇦</option>
+            <option value="pl">🇵🇱</option>
+            <option value="sk">🇸🇰</option>
+            <option value="en">🇬🇧</option>
+            <option value="be">🇧🇾</option>
+        </select>
+    </div>
+</div>
+
+<div class="modal-overlay" id="feedbackModal">
+    <div class="modal-box">
+        <h3 id="modalTitle">Запропонувати ідею або КПП</h3>
+        <textarea id="feedbackText" placeholder="Напишіть вашу пропозицію тут..."></textarea>
+        <div class="modal-actions">
+            <button class="btn-modal btn-cancel" onclick="closeFeedbackModal()">Скасувати</button>
+            <button class="btn-modal btn-submit" onclick="submitFeedback()">Надіслати</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -108,17 +223,30 @@ document.getElementById("langSelect").value = lang;
 document.getElementById("langSelect").addEventListener("change",(e)=>{
   lang = e.target.value;
   localStorage.setItem("lang",lang);
+  updateLabels();
   loadStats();
 });
 
 const i18n = {
-  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", was_control:"Був КОНТРОЛЬ", was_clean:"Було ЧИСТО", active: "Активно:" },
-  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:" },
-  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", was_control:"Bola KONTROLA", was_clean:"Bolo ČISTÉ", active: "Aktívne:" },
-  en:{ clean:"CLEAR", control:"CONTROL", total:"Total", was_control:"Was CONTROL", was_clean:"Was CLEAR", active: "Active:" },
-  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", was_control:"Быў КАНТРОЛЬ", was_clean:"Было ЧЫСТА", active: "Актыўна:" }
+  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", was_control:"Був КОНТРОЛЬ", was_clean:"Було ЧИСТО", active: "Активно:", feedback_prompt: "Запропонувати ідею або КПП", placeholder: "Напишіть вашу пропозицію тут...", cancel: "Скасувати", send: "Надіслати", empty_err: "Будь ласка, введіть текст пропозиції!", thanks: "Дякуємо! Вашу пропозицію надіслано розробнику." },
+  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:", feedback_prompt: "Zaproponuj pomysł lub punkt", placeholder: "Wpisz swoją sugestię tutaj...", cancel: "Anuluj", send: "Wyślij", empty_err: "Proszę wpisać treść sugestii!", thanks: "Dziękuję! Twoja sugestia została wysłana." },
+  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", was_control:"Bola KONTROLA", was_clean:"Bolo ČISTÉ", active: "Aktívne:", feedback_prompt: "Navrhnúť nápad alebo bod", placeholder: "Sem napíšte svoj návrh...", cancel: "Zrušiť", send: "Odoslať", empty_err: "Prosím, zadajte text návrhu!", thanks: "Ďakujeme! Váš návrh bol odoslaný." },
+  en:{ clean:"CLEAR", control:"CONTROL", total:"Total", was_control:"Was CONTROL", was_clean:"Was CLEAR", active: "Active:", feedback_prompt: "Suggest an idea or checkpoint", placeholder: "Write your suggestion here...", cancel: "Cancel", send: "Send", empty_err: "Please enter suggestion text!", thanks: "Thank you! Your suggestion has been sent." },
+  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", was_control:"Быў КАНТРОЛЬ", was_clean:"Было ЧЫСТА", active: "Актыўна:", feedback_prompt: "Прапанаваць ідэю ці КПП", placeholder: "Напішыце вашу прапанову тут...", cancel: "Касаваць", send: "Адправіць", empty_err: "Калі ласка, увядзіце тэкст прапановы!", thanks: "Дякуй! Ваша прапанова адпраўлена." }
 };
 function t(k){ return i18n[lang][k]; }
+
+function updateLabels() {
+    document.getElementById("modalTitle").innerText = t("feedback_prompt");
+    document.getElementById("feedbackText").placeholder = t("placeholder");
+    document.getElementById("feedbackModal").querySelector(".btn-cancel").innerText = t("cancel");
+    document.getElementById("feedbackModal").querySelector(".btn-submit").innerText = t("send");
+    if(lang === "uk") {
+        document.getElementById("topTitle").innerText = "🏆 ТОП-5 активних водіїв";
+    } else {
+        document.getElementById("topTitle").innerText = t("topTitle") || "🏆 TOP-5 active drivers";
+    }
+}
 
 const dots = [
 {"id":1,"n":"Hörbranz A14","lt":47.5446,"ln":9.7407},
@@ -281,6 +409,50 @@ async function loadTopPermanent() {
     }
 }
 
+// Модальне вікно зворотного зв'язку
+function openFeedbackModal() {
+    document.getElementById("feedbackText").value = "";
+    document.getElementById("feedbackModal").style.display = "flex";
+}
+function closeFeedbackModal() {
+    document.getElementById("feedbackModal").style.display = "none";
+}
+function submitFeedback() {
+    const text = document.getElementById("feedbackText").value.trim();
+    if (!text) {
+        alert(t("empty_err"));
+        return;
+    }
+
+    let userId = 0;
+    let username = "";
+    let firstName = "Водій";
+
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        userId = tg.initDataUnsafe.user.id || 0;
+        username = tg.initDataUnsafe.user.username || "";
+        firstName = tg.initDataUnsafe.user.first_name || "Водій";
+    }
+
+    fetch(`${API_URL}/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            user_id: userId,
+            username: username,
+            first_name: firstName,
+            text: text
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(t("thanks"));
+        closeFeedbackModal();
+    })
+    .catch(err => console.error("Помилка відправки фідбеку:", err));
+}
+
+updateLabels();
 loadStats();
 loadTopPermanent();
 
