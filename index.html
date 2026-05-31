@@ -254,7 +254,7 @@ const i18n = {
   },
   pl:{ 
     clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:",
-    top_title: "🏆 TOP-5 active drivers", support_title: "Skontaktuj się z wsparciem", placeholder: "Opisz swój pomysł lub problem...",
+    top_title: "🏆 TOP-5 active drivers", support_title: "Skontaktuj się з wsparciem", placeholder: "Opisz swój pomysł lub problem...",
     cancel: "Anuluj", send: "Wyślij", close: "Zamknij", donate_title: "Dziękuję za wsparcie! ☕️", alert_empty: "Proszę wpisać tekst!", alert_success: "Wiadomość została wysłana!"
   },
   sk:{ 
@@ -316,20 +316,22 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&
 let markers = {}, stats = {};
 let userMarker = null;
 
+// Функція трекінгу з іконкою великої єврофури
 function locateUser(centerMap = false) {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(position) {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
 
-            const truckIcon = new L.Icon({
-                iconUrl: 'https://cdn-icons-png.flaticon.com/512/713/713013.png',
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
+            // Використовуємо детальну іконку вантажівки з причепом (38x38 пікселів)
+            const realTruckIcon = new L.Icon({
+                iconUrl: 'https://cdn-icons-png.flaticon.com/512/3579/3579893.png', 
+                iconSize: [38, 38],
+                iconAnchor: [19, 19]
             });
 
             if (!userMarker) {
-                userMarker = L.marker([lat, lng], {icon: truckIcon}).addTo(map);
+                userMarker = L.marker([lat, lng], {icon: realTruckIcon}).addTo(map);
             } else {
                 userMarker.setLatLng([lat, lng]);
             }
