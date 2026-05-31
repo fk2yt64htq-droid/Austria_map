@@ -15,9 +15,15 @@ ADMIN_CHAT_ID = "1034056050"
 app = Flask(__name__)
 CORS(app)
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "austria_map.db")
+# Змінено шлях для збереження бази даних на постійний диск Render
+DB_PATH = "/data/austria_map.db"
 
 def init_db():
+    # Перевіряємо, чи існує папка /data (про всяк випадок для локальних тестів)
+    db_dir = os.path.dirname(DB_PATH)
+    if db_dir and not os.path.exists(db_dir):
+        os.makedirs(db_dir, exist_ok=True)
+        
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('''
@@ -87,7 +93,6 @@ def generate_top_data(period="week"):
             
     top_text += "\nОновлено щойно. Дякуємо за допомогу на дорогах Австрії! 🤝"
     
-    # Створюємо inline-кнопки під віконечком
     inline_keyboard = {
         "inline_keyboard": [
             [
@@ -108,7 +113,6 @@ def telegram_webhook():
     if not update:
         return jsonify({"status": "ignored"}), 200
         
-    # --- ОБРОБКА ЗВИЧАЙНИХ ПОВІДОМЛЕНЬ (Команди) ---
     if "message" in update:
         message = update["message"]
         chat_id = message.get("chat", {}).get("id")
@@ -117,7 +121,6 @@ def telegram_webhook():
         if not chat_id or not text:
             return jsonify({"status": "ignored"}), 200
 
-        # 1. Обробка команди /start
         if text == "/start":
             welcome_text = (
                 "👋 **Вітаємо в Driving Assistant Bot!**\n\n"
@@ -132,7 +135,6 @@ def telegram_webhook():
                 "parse_mode": "Markdown"
             })
 
-        # 2. Обробка команди /top (по замовчуванню показуємо тиждень)
         elif text == "/top":
             top_text, reply_markup = generate_top_data("week")
             
@@ -144,7 +146,6 @@ def telegram_webhook():
                 "reply_markup": reply_markup
             })
 
-    # --- ОБРОБКА КЛІКІВ НА ІНЛАЙН-КНОПКИ ---
     elif "callback_query" in update:
         callback_query = update["callback_query"]
         callback_data = callback_query.get("data")
@@ -158,7 +159,6 @@ def telegram_webhook():
             period = "week" if callback_data == "top_week" else "month"
             new_text, reply_markup = generate_top_data(period)
             
-            # Редагуємо поточне повідомлення (змінюємо текст і кнопки всередині нього)
             url = f"https://api.telegram.org/bot{BOT_TOKEN}/editMessageText"
             requests.post(url, json={
                 "chat_id": chat_id,
@@ -168,7 +168,6 @@ def telegram_webhook():
                 "reply_markup": reply_markup
             })
             
-            # Відповідаємо телеграму, що callback оброблено (щоб кнопка не "зависала" в режимі завантаження)
             url_ans = f"https://api.telegram.org/bot{BOT_TOKEN}/answerCallbackQuery"
             requests.post(url_ans, json={"callback_query_id": callback_id})
 
