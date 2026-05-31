@@ -82,12 +82,15 @@ def telegram_webhook():
             "parse_mode": "Markdown"
         })
 
-    # 2. Обробка команди /top всередині чату
+    # 2. Обробка команди /top всередині чату (Тиждень + Місяць)
     elif text == "/top":
-        limit_date = (datetime.now() - timedelta(days=7)).isoformat()
+        date_week = (datetime.now() - timedelta(days=7)).isoformat()
+        date_month = (datetime.now() - timedelta(days=30)).isoformat()
         
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
+        
+        # --- ЗАПИТ ЗА ТИЖДЕНЬ ---
         cursor.execute('''
             SELECT first_name, COUNT(user_id) as vote_count 
             FROM user_votes 
@@ -95,17 +98,43 @@ def telegram_webhook():
             GROUP BY user_id 
             ORDER BY vote_count DESC 
             LIMIT 5
-        ''', (limit_date,))
-        rows = cursor.fetchall()
+        ''', (date_week,))
+        rows_week = cursor.fetchall()
+        
+        # --- ЗАПИТ ЗА МІСЯЦЬ ---
+        cursor.execute('''
+            SELECT first_name, COUNT(user_id) as vote_count 
+            FROM user_votes 
+            WHERE timestamp >= ?
+            GROUP BY user_id 
+            ORDER BY vote_count DESC 
+            LIMIT 5
+        ''', (date_month,))
+        rows_month = cursor.fetchall()
+        
         conn.close()
         
-        top_text = "🏆 **ТОП-5 активних водіїв за тиждень:**\n\n"
         medals = ["🥇", "🥈", "🥉", "4.", "5."]
+        top_text = ""
         
-        if not rows:
-            top_text += "Голосів ще немає. Будь першим! 🚀"
+        # Формуємо блок за ТИЖДЕНЬ
+        top_text += "🏆 **ТОП-5 активних водіїв за тиждень:**\n\n"
+        if not rows_week:
+            top_text += "Голосів ще немає. Будь першим! 🚀\n"
         else:
-            for i, row in enumerate(rows):
+            for i, row in enumerate(rows_week):
+                place = medals[i] if i < len(medals) else f"{i+1}."
+                top_text += f"{place} *{row[0]}* — {row[1]} 🗳️\n"
+                
+        # Красивий розділювач між тижнем та місяцем
+        top_text += "\n────────────────────\n\n"
+        
+        # Формуємо блок за МІСЯЦЬ
+        top_text += "🏆 **ТОП-5 active водіїв за місяць:**\n\n"
+        if not rows_month:
+            top_text += "За місяць активності ще не зафіксовано. 🚀\n"
+        else:
+            for i, row in enumerate(rows_month):
                 place = medals[i] if i < len(medals) else f"{i+1}."
                 top_text += f"{place} *{row[0]}* — {row[1]} 🗳️\n"
                 
