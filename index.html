@@ -252,7 +252,7 @@ const i18n = {
   },
   pl:{ 
     clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:",
-    top_title: "🏆 TOP-5 active drivers", support_title: "Skontaktuj się з wsparciem", placeholder: "Opisz swój pomysł lub problem...",
+    top_title: "🏆 TOP-5 active drivers", support_title: "Skontaktuj się z wsparciem", placeholder: "Opisz swój pomysł lub problem...",
     cancel: "Anuluj", send: "Wyślij", close: "Zamknij", donate_title: "Dziękuję za wsparcie! ☕️", alert_empty: "Proszę wpisać tekst!", alert_success: "Wiadomość została wysłana!"
   },
   sk:{ 
@@ -330,8 +330,8 @@ ${historyHtml}
 <span style="display:inline-block;width:16px;height:16px;background:red;border-radius:50%;"></span> ${redP}% |
 <span style="display:inline-block;width:16px;height:16px;background:green;border-radius:50%;"></span> ${greenP}%<br>
 <small>${t("total")}: ${total}</small><br>
-<button class="btn" style="background:green" onclick="sendVote(${dot.id},'green')">${t("clean")}</button>
-<button class="btn" style="background:red" onclick="sendVote(${dot.id},'red')">${t("control")}</button>
+<button class="btn" style="background:green" onclick="sendVote(${dot.id},'green',${dot.lt},${dot.ln})">${t("clean")}</button>
+<button class="btn" style="background:red" onclick="sendVote(${dot.id},'red',${dot.lt},${dot.ln})">${t("control")}</button>
 `;
 }
 
@@ -355,20 +355,66 @@ markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total,s.color,s.old_
 });
 }
 
-function sendVote(id, status) {
-    let userId = 0; let username = ""; let firstName = "Водій";
-    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        userId = tg.initDataUnsafe.user.id || 0;
-        username = tg.initDataUnsafe.user.username || "";
-        firstName = tg.initDataUnsafe.user.first_name || "Водій";
+function sendVote(id, status, pointLat, pointLng) {
+    if (!navigator.geolocation) {
+        alert("⚠️ Ваш пристрій або браузер не підтримує геолокацію!");
+        return;
     }
-    fetch(`${API_URL}/update`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: id, status: status, user_id: userId, username: username, first_name: firstName })
-    })
-    .then(res => res.json())
-    .then(() => { if (tg) { try { tg.sendData(status + "_" + id); } catch(e){} } loadStats(); loadTopPermanent(); })
-    .catch(err => console.error("Помилка:", err));
+
+    // Запитуємо точні координати телефона водія
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const userLat = position.coords.latitude;
+            const userLng = position.coords.longitude;
+
+            let userId = 0; let username = ""; let firstName = "Водій";
+            if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                userId = tg.initDataUnsafe.user.id || 0;
+                username = tg.initDataUnsafe.user.username || "";
+                firstName = tg.initDataUnsafe.user.first_name || "Водій";
+            }
+
+            // Відправляємо пакет даних разом із координатами на сервер
+            fetch(`${API_URL}/update`, {
+                method: "POST", 
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    id: id, 
+                    status: status, 
+                    user_id: userId, 
+                    username: username, 
+                    first_name: firstName,
+                    user_lat: userLat,
+                    user_lng: userLng,
+                    point_lat: pointLat,
+                    point_lng: pointLng
+                })
+            })
+            .then(res => res.json().then(data => ({ status: res.status, body: data })))
+            .then(res => {
+                if (res.status === 200) {
+                    // Якщо все супер і водій у радіусі 2 км
+                    if (tg) { try { tg.sendData(status + "_" + id); } catch(e){} } 
+                    loadStats(); 
+                    loadTopPermanent();
+                } else {
+                    // Якщо сервер повернув помилку (наприклад, водій занадто далеко)
+                    alert("❌ Помилка: " + res.body.message);
+                }
+            })
+            .catch(err => {
+                console.error("Помилка:", err);
+                alert("⚠️ Помилка зв'язку із сервером.");
+            });
+        },
+        function(error) {
+            alert("⚠️ GPS вимкнено або доступ заборонено. Увімкніть геопозицію на телефоні!");
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 7000
+        }
+    );
 }
 
 function sendTrafficBan() {
