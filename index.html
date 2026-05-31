@@ -353,19 +353,40 @@ markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total,s.color,s.old_
 
 function sendVote(id, status, pointLat, pointLng) {
     if (!navigator.geolocation) { alert("⚠️ Помилка GPS!"); return; }
+    
+    // Примусово беремо нову позицію (maximumAge: 0)
     navigator.geolocation.getCurrentPosition(function(position) {
         const userLat = position.coords.latitude;
         const userLng = position.coords.longitude;
         let userId = 0; let username = ""; let firstName = "Водій";
-        if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) { userId = tg.initDataUnsafe.user.id || 0; username = tg.initDataUnsafe.user.username || ""; firstName = tg.initDataUnsafe.user.first_name || "Водій"; }
+        if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) { 
+            userId = tg.initDataUnsafe.user.id || 0; 
+            username = tg.initDataUnsafe.user.username || ""; 
+            firstName = tg.initDataUnsafe.user.first_name || "Водій"; 
+        }
+
         fetch(`${API_URL}/update`, {
-            method: "POST", headers: { "Content-Type": "application/json" },
+            method: "POST", 
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id, status, user_id: userId, username, first_name: firstName, user_lat: userLat, user_lng: userLng, point_lat: pointLat, point_lng: pointLng })
-        }).then(res => { if (res.status === 200) { if (tg) tg.sendData(status + "_" + id); loadStats(); loadTopPermanent(); } });
-    });
+        })
+        .then(async res => {
+            const data = await res.json();
+            if (res.status === 200) {
+                if (tg) tg.sendData(status + "_" + id);
+                loadStats();
+                loadTopPermanent();
+            } else {
+                // Саме тут сервер повертає помилку, яку ми показуємо через alert
+                alert(data.message || "Помилка: Ви занадто далеко!");
+            }
+        })
+        .catch(err => { alert("⚠️ Помилка зв'язку із сервером."); });
+    }, function(err) { alert("⚠️ GPS недоступний. Увімкніть його!"); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
 }
 
 function sendTrafficBan() { if (tg && tg.openLink) tg.openLink("https://trafficban.com"); else window.open("https://trafficban.com", '_blank'); }
+
 async function loadTopPermanent() {
     const listDiv = document.getElementById("topList");
     try {
@@ -399,7 +420,7 @@ function copyToClipboard(id) { const text = document.getElementById(id).innerTex
 updateLabels();
 loadStats();
 loadTopPermanent();
-locateUser(false); // Запуск при вході
+locateUser(false); 
 setInterval(loadStats, 2000);
 setInterval(loadTopPermanent, 10000);
 </script>
