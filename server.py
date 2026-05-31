@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import requests  # Імпорт для відправки повідомлень в Телеграм
+import math
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime, timedelta
@@ -15,11 +16,11 @@ ADMIN_CHAT_ID = "1034056050"
 app = Flask(__name__)
 CORS(app)
 
-# Змінено шлях для збереження бази даних на постійний диск Render
+# Шлях для збереження бази даних на постійний диск Render
 DB_PATH = "/data/austria_map.db"
 
 def init_db():
-    # Перевіряємо, чи існує папка /data (про всяк випадок для локальних тестів)
+    # Перевіряємо, чи існує папка /data
     db_dir = os.path.dirname(DB_PATH)
     if db_dir and not os.path.exists(db_dir):
         os.makedirs(db_dir, exist_ok=True)
@@ -56,6 +57,31 @@ def init_db():
     conn.close()
 
 init_db()
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    """
+    Рахує відстань у кілометрах між двома точками на Землі (Формула Гаверсину)
+    """
+    try:
+        # Радіус Землі в кілометрах
+        R = 6371.0
+        
+        # Переводимо координати в радіани
+        rad_lat1 = math.radians(float(lat1))
+        rad_lon1 = math.radians(float(lon1))
+        rad_lat2 = math.radians(float(lat2))
+        rad_lon2 = math.radians(float(lon2))
+        
+        dlon = rad_lon2 - rad_lon1
+        dlat = rad_lat2 - rad_lat1
+        
+        a = math.sin(dlat / 2)**2 + math.cos(rad_lat1) * math.cos(rad_lat2) * math.sin(dlon / 2)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        
+        distance = R * c
+        return distance
+    except Exception:
+        return 9999.0  # Якщо координати бИТі або порожні
 
 # Функція для генерації тексту ТОПу та кнопок
 def generate_top_data(period="week"):
@@ -124,7 +150,7 @@ def telegram_webhook():
         if text == "/start":
             welcome_text = (
                 "👋 **Вітаємо в Driving Assistant Bot!**\n\n"
-                "Тут ви можете моніторити ситуацію на дорогах Австрії в реальному часі.\n\n"
+                "🛣️ Тут ви можете моніторити ситуацію на дорогах Австрії в реальному часі.\n\n"
                 "🗺️ Щоб запустити інтерактивну карту, просто натисніть синю кнопку **'Відкрити мапу'** в самому низу екрана 👇"
             )
             
@@ -183,6 +209,31 @@ def update_point():
     username = data.get('username', '')
     first_name = data.get('first_name', 'Водій')
     
+    # Отримуємо геопозицію водія та координати самої точки з карти
+    user_lat = data.get('user_lat')
+    user_lng = data.get('user_lng')
+    point_lat = data.get('point_lat')
+    point_lng = data.get('point_lng')
+    
+    # --- ПЕРЕВІРКА ГЕОЛОКАЦІЇ (Радіус 2 КМ) ---
+    if user_lat and user_lng and point_lat and point_lng:
+        distance = calculate_distance(user_lat, user_lng, point_lat, point_lng)
+        
+        # Якщо водій далі ніж за 2 км від точки контролю
+        if distance > 2.0:
+            dist_str = f"{distance:.1f} км"
+            return jsonify({
+                "status": "error", 
+                "message": f"Ви занадто далеко ({dist_str}). Радіус дії 2 км!"
+            }), 400
+    else:
+        # Якщо карта не передала координати взагалі
+        return jsonify({
+            "status": "error",
+            "message": "Неможливо визначити вашу геопозицію. Увімкніть GPS на телефоні!"
+        }), 400
+    # ------------------------------------------
+
     now = datetime.now().isoformat()
 
     conn = sqlite3.connect(DB_PATH)
