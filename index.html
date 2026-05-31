@@ -185,8 +185,8 @@ font-weight: bold;
     <button class="donate-btn" onclick="showDonateModal()">☕️</button>
 </div>
 
-<div style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 9999; padding: 10px; box-sizing: border-box;">
-    <button onclick="sendTrafficBan()" style="width: 100%; padding: 15px; border: none; border-radius: 8px; background: #d32f2f; color: white; font-weight: bold; font-size: 16px; cursor: pointer; box-shadow: 0 -2px 10px rgba(0,0,0,0.2);">
+<div style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 9999; padding: 10px; box-sizing: border-box; background: rgba(255,255,255,0.1);">
+    <button onclick="sendTrafficBan()" style="width: 100%; padding: 15px; border: none; border-radius: 8px; background: #b71c1c; color: white; font-weight: bold; font-size: 16px; cursor: pointer; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);">
         TRAFFICBAN
     </button>
 </div>
@@ -355,10 +355,13 @@ function sendVote(id, status) {
     .catch(err => console.error("Помилка:", err));
 }
 
-// Кнопка TRAFFICBAN - тільки відкриває посилання
+// КНОПКА ВІДКРИВАЄ САЙТ TRAFFICBAN НАПРЯМУ В СЛУЖБОВОМУ БРАУЗЕРІ ТЕЛЕГРАМУ
 function sendTrafficBan() {
-    const targetUrl = "https://твоя_адреса_сайту.com"; // ВСТАВ СЮДИ СВОЄ ПОСИЛАННЯ
-    window.open(targetUrl, '_blank');
+    if (tg && tg.openLink) {
+        tg.openLink("https://trafficban.com");
+    } else {
+        window.open("https://trafficban.com", '_blank');
+    }
 }
 
 async function loadTopPermanent() {
