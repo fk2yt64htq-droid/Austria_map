@@ -5,7 +5,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime, timedelta
 
-# Налаштування
+# Твої дані
 BOT_TOKEN = "8328089237:AAGsx0fWLMT292cWyrHzKgnbEYtu9qUUzAM"
 ADMIN_CHAT_ID = "1034056050"
 
@@ -83,7 +83,7 @@ def get_top():
 def save_feedback():
     data = request.json
     user_id, username, first_name, text = data.get('user_id', 0), data.get('username', ''), data.get('first_name', 'Водій'), data.get('text', '').strip()
-    if not text: return jsonify({"status": "error"}), 400
+    if not text: return jsonify({"status": "error", "message": "Текст порожній"}), 400
     
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -91,11 +91,16 @@ def save_feedback():
     conn.commit()
     conn.close()
     
+    # Відправка в ТГ
     try:
         msg = f"💡 *Пропозиція від {first_name} (@{username}):* {text}"
-        requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={"chat_id": ADMIN_CHAT_ID, "text": msg, "parse_mode": "Markdown"}, timeout=5)
-    except: pass
-    return jsonify({"status": "success"})
+        response = requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", 
+                                 json={"chat_id": ADMIN_CHAT_ID, "text": msg, "parse_mode": "Markdown"}, timeout=10)
+        print(f"DEBUG: Telegram response: {response.status_code}, {response.text}")
+    except Exception as e:
+        print(f"DEBUG: Error sending to Telegram: {e}")
+        
+    return jsonify({"status": "success", "message": "Дякуємо за пропозицію!"})
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
