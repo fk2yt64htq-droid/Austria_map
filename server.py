@@ -69,24 +69,17 @@ def telegram_webhook():
 
     # 1. Обробка команди /start
     if text == "/start":
-        welcome_text = "👋 Вітаємо в **Driving Assistant Bot**!\n\nТут ви можете моніторити ситуацію на дорогах Австрії в реальному часі.\n\nНатисніть кнопку нижче, щоб відкрити інтерактивну карту 👇"
-        
-        # Створюємо кнопку WebApp (як у тебе на скріншоті)
-        reply_markup = {
-            "inline_keyboard": [[
-                {
-                    "text": "🗺️ Відкрити мапу",
-                    "web_app": {"url": "https://fk2yt64htq-droid.github.io/"} # Твоя адреса github.io
-                }
-            ]]
-        }
+        welcome_text = (
+            "👋 **Вітаємо в Driving Assistant Bot!**\n\n"
+            "Тут ви можете моніторити ситуацію на дорогах Австрії в реальному часі.\n\n"
+            "🗺️ Щоб запустити інтерактивну карту, просто натисніть синю кнопку **'Відкрити мапу'** в самому низу екрана 👇"
+        )
         
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
         requests.post(url, json={
             "chat_id": chat_id,
             "text": welcome_text,
-            "parse_mode": "Markdown",
-            "reply_markup": reply_markup
+            "parse_mode": "Markdown"
         })
 
     # 2. Обробка команди /top всередині чату
