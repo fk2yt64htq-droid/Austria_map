@@ -179,7 +179,7 @@ def get_stats():
                 if minutes < 60:
                     time_passed_str = f"{minutes} хв. тому"
                 else:
-                    time_passed_str = f"{minutes // 60} год. {minutes % 60} хв. тому"
+                    time_passed_str = f"{minutes // 60} god. {minutes % 60} хв. тому"
                 
                 if diff > timedelta(hours=1.5):
                     is_expired = True
@@ -210,6 +210,8 @@ def get_stats():
 @app.route('/top', methods=['GET'])
 def get_top():
     period = request.args.get('period', 'week')
+    lang = request.args.get('lang', 'uk')  # Отримуємо мову з прапорця на мапі
+    
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
@@ -230,6 +232,18 @@ def get_top():
     rows = cursor.fetchall()
     conn.close()
     
+    # Мультимовні заголовки для блоку ТОП на мапі
+    titles = {
+        "uk": "🏆 ТОП-5 активних водіїв",
+        "pl": "🏆 TOP-5 aktywnych kierowców",
+        "sk": "🏆 TOP-5 aktívnych vodičov",
+        "be": "🏆 ТОП-5 актыўных кіроўцаў",
+        "en": "🏆 TOP-5 active drivers"
+    }
+    
+    # Вибираємо потрібний заголовок (якщо мова невідома — ставимо англійську)
+    chosen_title = titles.get(lang, titles["en"])
+    
     top_list = []
     for row in rows:
         top_list.append({
@@ -237,7 +251,12 @@ def get_top():
             "username": row[1],
             "votes": row[2]
         })
-    return jsonify(top_list), 200
+        
+    # Повертаємо і дані водіїв, і вже ПЕРЕКЛАДЕНИЙ заголовок для мапи
+    return jsonify({
+        "title": chosen_title,
+        "drivers": top_list
+    }), 200
 
 @app.route('/feedback', methods=['POST'])
 def save_feedback():
