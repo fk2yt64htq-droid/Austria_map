@@ -45,7 +45,6 @@ font-size: 13px;
 }
 .top-item:last-child { border: none; }
 
-/* Контейнер для елементів керування праворуч - змінено на вертикальний */
 .right-controls {
 position: absolute;
 top: 10px;
@@ -57,7 +56,6 @@ align-items: center;
 gap: 8px;
 }
 
-/* Стиль кнопки донату та лампочки */
 .feedback-btn, .donate-btn {
 background: #ff9800;
 color: white;
@@ -82,7 +80,7 @@ box-shadow: 0 2px 6px rgba(0,0,0,.3);
 height: 24px;
 display: flex;
 align-items: center;
-width: 36px; /* щоб було симетрично */
+width: 36px;
 justify-content: center;
 }
 .langBox select {
@@ -93,7 +91,6 @@ font-size: 16px;
 cursor: pointer;
 }
 
-/* Модальне вікно для фідбеку та донату */
 .modal-overlay {
 position: fixed;
 top: 0;
@@ -148,6 +145,17 @@ font-weight: bold;
 .btn-cancel { background: #eee; color: #333; }
 .btn-submit { background: #ff9800; color: white; }
 
+/* Стиль для кнопки копіювання */
+.copy-btn {
+    cursor: pointer;
+    border: none;
+    background: #eee;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    margin-left: 5px;
+}
+
 @media (max-width: 400px) {
   .top-permanent-box { width: 190px; padding: 8px; font-size: 11px; }
   .top-permanent-box h3 { font-size: 12px; }
@@ -192,8 +200,14 @@ font-weight: bold;
 <div class="modal-overlay" id="donateModal">
     <div class="modal-box" style="text-align:left; font-size:13px;">
         <h3>Дякую за підтримку! ☕️</h3>
-        <p><b>EUR (Revolut):</b><br>Vitalii Sachenko<br>IBAN: <code>LT733250059128960771</code></p>
-        <p><b>PLN (UniCredit):</b><br>Vitalii Sachenko<br>PL: <code>78291000062469800208676521</code></p>
+        <p><b>EUR (Revolut):</b><br>Vitalii Sachenko<br>
+           IBAN: <code id="iban1">LT733250059128960771</code> 
+           <button class="copy-btn" onclick="copyToClipboard('iban1')">📋</button>
+        </p>
+        <p><b>PLN (UniCredit):</b><br>Vitalii Sachenko<br>
+           PL: <code id="iban2">78291000062469800208676521</code> 
+           <button class="copy-btn" onclick="copyToClipboard('iban2')">📋</button>
+        </p>
         <div class="modal-actions">
             <button class="btn-modal btn-cancel" onclick="closeDonateModal()">Закрити</button>
         </div>
@@ -201,7 +215,6 @@ font-weight: bold;
 </div>
 
 <script>
-// ТУТ ВАШ ОРИГІНАЛЬНИЙ JS КОД, ЯКИЙ ВИ ВЖЕ МАЛИ
 const tg = window.Telegram ? window.Telegram.WebApp : null;
 if (tg) {
     tg.ready();
@@ -417,7 +430,6 @@ async function loadTopPermanent() {
     }
 }
 
-// Функції керування модальними вікнами
 function openFeedbackModal() { document.getElementById("feedbackModal").style.display = "flex"; }
 function closeFeedbackModal() { document.getElementById("feedbackModal").style.display = "none"; }
 function showDonateModal() { document.getElementById("donateModal").style.display = "flex"; }
@@ -428,6 +440,16 @@ function submitFeedback() {
     if (!text) { alert(lang === "uk" ? "Будь ласка, введіть текст!" : "Please enter text!"); return; }
     alert(lang === "uk" ? "Повідомлення надіслано!" : "Message sent!");
     closeFeedbackModal();
+}
+
+// Функція копіювання
+function copyToClipboard(id) {
+    const text = document.getElementById(id).innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        alert("Скопійовано: " + text);
+    }).catch(err => {
+        console.error("Помилка копіювання: ", err);
+    });
 }
 
 updateLabels();
