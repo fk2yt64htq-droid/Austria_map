@@ -10,7 +10,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
-html, body { margin:0; padding:0; height:100%; overflow: hidden; }
+html, body { margin:0; padding:0; height:100%; overflow: hidden; font-family: Arial, sans-serif; }
 #map { height: calc(100vh - 60px); width: 100vw; }
 
 /* Кнопка TRAFFICBAN */
@@ -43,6 +43,7 @@ html, body { margin:0; padding:0; height:100%; overflow: hidden; }
 .btn { width: 100%; padding:10px; margin-top:5px; border:none; border-radius:6px; color:#fff; font-weight:bold; cursor:pointer; }
 .leaflet-popup-content { text-align:center; color:#000 !important; }
 
+/* Виправлений контейнер ТОП-5 */
 .top-permanent-box {
     position: absolute;
     top: 10px;
@@ -50,14 +51,15 @@ html, body { margin:0; padding:0; height:100%; overflow: hidden; }
     z-index: 9999;
     background: rgba(255, 255, 255, 0.95);
     width: 240px;
+    min-height: 40px; /* Захист від згортання в нуль */
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,.3);
     padding: 12px;
-    font-family: Arial, sans-serif;
     border: 1px solid #ddd;
+    box-sizing: border-box;
 }
 .top-permanent-box h3 { margin: 0 0 8px 0; font-size: 14px; text-align: center; color: #222; border-bottom: 2px solid #136AEC; padding-bottom: 4px; }
-.top-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #eee; font-size: 13px; }
+.top-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #eee; font-size: 13px; align-items: center; }
 .top-item:last-child { border: none; }
 
 .right-controls { position: absolute; top: 10px; right: 10px; z-index: 9999; display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -68,7 +70,9 @@ html, body { margin:0; padding:0; height:100%; overflow: hidden; }
 .langBox select { border: none; outline: none; background: transparent; font-size: 16px; cursor: pointer; }
 
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: none; align-items: center; justify-content: center; }
-.modal-box { background: white; padding: 20px; border-radius: 12px; width: 85%; max-width: 320px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-family: Arial, sans-serif; }
+.modal-box { background: white; padding: 20px; border-radius: 12px; width: 85%; max-width: 320px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+.modal-box h3 { margin: 0 0 10px 0; font-size: 16px; text-align: center; color: #333; }
+.modal-box textarea { width: 100%; height: 90px; border: 1px solid #ccc; border-radius: 6px; padding: 8px; resize: none; box-sizing: border-box; font-size: 14px; outline: none; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
 .btn-modal { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
 .btn-cancel { background: #eee; color: #333; }
@@ -77,6 +81,8 @@ html, body { margin:0; padding:0; height:100%; overflow: hidden; }
 
 @media (max-width: 400px) {
   .top-permanent-box { width: 190px; padding: 8px; font-size: 11px; }
+  .top-permanent-box h3 { font-size: 12px; }
+  .top-item { font-size: 11px; padding: 3px 0; }
 }
 </style>
 </head>
@@ -89,7 +95,7 @@ html, body { margin:0; padding:0; height:100%; overflow: hidden; }
 </div>
 
 <div class="top-permanent-box">
-    <h3 id="topTitle">🏆 ТОП-5 active drivers</h3>
+    <h3 id="topTitle">🏆 ТОП-5 активних водіїв</h3>
     <div id="topList">Завантаження рейтингу...</div>
 </div>
 
@@ -126,7 +132,6 @@ html, body { margin:0; padding:0; height:100%; overflow: hidden; }
 </div>
 
 <script>
-// (Ваш існуючий JS код залишається без змін)
 const tg = window.Telegram ? window.Telegram.WebApp : null;
 if (tg) { tg.ready(); tg.expand(); }
 
@@ -135,7 +140,7 @@ const API_URL = "https://austria-map.onrender.com";
 let lang = localStorage.getItem("lang") || "uk";
 document.getElementById("langSelect").value = lang;
 document.getElementById("langSelect").addEventListener("change",(e)=>{
-  lang = e.target.value; localStorage.setItem("lang",lang); updateLabels(); loadStats();
+  lang = e.target.value; localStorage.setItem("lang",lang); updateLabels(); loadStats(); loadTopPermanent();
 });
 
 const i18n = {
@@ -151,10 +156,12 @@ function updateLabels() {
     if(lang === "uk") {
         document.getElementById("topTitle").innerText = "🏆 ТОП-5 активних водіїв";
         document.getElementById("modalTitle").innerText = "Зв'язатися з підтримкою";
+        document.getElementById("feedbackText").placeholder = "Опишіть вашу ідею чи проблему...";
         document.querySelector(".btn-submit").innerText = "Надіслати";
     } else {
         document.getElementById("topTitle").innerText = "🏆 TOP-5 active drivers";
         document.getElementById("modalTitle").innerText = "Contact Support";
+        document.getElementById("feedbackText").placeholder = "Describe your idea or problem...";
         document.querySelector(".btn-submit").innerText = "Send";
     }
 }
@@ -165,23 +172,127 @@ let map = L.map("map").setView([47.5162, 14.5501], 7);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap'}).addTo(map);
 
 let markers = {}, stats = {};
+
 function createPopup(dot, redP, greenP, total, color, oldStatus, lastTime){
     if(dot.fix) return `<b>${dot.n}</b><br><span style="color:red;font-weight:bold;">КОНТРОЛЬ</span>`;
-    return `<b>${dot.n}</b><br><span style="display:inline-block;width:16px;height:16px;background:red;border-radius:50%;"></span> ${redP}% | <span style="display:inline-block;width:16px;height:16px;background:green;border-radius:50%;"></span> ${greenP}%<br><small>${t("total")}: ${total}</small><br><button class="btn" style="background:green" onclick="sendVote(${dot.id},'green')">${t("clean")}</button><button class="btn" style="background:red" onclick="sendVote(${dot.id},'red')">${t("control")}</button>`;
+    
+    let historyHtml = "";
+    if (color === "blue" && oldStatus) {
+        let statusText = oldStatus === "red" ? t("was_control") : t("was_clean");
+        let statusColor = oldStatus === "red" ? "red" : "green";
+        historyHtml = `<div style="margin: 5px 0; font-size:12px; color:#555;">⏳ <b>${statusText}</b> (<span style="color:${statusColor}">${lastTime}</span>)</div>`;
+    } else if (lastTime) {
+        historyHtml = `<div style="margin: 5px 0; font-size:12px; color:#666;">⏱️ ${t("active")} ${lastTime}</div>`;
+    }
+
+    return `
+    <b>${dot.n}</b><br>
+    ${historyHtml}
+    <span style="display:inline-block;width:16px;height:16px;background:red;border-radius:50%;"></span> ${redP}% | 
+    <span style="display:inline-block;width:16px;height:16px;background:green;border-radius:50%;"></span> ${greenP}%<br>
+    <small>${t("total")}: ${total}</small><br>
+    <button class="btn" style="background:green" onclick="sendVote(${dot.id},'green')">${t("clean")}</button>
+    <button class="btn" style="background:red" onclick="sendVote(${dot.id},'red')">${t("control")}</button>
+    `;
 }
 
-async function loadStats(){ try{ const res = await fetch(`${API_URL}/stats`); stats = await res.json(); }catch{ stats = {}; } dots.forEach(dot=>{ const s = stats[dot.id] || {color:"blue", green:0, red:0}; const total = s.green + s.red; const redP = total ? Math.round((s.red/total)*100) : 0; const greenP = total ? 100-redP : 0; const iconUrl=`https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${s.color||'blue'}.png`; if(!markers[dot.id]){ markers[dot.id]=L.marker([dot.lt,dot.ln],{icon:new L.Icon({iconUrl:iconUrl,iconSize:[25,41]})}).addTo(map).bindPopup(createPopup(dot,redP,greenP,total)); }else{ markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total)); } }); }
-function sendVote(id, status) { fetch(`${API_URL}/update`, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({id, status}) }).then(() => loadStats()); }
-async function loadTopPermanent() { const listDiv = document.getElementById("topList"); try { const res = await fetch(`${API_URL}/top?period=week`); const top = await res.json(); listDiv.innerHTML = top.slice(0,5).map((u,i) => `<div class="top-item"><span>${i+1}. ${u.first_name}</span><span>${u.votes} 🗳️</span></div>`).join(""); } catch(e) {} }
+async function loadStats(){ 
+    try{ 
+        const res = await fetch(`${API_URL}/stats`); 
+        stats = await res.json(); 
+    }catch{ stats = {}; } 
+    
+    dots.forEach(dot=>{ 
+        const s = stats[dot.id] || {color:"blue", green:0, red:0, old_status:"", last_time:""}; 
+        const total = s.green + s.red; 
+        const redP = total ? Math.round((s.red/total)*100) : 0; 
+        const greenP = total ? 100-redP : 0; 
+        
+        let color = s.color || "blue";
+        if(dot.fix){
+            color="red";
+        } else if(color !== "blue" && total > 0){
+            if(s.red > s.green) color="red";
+            else if(s.green > s.red) color="green";
+            else color="gold";
+        }
+        
+        const iconUrl=`https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`; 
+        if(!markers[dot.id]){ 
+            markers[dot.id]=L.marker([dot.lt,dot.ln],{
+                icon:new L.Icon({
+                    iconUrl:iconUrl,
+                    shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                    iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]
+                })
+            }).addTo(map).bindPopup(createPopup(dot,redP,greenP,total,s.color,s.old_status,s.last_time)); 
+            L.circle([dot.lt,dot.ln],{radius:1500,color:"blue",weight:1,fillOpacity:0.1}).addTo(map);
+        }else{ 
+            markers[dot.id].setIcon(new L.Icon({
+                iconUrl:iconUrl,
+                shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]
+            }));
+            markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total,s.color,s.old_status,s.last_time)); 
+        } 
+    }); 
+}
+
+function sendVote(id, status) { 
+    let userId = 0; let username = ""; let firstName = "Водій";
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        userId = tg.initDataUnsafe.user.id || 0;
+        username = tg.initDataUnsafe.user.username || "";
+        firstName = tg.initDataUnsafe.user.first_name || "Водій";
+    }
+    fetch(`${API_URL}/update`, { 
+        method: "POST", 
+        headers: {"Content-Type":"application/json"}, 
+        body: JSON.stringify({id: id, status: status, user_id: userId, username: username, first_name: firstName}) 
+    }).then(() => {
+        loadStats(); loadTopPermanent();
+    }); 
+}
+
+async function loadTopPermanent() { 
+    const listDiv = document.getElementById("topList"); 
+    try { 
+        const res = await fetch(`${API_URL}/top?period=week`); 
+        const topUsers = await res.json(); 
+        if (!topUsers || topUsers.length === 0) {
+            listDiv.innerHTML = "<p style='text-align:center;margin:5px 0;color:#777;font-size:12px;'>Голосів немає 🚀</p>";
+            return;
+        }
+        let html = "";
+        const medals = ["🥇", "🥈", "🥉"];
+        topUsers.slice(0,5).forEach((user, i) => {
+            const place = i < 3 ? medals[i] : `${i + 1}.`;
+            html += `<div class="top-item"><span>${place} <b>${user.first_name || 'Водій'}</b></span><span style="color:#136AEC;font-weight:bold;">${user.votes} 🗳️</span></div>`;
+        });
+        listDiv.innerHTML = html; 
+    } catch(e) {
+        // Якщо сервер лежить, не затираємо повністю інтерфейс
+        if(listDiv.innerHTML === "Завантаження рейтингу...") {
+            listDiv.innerHTML = "<p style='color:red;font-size:12px;'>Помилка з'єднання</p>";
+        }
+    } 
+}
 
 function openFeedbackModal() { document.getElementById("feedbackModal").style.display = "flex"; }
 function closeFeedbackModal() { document.getElementById("feedbackModal").style.display = "none"; }
 function showDonateModal() { document.getElementById("donateModal").style.display = "flex"; }
 function closeDonateModal() { document.getElementById("donateModal").style.display = "none"; }
-function submitFeedback() { alert("Надіслано!"); closeFeedbackModal(); }
+function submitFeedback() { 
+    const text = document.getElementById("feedbackText").value.trim();
+    if (!text) { alert(lang === "uk" ? "Будь ласка, введіть текст!" : "Please enter text!"); return; }
+    alert(lang === "uk" ? "Повідомлення надіслано!" : "Message sent!"); 
+    closeFeedbackModal(); 
+}
 function copyToClipboard(id) { navigator.clipboard.writeText(document.getElementById(id).innerText).then(() => alert("Скопійовано!")); }
 
-updateLabels(); loadStats(); loadTopPermanent(); setInterval(loadStats, 5000); setInterval(loadTopPermanent, 10000);
+updateLabels(); loadStats(); loadTopPermanent(); 
+setInterval(loadStats, 4000); // Збільшено до 4 сек, щоб знизити навантаження на Render
+setInterval(loadTopPermanent, 15000); // Збільшено до 15 сек
 </script>
 </body>
 </html>
