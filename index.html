@@ -28,127 +28,29 @@ padding: 12px;
 font-family: Arial, sans-serif;
 border: 1px solid #ddd;
 }
-.top-permanent-box h3 { 
-margin: 0 0 8px 0; 
-font-size: 14px; 
-text-align: center; 
-color: #222; 
-border-bottom: 2px solid #136AEC;
-padding-bottom: 4px;
-}
-.top-item { 
-display: flex; 
-justify-content: space-between; 
-padding: 5px 0; 
-border-bottom: 1px solid #eee; 
-font-size: 13px; 
-}
+.top-permanent-box h3 { margin: 0 0 8px 0; font-size: 14px; text-align: center; color: #222; border-bottom: 2px solid #136AEC; padding-bottom: 4px; }
+.top-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #eee; font-size: 13px; }
 .top-item:last-child { border: none; }
 
-/* Контейнер для елементів керування праворуч */
-.right-controls {
-position: absolute;
-top: 10px;
-right: 10px;
-z-index: 9999;
-display: flex;
-align-items: center;
-gap: 8px;
-}
+.right-controls { position: absolute; top: 10px; right: 10px; z-index: 9999; display: flex; align-items: center; gap: 8px; }
 
-/* Кнопка-лампочка зворотного зв'язку */
-.feedback-btn {
-background: #ff9800;
-color: white;
-border: none;
-width: 36px;
-height: 36px;
-border-radius: 6px;
-font-size: 18px;
-cursor: pointer;
-box-shadow: 0 2px 6px rgba(0,0,0,.3);
-display: flex;
-align-items: center;
-justify-content: center;
+.feedback-btn, .donate-btn {
+background: #ff9800; color: white; border: none; width: 36px; height: 36px; border-radius: 6px; font-size: 18px; cursor: pointer;
+box-shadow: 0 2px 6px rgba(0,0,0,.3); display: flex; align-items: center; justify-content: center;
 }
+.donate-btn { background: #4caf50; }
 
-.langBox {
-background: white;
-padding: 5px;
-border-radius: 6px;
-box-shadow: 0 2px 6px rgba(0,0,0,.3);
-height: 24px;
-display: flex;
-align-items: center;
-}
-.langBox select {
-border: none;
-outline: none;
-background: transparent;
-font-size: 16px;
-cursor: pointer;
-}
+.langBox { background: white; padding: 5px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,.3); height: 24px; display: flex; align-items: center; }
+.langBox select { border: none; outline: none; background: transparent; font-size: 16px; cursor: pointer; }
 
-/* Модальне вікно для фідбеку */
-.modal-overlay {
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-background: rgba(0,0,0,0.5);
-z-index: 10000;
-display: none;
-align-items: center;
-justify-content: center;
-}
-.modal-box {
-background: white;
-padding: 20px;
-border-radius: 12px;
-width: 85%;
-max-width: 320px;
-box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-font-family: Arial, sans-serif;
-}
-.modal-box h3 {
-margin: 0 0 10px 0;
-font-size: 16px;
-text-align: center;
-color: #333;
-}
-.modal-box textarea {
-width: 100%;
-height: 90px;
-border: 1px solid #ccc;
-border-radius: 6px;
-padding: 8px;
-resize: none;
-box-sizing: border-box;
-font-size: 14px;
-outline: none;
-}
-.modal-actions {
-display: flex;
-justify-content: flex-end;
-gap: 10px;
-margin-top: 10px;
-}
-.btn-modal {
-padding: 8px 14px;
-border: none;
-border-radius: 6px;
-cursor: pointer;
-font-weight: bold;
-}
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: none; align-items: center; justify-content: center; }
+.modal-box { background: white; padding: 20px; border-radius: 12px; width: 85%; max-width: 320px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-family: Arial, sans-serif; }
+.modal-box h3 { margin: 0 0 10px 0; font-size: 16px; text-align: center; color: #333; }
+.modal-box textarea { width: 100%; height: 90px; border: 1px solid #ccc; border-radius: 6px; padding: 8px; resize: none; box-sizing: border-box; font-size: 14px; outline: none; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+.btn-modal { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
 .btn-cancel { background: #eee; color: #333; }
 .btn-submit { background: #ff9800; color: white; }
-
-@media (max-width: 400px) {
-  .top-permanent-box { width: 190px; padding: 8px; font-size: 11px; }
-  .top-permanent-box h3 { font-size: 12px; }
-  .top-item { font-size: 11px; padding: 3px 0; }
-}
 </style>
 </head>
 <body>
@@ -161,6 +63,7 @@ font-weight: bold;
 </div>
 
 <div class="right-controls">
+    <button class="donate-btn" onclick="showDonateModal()">☕️</button>
     <button class="feedback-btn" onclick="openFeedbackModal()">💡</button>
     <div class="langBox">
         <select id="langSelect">
@@ -184,12 +87,20 @@ font-weight: bold;
     </div>
 </div>
 
+<div class="modal-overlay" id="donateModal">
+    <div class="modal-box" style="text-align:left; font-size:13px;">
+        <h3>Дякую за підтримку! ☕️</h3>
+        <p><b>EUR (Revolut):</b><br>Vitalii Sachenko<br>IBAN: <code>LT733250059128960771</code></p>
+        <p><b>PLN (UniCredit):</b><br>Vitalii Sachenko<br>PL: <code>78291000062469800208676521</code></p>
+        <div class="modal-actions">
+            <button class="btn-modal btn-cancel" onclick="closeDonateModal()">Закрити</button>
+        </div>
+    </div>
+</div>
+
 <script>
 const tg = window.Telegram ? window.Telegram.WebApp : null;
-if (tg) {
-    tg.ready();
-    tg.expand();
-}
+if (tg) { tg.ready(); tg.expand(); }
 
 const API_URL = "https://austria-map.onrender.com";
 
@@ -202,9 +113,7 @@ if(!lang){
     else if(tgLang.startsWith("be")) lang="be";
     else if(tgLang.startsWith("uk")) lang="uk";
     else lang="en";
-  }else{
-    lang="uk";
-  }
+  }else{ lang="uk"; }
 }
 document.getElementById("langSelect").value = lang;
 document.getElementById("langSelect").addEventListener("change",(e)=>{
@@ -270,7 +179,6 @@ let markers = {}, stats = {};
 
 function createPopup(dot, redP, greenP, total, color, oldStatus, lastTime){
 if(dot.fix) return `<b>${dot.n}</b><br><span style="color:red;font-weight:bold;">КОНТРОЛЬ</span>`;
-
 let historyHtml = "";
 if (color === "blue" && oldStatus) {
     let statusText = oldStatus === "red" ? t("was_control") : t("was_clean");
@@ -279,94 +187,40 @@ if (color === "blue" && oldStatus) {
 } else if (lastTime) {
     historyHtml = `<div style="margin: 5px 0; font-size:12px; color:#666;">⏱️ ${t("active")} ${lastTime}</div>`;
 }
-
-return `
-<b>${dot.n}</b><br>
-${historyHtml}
-<span style="display:inline-block;width:16px;height:16px;background:red;border-radius:50%;"></span> ${redP}% |
-<span style="display:inline-block;width:16px;height:16px;background:green;border-radius:50%;"></span> ${greenP}%<br>
-<small>${t("total")}: ${total}</small><br>
-<button class="btn" style="background:green" onclick="sendVote(${dot.id},'green')">${t("clean")}</button>
-<button class="btn" style="background:red" onclick="sendVote(${dot.id},'red')">${t("control")}</button>
-`;
+return `<b>${dot.n}</b><br>${historyHtml}<span style="display:inline-block;width:16px;height:16px;background:red;border-radius:50%;"></span> ${redP}% | <span style="display:inline-block;width:16px;height:16px;background:green;border-radius:50%;"></span> ${greenP}%<br><small>${t("total")}: ${total}</small><br><button class="btn" style="background:green" onclick="sendVote(${dot.id},'green')">${t("clean")}</button><button class="btn" style="background:red" onclick="sendVote(${dot.id},'red')">${t("control")}</button>`;
 }
 
 async function loadStats(){
-try{
-const res = await fetch(`${API_URL}/stats`);
-stats = await res.json();
-}catch{ stats = {}; }
-
+try{ const res = await fetch(`${API_URL}/stats`); stats = await res.json(); }catch{ stats = {}; }
 dots.forEach(dot=>{
 const s = stats[dot.id] || {color:"blue", green:0, red:0, old_status:"", last_time:""};
 const total = s.green + s.red;
 const redP = total ? Math.round((s.red/total)*100) : 0;
 const greenP = total ? 100-redP : 0;
-
 let color = s.color || "blue";
-if(dot.fix){
-  color="red";
-} else if(color !== "blue" && total > 0){
-  if(s.red > s.green) color="red";
-  else if(s.green > s.red) color="green";
-  else color="gold";
+if(dot.fix){ color="red"; } else if(color !== "blue" && total > 0){
+  if(s.red > s.green) color="red"; else if(s.green > s.red) color="green"; else color="gold";
 }
-
 const iconUrl=`https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`;
-
 if(!markers[dot.id]){
-markers[dot.id]=L.marker([dot.lt,dot.ln],{
-icon:new L.Icon({
-iconUrl:iconUrl,
-shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]
-})
-}).addTo(map).bindPopup(createPopup(dot,redP,greenP,total,s.color,s.old_status,s.last_time));
-
+markers[dot.id]=L.marker([dot.lt,dot.ln],{icon:new L.Icon({iconUrl:iconUrl,shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]})}).addTo(map).bindPopup(createPopup(dot,redP,greenP,total,s.color,s.old_status,s.last_time));
 L.circle([dot.lt,dot.ln],{radius:1500,color:"blue",weight:1,fillOpacity:0.1}).addTo(map);
-
 }else{
-markers[dot.id].setIcon(new L.Icon({
-iconUrl:iconUrl,
-shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]
-}));
+markers[dot.id].setIcon(new L.Icon({iconUrl:iconUrl,shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]}));
 markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total,s.color,s.old_status,s.last_time));
 }
 });
 }
 
 function sendVote(id, status) {
-    let userId = 0;
-    let username = "";
-    let firstName = "Водій";
-
+    let userId = 0, username = "", firstName = "Водій";
     if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
         userId = tg.initDataUnsafe.user.id || 0;
         username = tg.initDataUnsafe.user.username || "";
         firstName = tg.initDataUnsafe.user.first_name || "Водій";
     }
-
-    fetch(`${API_URL}/update`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            id: id,
-            status: status,
-            user_id: userId,
-            username: username,
-            first_name: firstName
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (tg) {
-            try { tg.sendData(status + "_" + id); } catch(e){}
-        }
-        loadStats();
-        loadTopPermanent();
-    })
-    .catch(err => console.error("Помилка:", err));
+    fetch(`${API_URL}/update`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({id:id, status:status, user_id:userId, username:username, first_name:firstName}) })
+    .then(res => res.json()).then(data => { if (tg) { try { tg.sendData(status + "_" + id); } catch(e){} } loadStats(); loadTopPermanent(); });
 }
 
 async function loadTopPermanent() {
@@ -374,121 +228,38 @@ async function loadTopPermanent() {
     try {
         const res = await fetch(`${API_URL}/top?period=week`);
         const topUsers = await res.json();
-        
-        if (!topUsers || topUsers.length === 0) {
-            listDiv.innerHTML = "<p style='text-align:center;margin:5px 0;color:#777;font-size:12px;'>Голосів ще немає 🚀</p>";
-            return;
-        }
-        
-        let html = "";
-        const medals = ["🥇", "🥈", "🥉"];
-        const top5 = topUsers.slice(0, 5);
-        
-        top5.forEach((user, i) => {
-            const place = i < 3 ? medals[i] : `${i + 1}.`;
-            const name = user.first_name || "Водій";
-            html += `
-                <div class="top-item">
-                    <span>${place} <b>${name}</b></span>
-                    <span style="color:#136AEC;font-weight:bold;">${user.votes} 🗳️</span>
-                </div>
-            `;
-        });
+        if (!topUsers || topUsers.length === 0) { listDiv.innerHTML = "<p style='text-align:center;margin:5px 0;color:#777;font-size:12px;'>Голосів ще немає 🚀</p>"; return; }
+        let html = ""; const medals = ["🥇", "🥈", "🥉"];
+        topUsers.slice(0, 5).forEach((user, i) => { const place = i < 3 ? medals[i] : `${i + 1}.`; const name = user.first_name || "Водій"; html += `<div class="top-item"><span>${place} <b>${name}</b></span><span style="color:#136AEC;font-weight:bold;">${user.votes} 🗳️</span></div>`; });
         listDiv.innerHTML = html;
-    } catch (e) {
-        listDiv.innerHTML = "<p style='color:red;font-size:12px;'>Помилка рейтингу</p>";
-    }
+    } catch (e) { listDiv.innerHTML = "<p style='color:red;font-size:12px;'>Помилка рейтингу</p>"; }
 }
 
-// Функції керування вікном фідбеку
-function openFeedbackModal() {
-    document.getElementById("feedbackText").value = "";
-    document.getElementById("feedbackModal").style.display = "flex";
-}
-
-function closeFeedbackModal() {
-    document.getElementById("feedbackModal").style.display = "none";
-}
+function openFeedbackModal() { document.getElementById("feedbackText").value = ""; document.getElementById("feedbackModal").style.display = "flex"; }
+function closeFeedbackModal() { document.getElementById("feedbackModal").style.display = "none"; }
+function showDonateModal() { document.getElementById("donateModal").style.display = "flex"; }
+function closeDonateModal() { document.getElementById("donateModal").style.display = "none"; }
 
 function submitFeedback() {
     const text = document.getElementById("feedbackText").value.trim();
-    if (!text) {
-        alert(lang === "uk" ? "Будь ласка, введіть текст!" : "Please enter text!");
-        return;
-    }
-
-    let userId = 0;
-    let username = "";
-    let firstName = "Водій";
-
+    if (!text) { alert(lang === "uk" ? "Будь ласка, введіть текст!" : "Please enter text!"); return; }
+    let userId = 0, username = "", firstName = "Водій";
     if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
         userId = tg.initDataUnsafe.user.id || 0;
         username = tg.initDataUnsafe.user.username || "";
         firstName = tg.initDataUnsafe.user.first_name || "Водій";
     }
-
-    fetch(`${API_URL}/feedback`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            user_id: userId,
-            username: username,
-            first_name: firstName,
-            text: text
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        alert(lang === "uk" ? "Повідомлення надіслано!" : "Message sent!");
-        closeFeedbackModal();
-    })
-    .catch(err => {
-        console.error("Помилка відправки:", err);
-        alert(lang === "uk" ? "Не вдалося надіслати. Спробуйте пізніше." : "Failed to send.");
-    });
+    fetch(`${API_URL}/feedback`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({user_id:userId, username:username, first_name:firstName, text:text}) })
+    .then(res => res.json()).then(data => { alert(lang === "uk" ? "Повідомлення надіслано!" : "Message sent!"); closeFeedbackModal(); });
 }
 
-updateLabels();
-loadStats();
-loadTopPermanent();
-
-setInterval(loadStats, 2000);
-setInterval(loadTopPermanent, 10000);
-
-let myDot=null, myAccuracy=null;
-function setMyLocation(lat, lon, acc=200){
-  if(myDot){
-    myDot.setLatLng([lat,lon]);
-    myAccuracy.setLatLng([lat,lon]);
-    myAccuracy.setRadius(acc);
-  } else {
-    myAccuracy = L.circle([lat,lon],{
-      radius: acc,
-      color: "#136AEC",
-      fillColor: "#136AEC",
-      fillOpacity: 0.15,
-      weight: 1
-    }).addTo(map);
-
-    myDot = L.circleMarker([lat,lon],{
-      radius:7,
-      fillColor:"#136AEC",
-      color:"#fff",
-      weight:2,
-      opacity:1,
-      fillOpacity:1
-    }).addTo(map);
-
-    map.setView([lat,lon],9);
-  }
-}
+updateLabels(); loadStats(); loadTopPermanent();
+setInterval(loadStats, 2000); setInterval(loadTopPermanent, 10000);
 
 if(navigator.geolocation){
-  navigator.geolocation.watchPosition(pos=>{
-    setMyLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
-  }, err=>{ console.log("Помилка геолокації:", err); }, { enableHighAccuracy:true });
+  navigator.geolocation.watchPosition(pos=>{ setMyLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy); }, err=>{ console.log("Помилка:", err); }, { enableHighAccuracy:true });
 }
+function setMyLocation(lat, lon, acc=200){ /* ... код геолокації ... */ }
 </script>
-
 </body>
 </html>
