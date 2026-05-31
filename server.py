@@ -6,7 +6,7 @@ from flask_cors import CORS
 from datetime import datetime, timedelta
 
 # ====================================================================
-#  НАЛАШТУВАННЯ ТЕЛЕГРАМ-УВЕДОМЛЕНЬ ВІД ВОДІЇВ
+#   НАЛАШТУВАННЯ ТЕЛЕГРАМ-УВЕДОМЛЕНЬ ВІД ВОДІЇВ
 # ====================================================================
 BOT_TOKEN = "8328089237:AAGsx0fWLMT292cWyrHzKgnbEYtu9qUUzAM"
 ADMIN_CHAT_ID = "1034056050"
@@ -78,10 +78,10 @@ def update_point():
             
         conn.commit()
         conn.close()
-        return jsonify({"status": "success", "message": "Голос враховано"})
+        return jsonify({"status": "success", "message": "Голос враховано"}), 200
     
     conn.close()
-    return jsonify({"status": "ignored", "message": "Статус не змінився"})
+    return jsonify({"status": "ignored", "message": "Статус не змінився"}), 200
 
 @app.route('/stats', methods=['GET'])
 def get_stats():
@@ -137,7 +137,7 @@ def get_stats():
                 "last_time": time_passed_str
             }
             
-    return jsonify(result)
+    return jsonify(result), 200
 
 @app.route('/top', methods=['GET'])
 def get_top():
@@ -169,7 +169,7 @@ def get_top():
             "username": row[1],
             "votes": row[2]
         })
-    return jsonify(top_list)
+    return jsonify(top_list), 200
 
 @app.route('/feedback', methods=['POST'])
 def save_feedback():
@@ -194,8 +194,8 @@ def save_feedback():
     conn.commit()
     conn.close()
     
-    # 2. Перевірка налаштувань та автоматичне надсилання сповіщення адміну
-    if BOT_TOKEN != "ВСТАВ_СЮДИ_ТОКЕН_З_BOT_FATHER" and ADMIN_CHAT_ID != "ВСТАВ_СЮДИ_СВІЙ_ID_ЦИФРАМИ":
+    # 2. Пряме надсилання сповіщення адміну без заплутаних перевірок рядків
+    if BOT_TOKEN and ADMIN_CHAT_ID:
         tg_user = f"@{username}" if username else f"ID: {user_id}"
         message_text = f"💡 *Нова пропозиція від водія!*\n\n👤 *Ім'я:* {first_name} ({tg_user})\n📝 *Ідея:* {text}"
         
@@ -205,11 +205,11 @@ def save_feedback():
                 "chat_id": ADMIN_CHAT_ID,
                 "text": message_text,
                 "parse_mode": "Markdown"
-            })
+            }, timeout=5)
         except Exception as e:
             print(f"Помилка відправки в ТГ: {e}")
     
-    return jsonify({"status": "success", "message": "Дякуємо за пропозицію!"})
+    return jsonify({"status": "success", "message": "Дякуємо за пропозицію!"}), 200
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
