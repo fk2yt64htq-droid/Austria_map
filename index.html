@@ -247,31 +247,11 @@ document.getElementById("langSelect").addEventListener("change",(e)=>{
 });
 
 const i18n = {
-  uk:{ 
-    clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", was_control:"Був КОНТРОЛЬ", was_clean:"Було ЧИСТО", active: "Активно:",
-    top_title: "🏆 ТОП-5 active drivers", support_title: "Зв'язатися з підтримкою", placeholder: "Опишіть вашу ідею чи проблему...",
-    cancel: "Скасувати", send: "Надіслати", close: "Закрити", donate_title: "Дякую за підтримку! ☕️", alert_empty: "Будь ласка, введіть текст!", alert_success: "Повідомлення надіслано!"
-  },
-  pl:{ 
-    clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:",
-    top_title: "🏆 TOP-5 active drivers", support_title: "Skontaktuj się z wsparciem", placeholder: "Opisz swój pomysł lub problem...",
-    cancel: "Anuluj", send: "Wyślij", close: "Zamknij", donate_title: "Dziękuję za wsparcie! ☕️", alert_empty: "Proszę wpisać tekst!", alert_success: "Wiadomość została wysłana!"
-  },
-  sk:{ 
-    clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", was_control:"Bola KONTROLA", was_clean:"Bolo ČISTÉ", active: "Aktívne:",
-    top_title: "🏆 TOP-5 active drivers", support_title: "Kontaktovať podporu", placeholder: "Popíšte svoj nápad alebo problém...",
-    cancel: "Zrušiť", send: "Odoslať", close: "Zatvoriť", donate_title: "Ďakujem za podporu! ☕️", alert_empty: "Prosím, zadajte text!", alert_success: "Správa bola odoslaná!"
-  },
-  en:{ 
-    clean:"CLEAR", control:"CONTROL", total:"Total", was_control:"Was CONTROL", was_clean:"Was CLEAR", active: "Active:",
-    top_title: "🏆 TOP-5 active drivers", support_title: "Contact Support", placeholder: "Describe your idea or problem...",
-    cancel: "Cancel", send: "Send", close: "Close", donate_title: "Thanks for your support! ☕️", alert_empty: "Please enter text!", alert_success: "Message sent!"
-  },
-  be:{ 
-    clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", was_control:"Быў КАНТРОЛЬ", was_clean:"Было ЧЫСТА", active: "Актыўна:",
-    top_title: "🏆 ТОП-5 active drivers", support_title: "Звязацца з падтрымкай", placeholder: "Апішыце вашу ідэю ці праблему...",
-    cancel: "Скасаваць", send: "Адправіць", close: "Зачыніць", donate_title: "Дзякуй за падтрымку! ☕️", alert_empty: "Калі ласка, увядзіце тэкст!", alert_success: "Паведамленне адпраўлено!"
-  }
+  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", was_control:"Був КОНТРОЛЬ", was_clean:"Було ЧИСТО", active: "Активно:", top_title: "🏆 ТОП-5 active drivers", support_title: "Зв'язатися з підтримкою", placeholder: "Опишіть вашу ідею чи проблему...", cancel: "Скасувати", send: "Надіслати", close: "Закрити", donate_title: "Дякую за підтримку! ☕️", alert_empty: "Будь ласка, введіть текст!", alert_success: "Повідомлення надіслано!" },
+  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:", top_title: "🏆 TOP-5 active drivers", support_title: "Skontaktuj się z wsparciem", placeholder: "Opisz swój pomysł lub problem...", cancel: "Anuluj", send: "Wyślij", close: "Zamknij", donate_title: "Dziękuję za wsparcie! ☕️", alert_empty: "Proszę wpisać tekst!", alert_success: "Wiadomość została wysłana!" },
+  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", was_control:"Bola KONTROLA", was_clean:"Bolo ČISTÉ", active: "Aktívne:", top_title: "🏆 TOP-5 active drivers", support_title: "Kontaktovať podporu", placeholder: "Popíšte svoj nápad alebo problém...", cancel: "Zrušiť", send: "Odoslať", close: "Zatvoriť", donate_title: "Ďakujem za podporu! ☕️", alert_empty: "Prosím, zadajte text!", alert_success: "Správa bola odoslaná!" },
+  en:{ clean:"CLEAR", control:"CONTROL", total:"Total", was_control:"Was CONTROL", was_clean:"Was CLEAR", active: "Active:", top_title: "🏆 TOP-5 active drivers", support_title: "Contact Support", placeholder: "Describe your idea or problem...", cancel: "Cancel", send: "Send", close: "Close", donate_title: "Thanks for your support! ☕️", alert_empty: "Please enter text!", alert_success: "Message sent!" },
+  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", was_control:"Быў КАНТРОЛЬ", was_clean:"Было ЧЫСТА", active: "Актыўна:", top_title: "🏆 ТОП-5 active drivers", support_title: "Звязацца з падтрымкай", placeholder: "Апішыце вашу ідэю ці праблему...", cancel: "Скасаваць", send: "Адправіць", close: "Зачыніць", donate_title: "Дзякуй за падтрымку! ☕️", alert_empty: "Калі ласка, увядзіце тэкст!", alert_success: "Паведамленне адпраўлено!" }
 };
 function t(k){ return i18n[lang][k]; }
 
@@ -281,7 +261,6 @@ function updateLabels() {
     document.getElementById("feedbackText").placeholder = t("placeholder");
     document.getElementById("btnFeedbackCancel").innerText = t("cancel");
     document.getElementById("btnFeedbackSubmit").innerText = t("send");
-    
     document.getElementById("donateTitle").innerText = t("donate_title");
     document.getElementById("btnDonateClose").innerText = t("close");
 }
@@ -315,33 +294,27 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&
 
 let markers = {}, stats = {};
 let userLocationMarker = null;
+let watchId = null;
 
-// Функція відображення чистої синьої точки Google Maps
 function locateUser(centerMap = false) {
     if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-
-            if (!userLocationMarker) {
-                // Створюємо просту синю точку без жодних поп-апів чи підписів
-                userLocationMarker = L.circleMarker([lat, lng], {
-                    radius: 8,
-                    color: '#ffffff',
-                    weight: 2,
-                    fillColor: '#136AEC',
-                    fillOpacity: 1
-                }).addTo(map);
-            } else {
-                userLocationMarker.setLatLng([lat, lng]);
-            }
-
-            if (centerMap) {
-                map.setView([lat, lng], 12);
-            }
-        }, function(err) {
-            console.log("Не вдалося отримати GPS координати водія");
-        }, { enableHighAccuracy: true });
+        if (watchId === null) {
+            watchId = navigator.geolocation.watchPosition(function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                if (!userLocationMarker) {
+                    userLocationMarker = L.circleMarker([lat, lng], { radius: 8, color: '#ffffff', weight: 2, fillColor: '#136AEC', fillOpacity: 1 }).addTo(map);
+                } else {
+                    userLocationMarker.setLatLng([lat, lng]);
+                }
+                if (centerMap) {
+                    map.setView([lat, lng], 12);
+                    centerMap = false;
+                }
+            }, function(err) { console.log("Помилка GPS"); }, { enableHighAccuracy: true });
+        } else if (centerMap && userLocationMarker) {
+            map.setView(userLocationMarker.getLatLng(), 12);
+        }
     }
 }
 
@@ -355,15 +328,7 @@ if (color === "blue" && oldStatus) {
 } else if (lastTime) {
     historyHtml = `<div style="margin: 5px 0; font-size:12px; color:#666;">⏱️ ${t("active")} ${lastTime}</div>`;
 }
-return `
-<b>${dot.n}</b><br>
-${historyHtml}
-<span style="display:inline-block;width:16px;height:16px;background:red;border-radius:50%;"></span> ${redP}% |
-<span style="display:inline-block;width:16px;height:16px;background:green;border-radius:50%;"></span> ${greenP}%<br>
-<small>${t("total")}: ${total}</small><br>
-<button class="btn" style="background:green" onclick="sendVote(${dot.id},'green',${dot.lt},${dot.ln})">${t("clean")}</button>
-<button class="btn" style="background:red" onclick="sendVote(${dot.id},'red',${dot.lt},${dot.ln})">${t("control")}</button>
-`;
+return `<b>${dot.n}</b><br>${historyHtml}<span style="display:inline-block;width:16px;height:16px;background:red;border-radius:50%;"></span> ${redP}% | <span style="display:inline-block;width:16px;height:16px;background:green;border-radius:50%;"></span> ${greenP}%<br><small>${t("total")}: ${total}</small><br><button class="btn" style="background:green" onclick="sendVote(${dot.id},'green',${dot.lt},${dot.ln})">${t("clean")}</button><button class="btn" style="background:red" onclick="sendVote(${dot.id},'red',${dot.lt},${dot.ln})">${t("control")}</button>`;
 }
 
 async function loadStats(){
@@ -387,82 +352,30 @@ markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total,s.color,s.old_
 }
 
 function sendVote(id, status, pointLat, pointLng) {
-    if (!navigator.geolocation) {
-        alert("⚠️ Ваш пристрій або браузер не підтримує геолокацію!");
-        return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-        function(position) {
-            const userLat = position.coords.latitude;
-            const userLng = position.coords.longitude;
-
-            let userId = 0; let username = ""; let firstName = "Водій";
-            if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                userId = tg.initDataUnsafe.user.id || 0;
-                username = tg.initDataUnsafe.user.username || "";
-                firstName = tg.initDataUnsafe.user.first_name || "Водій";
-            }
-
-            fetch(`${API_URL}/update`, {
-                method: "POST", 
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    id: id, 
-                    status: status, 
-                    user_id: userId, 
-                    username: username, 
-                    first_name: firstName,
-                    user_lat: userLat,
-                    user_lng: userLng,
-                    point_lat: pointLat,
-                    point_lng: pointLng
-                })
-            })
-            .then(res => res.json().then(data => ({ status: res.status, body: data })))
-            .then(res => {
-                if (res.status === 200) {
-                    if (tg) { try { tg.sendData(status + "_" + id); } catch(e){} } 
-                    loadStats(); 
-                    loadTopPermanent();
-                } else {
-                    alert("❌ Помилка: " + res.body.message);
-                }
-            })
-            .catch(err => {
-                console.error("Помилка:", err);
-                alert("⚠️ Помилка зв'язку із сервером.");
-            });
-        },
-        function(error) {
-            alert("⚠️ GPS вимкнено або доступ заборонено. Увімкніть геопозицію на телефоні!");
-        },
-        { enableHighAccuracy: true, timeout: 7000 }
-    );
+    if (!navigator.geolocation) { alert("⚠️ Помилка GPS!"); return; }
+    navigator.geolocation.getCurrentPosition(function(position) {
+        const userLat = position.coords.latitude;
+        const userLng = position.coords.longitude;
+        let userId = 0; let username = ""; let firstName = "Водій";
+        if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) { userId = tg.initDataUnsafe.user.id || 0; username = tg.initDataUnsafe.user.username || ""; firstName = tg.initDataUnsafe.user.first_name || "Водій"; }
+        fetch(`${API_URL}/update`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, status, user_id: userId, username, first_name: firstName, user_lat: userLat, user_lng: userLng, point_lat: pointLat, point_lng: pointLng })
+        }).then(res => { if (res.status === 200) { if (tg) tg.sendData(status + "_" + id); loadStats(); loadTopPermanent(); } });
+    });
 }
 
-function sendTrafficBan() {
-    if (tg && tg.openLink) {
-        tg.openLink("https://trafficban.com");
-    } else {
-        window.open("https://trafficban.com", '_blank');
-    }
-}
-
+function sendTrafficBan() { if (tg && tg.openLink) tg.openLink("https://trafficban.com"); else window.open("https://trafficban.com", '_blank'); }
 async function loadTopPermanent() {
     const listDiv = document.getElementById("topList");
     try {
         const res = await fetch(`${API_URL}/top?period=week`);
         const topUsers = await res.json();
-        if (!topUsers || topUsers.length === 0) { listDiv.innerHTML = "<p style='text-align:center;margin:5px 0;color:#777;font-size:12px;'>Голосів ще немає 🚀</p>"; return; }
-        let html = ""; const medals = ["🥇", "🥈", "🥉"]; const top5 = topUsers.slice(0, 5);
-        top5.forEach((user, i) => {
-            const place = i < 3 ? medals[i] : `${i + 1}.`;
-            const name = user.first_name || "Водій";
-            html += `<div class="top-item"><span>${place} <b>${name}</b></span> <span style="color:#136AEC;font-weight:bold;">${user.votes} 🗳️</span></div>`;
-        });
+        if (!topUsers || topUsers.length === 0) { listDiv.innerHTML = "Голосів ще немає 🚀"; return; }
+        let html = ""; const medals = ["🥇", "🥈", "🥉"];
+        topUsers.slice(0, 5).forEach((user, i) => { html += `<div class="top-item"><span>${i < 3 ? medals[i] : (i+1)+'.'} <b>${user.first_name}</b></span> <span>${user.votes} 🗳️</span></div>`; });
         listDiv.innerHTML = html;
-    } catch (e) { listDiv.innerHTML = "<p style='color:red;font-size:12px;'>Помилка рейтингу</p>"; }
+    } catch (e) { listDiv.innerHTML = "Помилка рейтингу"; }
 }
 
 function openFeedbackModal() { document.getElementById("feedbackModal").style.display = "flex"; }
@@ -472,55 +385,21 @@ function closeDonateModal() { document.getElementById("donateModal").style.displ
 
 function submitFeedback() {
     const text = document.getElementById("feedbackText").value.trim();
-    if (!text) { 
-        alert(t("alert_empty")); 
-        return; 
-    }
-
+    if (!text) { alert(t("alert_empty")); return; }
     let userId = 0; let username = ""; let firstName = "Водій";
-    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        userId = tg.initDataUnsafe.user.id || 0;
-        username = tg.initDataUnsafe.user.username || "";
-        firstName = tg.initDataUnsafe.user.first_name || "Водій";
-    }
-
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) { userId = tg.initDataUnsafe.user.id || 0; username = tg.initDataUnsafe.user.username || ""; firstName = tg.initDataUnsafe.user.first_name || "Водій"; }
     fetch(`${API_URL}/feedback`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            text: text,
-            user_id: userId,
-            username: username,
-            first_name: firstName
-        })
-    })
-    .then(res => {
-        if (res.ok) {
-            alert(t("alert_success"));
-            document.getElementById("feedbackText").value = "";
-            closeFeedbackModal();
-        } else {
-            alert("Error server.");
-        }
-    })
-    .catch(err => {
-        console.error("Помилка:", err);
-        alert("Server error connection.");
-    });
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, user_id: userId, username, first_name: firstName })
+    }).then(res => { if (res.ok) { alert(t("alert_success")); document.getElementById("feedbackText").value = ""; closeFeedbackModal(); } });
 }
 
-function copyToClipboard(id) {
-    const text = document.getElementById(id).innerText;
-    navigator.clipboard.writeText(text).then(() => { alert("Copied: " + text); });
-}
+function copyToClipboard(id) { const text = document.getElementById(id).innerText; navigator.clipboard.writeText(text).then(() => { alert("Copied: " + text); }); }
 
 updateLabels();
 loadStats();
 loadTopPermanent();
-
-locateUser(false);
-setInterval(() => locateUser(false), 10000);
-
+locateUser(false); // Запуск при вході
 setInterval(loadStats, 2000);
 setInterval(loadTopPermanent, 10000);
 </script>
