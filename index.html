@@ -254,7 +254,7 @@ const i18n = {
   },
   pl:{ 
     clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:",
-    top_title: "🏆 TOP-5 active drivers", support_title: "Skontaktuj się з wsparciem", placeholder: "Opisz swój pomysł lub problem...",
+    top_title: "🏆 TOP-5 active drivers", support_title: "Skontaktuj się z wsparciem", placeholder: "Opisz swój pomysł lub problem...",
     cancel: "Anuluj", send: "Wyślij", close: "Zamknij", donate_title: "Dziękuję za wsparcie! ☕️", alert_empty: "Proszę wpisać tekst!", alert_success: "Wiadomość została wysłana!"
   },
   sk:{ 
@@ -270,7 +270,7 @@ const i18n = {
   be:{ 
     clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", was_control:"Быў КАНТРОЛЬ", was_clean:"Было ЧЫСТА", active: "Актыўна:",
     top_title: "🏆 ТОП-5 active drivers", support_title: "Звязацца з падтрымкай", placeholder: "Апішыце вашу ідэю ці праблему...",
-    cancel: "Скасаваць", send: "Адправіць", close: "Зачыніць", donate_title: "Дзякуй за падтрымку! ☕️", alert_empty: "Калі ласка, увядзіце тэкст!", alert_success: "Паведамленне адпраўлена!"
+    cancel: "Скасаваць", send: "Адправіць", close: "Зачыніць", donate_title: "Дзякуй за падтрымку! ☕️", alert_empty: "Калі ласка, увядзіце тэкст!", alert_success: "Паведамленне адпраўлено!"
   }
 };
 function t(k){ return i18n[lang][k]; }
@@ -314,33 +314,33 @@ let map = L.map("map").setView([47.5162, 14.5501], 7);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap'}).addTo(map);
 
 let markers = {}, stats = {};
-let userMarker = null;
+let userLocationMarker = null;
 
-// Функція трекінгу з іконкою великої єврофури
+// Функція відображення чистої синьої точки Google Maps
 function locateUser(centerMap = false) {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(position) {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
 
-            // Використовуємо детальну іконку вантажівки з причепом (38x38 пікселів)
-            const realTruckIcon = new L.Icon({
-                iconUrl: 'https://cdn-icons-png.flaticon.com/512/3579/3579893.png', 
-                iconSize: [38, 38],
-                iconAnchor: [19, 19]
-            });
-
-            if (!userMarker) {
-                userMarker = L.marker([lat, lng], {icon: realTruckIcon}).addTo(map);
+            if (!userLocationMarker) {
+                // Створюємо просту синю точку без жодних поп-апів чи підписів
+                userLocationMarker = L.circleMarker([lat, lng], {
+                    radius: 8,
+                    color: '#ffffff',
+                    weight: 2,
+                    fillColor: '#136AEC',
+                    fillOpacity: 1
+                }).addTo(map);
             } else {
-                userMarker.setLatLng([lat, lng]);
+                userLocationMarker.setLatLng([lat, lng]);
             }
 
             if (centerMap) {
                 map.setView([lat, lng], 12);
             }
         }, function(err) {
-            console.log("Не вдалося отримати GPS для відображення вантажівки");
+            console.log("Не вдалося отримати GPS координати водія");
         }, { enableHighAccuracy: true });
     }
 }
