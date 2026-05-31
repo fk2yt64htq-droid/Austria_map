@@ -204,7 +204,6 @@ def save_feedback():
             requests.post(url, json={
                 "chat_id": ADMIN_CHAT_ID,
                 "text": message_text,
-                "parse_mode": "Markdown"
             })
         except Exception as e:
             print(f"Помилка відправки в ТГ: {e}")
