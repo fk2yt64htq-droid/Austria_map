@@ -255,7 +255,7 @@ function t(k){ return i18n[lang][k]; }
 
 function updateLabels() {
     if(lang === "uk") {
-       document.getElementById("topTitle").innerText = "🏆 ТОП-5 активних водіїв";
+       document.getElementById("topTitle").innerText = "🏆 ТОП-5 active drivers";
        document.getElementById("modalTitle").innerText = "Зв'язатися з підтримкою";
        document.getElementById("feedbackText").placeholder = "Опишіть вашу ідею чи проблему...";
        document.querySelector(".btn-cancel").innerText = "Скасувати";
@@ -355,7 +355,6 @@ function sendVote(id, status) {
     .catch(err => console.error("Помилка:", err));
 }
 
-// КНОПКА ВІДКРИВАЄ САЙТ TRAFFICBAN НАПРЯМУ В СЛУЖБОВОМУ БРАУЗЕРІ ТЕЛЕГРАМУ
 function sendTrafficBan() {
     if (tg && tg.openLink) {
         tg.openLink("https://trafficban.com");
@@ -385,11 +384,45 @@ function closeFeedbackModal() { document.getElementById("feedbackModal").style.d
 function showDonateModal() { document.getElementById("donateModal").style.display = "flex"; }
 function closeDonateModal() { document.getElementById("donateModal").style.display = "none"; }
 
+// ВИПРАВЛЕНА ФУНКЦІЯ НАДСИЛАННЯ ВІДГУКУ НА СЕРВЕР
 function submitFeedback() {
     const text = document.getElementById("feedbackText").value.trim();
-    if (!text) { alert(lang === "uk" ? "Будь ласка, введіть текст!" : "Please enter text!"); return; }
-    alert(lang === "uk" ? "Повідомлення надіслано!" : "Message sent!");
-    closeFeedbackModal();
+    if (!text) { 
+        alert(lang === "uk" ? "Будь ласка, введіть текст!" : "Please enter text!"); 
+        return; 
+    }
+
+    let userId = 0; let username = ""; let firstName = "Водій";
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        userId = tg.initDataUnsafe.user.id || 0;
+        username = tg.initDataUnsafe.user.username || "";
+        firstName = tg.initDataUnsafe.user.first_name || "Водій";
+    }
+
+    // Відправляємо дані на сервер
+    fetch(`${API_URL}/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            text: text,
+            user_id: userId,
+            username: username,
+            first_name: firstName
+        })
+    })
+    .then(res => {
+        if (res.ok) {
+            alert(lang === "uk" ? "Повідомлення надіслано!" : "Message sent!");
+            document.getElementById("feedbackText").value = ""; // Очищаємо поле
+            closeFeedbackModal();
+        } else {
+            alert("Помилка сервера при відправці відгуку.");
+        }
+    })
+    .catch(err => {
+        console.error("Помилка:", err);
+        alert("Не вдалося зв'язатися з сервером.");
+    });
 }
 
 function copyToClipboard(id) {
