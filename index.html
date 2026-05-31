@@ -56,7 +56,7 @@ align-items: center;
 gap: 8px;
 }
 
-.feedback-btn, .donate-btn, .locate-btn {
+.feedback-btn, .donate-btn {
 background: #ff9800;
 color: white;
 border: none;
@@ -71,7 +71,6 @@ align-items: center;
 justify-content: center;
 }
 .donate-btn { background: #4caf50; }
-.locate-btn { background: #136AEC; font-size: 20px; }
 
 .langBox {
 background: white;
@@ -91,6 +90,35 @@ background: transparent;
 font-size: 16px;
 cursor: pointer;
 }
+
+/* Нові стилі для панелі масштабу */
+.map-controls {
+    position: fixed;
+    bottom: 80px;
+    left: 0;
+    width: 100%;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+.ctrl-btn {
+    background: #ffffff;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    font-size: 22px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+.ctrl-btn:active { background: #e0e0e0; }
 
 .modal-overlay {
 position: fixed;
@@ -182,9 +210,14 @@ font-weight: bold;
             <option value="be">🇧🇾</option>
         </select>
     </div>
-    <button class="locate-btn" onclick="locateUser(true)">🎯</button>
     <button class="feedback-btn" onclick="openFeedbackModal()">💡</button>
     <button class="donate-btn" onclick="showDonateModal()">☕️</button>
+</div>
+
+<div class="map-controls">
+    <button class="ctrl-btn" onclick="map.zoomOut()">➖</button>
+    <button class="ctrl-btn" onclick="locateUser(true)">🎯</button>
+    <button class="ctrl-btn" onclick="map.zoomIn()">➕</button>
 </div>
 
 <div style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 9999; padding: 10px; box-sizing: border-box; background: rgba(255,255,255,0.1);">
@@ -289,7 +322,7 @@ const dots = [
 {"id":21,"n":"Giornoco A2","lt":46.3882186,"ln":8.8929391,"fix":true}
 ];
 
-let map = L.map("map").setView([47.5162, 14.5501], 7);
+let map = L.map("map", {zoomControl: false}).setView([47.5162, 14.5501], 7);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap'}).addTo(map);
 
 let markers = {}, stats = {};
@@ -353,8 +386,6 @@ markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total,s.color,s.old_
 
 function sendVote(id, status, pointLat, pointLng) {
     if (!navigator.geolocation) { alert("⚠️ Помилка GPS!"); return; }
-    
-    // Примусово беремо нову позицію (maximumAge: 0)
     navigator.geolocation.getCurrentPosition(function(position) {
         const userLat = position.coords.latitude;
         const userLng = position.coords.longitude;
@@ -364,29 +395,18 @@ function sendVote(id, status, pointLat, pointLng) {
             username = tg.initDataUnsafe.user.username || ""; 
             firstName = tg.initDataUnsafe.user.first_name || "Водій"; 
         }
-
         fetch(`${API_URL}/update`, {
-            method: "POST", 
-            headers: { "Content-Type": "application/json" },
+            method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id, status, user_id: userId, username, first_name: firstName, user_lat: userLat, user_lng: userLng, point_lat: pointLat, point_lng: pointLng })
-        })
-        .then(async res => {
+        }).then(async res => {
             const data = await res.json();
-            if (res.status === 200) {
-                if (tg) tg.sendData(status + "_" + id);
-                loadStats();
-                loadTopPermanent();
-            } else {
-                // Саме тут сервер повертає помилку, яку ми показуємо через alert
-                alert(data.message || "Помилка: Ви занадто далеко!");
-            }
-        })
-        .catch(err => { alert("⚠️ Помилка зв'язку із сервером."); });
+            if (res.status === 200) { if (tg) tg.sendData(status + "_" + id); loadStats(); loadTopPermanent(); } 
+            else { alert(data.message || "Помилка: Ви занадто далеко!"); }
+        }).catch(err => { alert("⚠️ Помилка зв'язку із сервером."); });
     }, function(err) { alert("⚠️ GPS недоступний. Увімкніть його!"); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
 }
 
 function sendTrafficBan() { if (tg && tg.openLink) tg.openLink("https://trafficban.com"); else window.open("https://trafficban.com", '_blank'); }
-
 async function loadTopPermanent() {
     const listDiv = document.getElementById("topList");
     try {
