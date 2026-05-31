@@ -196,15 +196,15 @@ font-weight: bold;
         <h3 id="modalTitle">Зв'язатися з підтримкою</h3>
         <textarea id="feedbackText" placeholder="Опишіть вашу ідею чи проблему..."></textarea>
         <div class="modal-actions">
-            <button class="btn-modal btn-cancel" onclick="closeFeedbackModal()">Скасувати</button>
-            <button class="btn-modal btn-submit" onclick="submitFeedback()">Надіслати</button>
+            <button class="btn-modal btn-cancel" id="btnFeedbackCancel" onclick="closeFeedbackModal()">Скасувати</button>
+            <button class="btn-modal btn-submit" id="btnFeedbackSubmit" onclick="submitFeedback()">Надіслати</button>
         </div>
     </div>
 </div>
 
 <div class="modal-overlay" id="donateModal">
     <div class="modal-box" style="text-align:left; font-size:13px;">
-        <h3>Дякую за підтримку! ☕️</h3>
+        <h3 id="donateTitle" style="text-align:center;">Дякуємо за підтримку! ☕️</h3>
         <p><b>EUR (Revolut):</b><br>Vitalii Sachenko<br>
           IBAN: <code id="iban1">LT733250059128960771</code> 
           <button class="copy-btn" onclick="copyToClipboard('iban1')">📋</button>
@@ -214,7 +214,7 @@ font-weight: bold;
           <button class="copy-btn" onclick="copyToClipboard('iban2')">📋</button>
         </p>
         <div class="modal-actions">
-            <button class="btn-modal btn-cancel" onclick="closeDonateModal()">Закрити</button>
+            <button class="btn-modal btn-cancel" id="btnDonateClose" onclick="closeDonateModal()">Закрити</button>
         </div>
     </div>
 </div>
@@ -245,28 +245,44 @@ document.getElementById("langSelect").addEventListener("change",(e)=>{
 });
 
 const i18n = {
-  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", was_control:"Був КОНТРОЛЬ", was_clean:"Було ЧИСТО", active: "Активно:" },
-  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:" },
-  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", was_control:"Bola KONTROLA", was_clean:"Bolo ČISTÉ", active: "Aktívne:" },
-  en:{ clean:"CLEAR", control:"CONTROL", total:"Total", was_control:"Was CONTROL", was_clean:"Was CLEAR", active: "Active:" },
-  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", was_control:"Быў КАНТРОЛЬ", was_clean:"Было ЧЫСТА", active: "Актыўна:" }
+  uk:{ 
+    clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", was_control:"Був КОНТРОЛЬ", was_clean:"Було ЧИСТО", active: "Активно:",
+    top_title: "🏆 ТОП-5 active drivers", support_title: "Зв'язатися з підтримкою", placeholder: "Опишіть вашу ідею чи проблему...",
+    cancel: "Скасувати", send: "Надіслати", close: "Закрити", donate_title: "Дякую за підтримку! ☕️", alert_empty: "Будь ласка, введіть текст!", alert_success: "Повідомлення надіслано!"
+  },
+  pl:{ 
+    clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:",
+    top_title: "🏆 TOP-5 active drivers", support_title: "Skontaktuj się з wsparciem", placeholder: "Opisz swój pomysł lub problem...",
+    cancel: "Anuluj", send: "Wyślij", close: "Zamknij", donate_title: "Dziękuję za wsparcie! ☕️", alert_empty: "Proszę wpisać tekst!", alert_success: "Wiadomość została wysłana!"
+  },
+  sk:{ 
+    clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", was_control:"Bola KONTROLA", was_clean:"Bolo ČISTÉ", active: "Aktívne:",
+    top_title: "🏆 TOP-5 active drivers", support_title: "Kontaktovať podporu", placeholder: "Popíšte svoj nápad alebo problém...",
+    cancel: "Zrušiť", send: "Odoslať", close: "Zatvoriť", donate_title: "Ďakujem za podporu! ☕️", alert_empty: "Prosím, zadajte text!", alert_success: "Správa bola odoslaná!"
+  },
+  en:{ 
+    clean:"CLEAR", control:"CONTROL", total:"Total", was_control:"Was CONTROL", was_clean:"Was CLEAR", active: "Active:",
+    top_title: "🏆 TOP-5 active drivers", support_title: "Contact Support", placeholder: "Describe your idea or problem...",
+    cancel: "Cancel", send: "Send", close: "Close", donate_title: "Thanks for your support! ☕️", alert_empty: "Please enter text!", alert_success: "Message sent!"
+  },
+  be:{ 
+    clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", was_control:"Быў КАНТРОЛЬ", was_clean:"Было ЧЫСТА", active: "Актыўна:",
+    top_title: "🏆 ТОП-5 active drivers", support_title: "Звязацца з падтрымкай", placeholder: "Апішыце вашу ідэю ці праблему...",
+    cancel: "Скасаваць", send: "Адправіць", close: "Зачыніць", donate_title: "Дзякуй за падтрымку! ☕️", alert_empty: "Калі ласка, увядзіце тэкст!", alert_success: "Паведамленне адпраўлена!"
+  }
 };
 function t(k){ return i18n[lang][k]; }
 
 function updateLabels() {
-    if(lang === "uk") {
-       document.getElementById("topTitle").innerText = "🏆 ТОП-5 active drivers";
-       document.getElementById("modalTitle").innerText = "Зв'язатися з підтримкою";
-       document.getElementById("feedbackText").placeholder = "Опишіть вашу ідею чи проблему...";
-       document.querySelector(".btn-cancel").innerText = "Скасувати";
-       document.querySelector(".btn-submit").innerText = "Надіслати";
-    } else {
-       document.getElementById("topTitle").innerText = "🏆 TOP-5 active drivers";
-       document.getElementById("modalTitle").innerText = "Contact Support";
-       document.getElementById("feedbackText").placeholder = "Describe your idea or problem...";
-       document.querySelector(".btn-cancel").innerText = "Cancel";
-       document.querySelector(".btn-submit").innerText = "Send";
-    }
+    document.getElementById("topTitle").innerText = t("top_title");
+    document.getElementById("modalTitle").innerText = t("support_title");
+    document.getElementById("feedbackText").placeholder = t("placeholder");
+    document.getElementById("btnFeedbackCancel").innerText = t("cancel");
+    document.getElementById("btnFeedbackSubmit").innerText = t("send");
+    
+    // Переклад вікна донату
+    document.getElementById("donateTitle").innerText = t("donate_title");
+    document.getElementById("btnDonateClose").innerText = t("close");
 }
 
 const dots = [
@@ -384,11 +400,10 @@ function closeFeedbackModal() { document.getElementById("feedbackModal").style.d
 function showDonateModal() { document.getElementById("donateModal").style.display = "flex"; }
 function closeDonateModal() { document.getElementById("donateModal").style.display = "none"; }
 
-// ВИПРАВЛЕНА ФУНКЦІЯ НАДСИЛАННЯ ВІДГУКУ НА СЕРВЕР
 function submitFeedback() {
     const text = document.getElementById("feedbackText").value.trim();
     if (!text) { 
-        alert(lang === "uk" ? "Будь ласка, введіть текст!" : "Please enter text!"); 
+        alert(t("alert_empty")); 
         return; 
     }
 
@@ -399,7 +414,6 @@ function submitFeedback() {
         firstName = tg.initDataUnsafe.user.first_name || "Водій";
     }
 
-    // Відправляємо дані на сервер
     fetch(`${API_URL}/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -412,22 +426,22 @@ function submitFeedback() {
     })
     .then(res => {
         if (res.ok) {
-            alert(lang === "uk" ? "Повідомлення надіслано!" : "Message sent!");
-            document.getElementById("feedbackText").value = ""; // Очищаємо поле
+            alert(t("alert_success"));
+            document.getElementById("feedbackText").value = "";
             closeFeedbackModal();
         } else {
-            alert("Помилка сервера при відправці відгуку.");
+            alert("Error server.");
         }
     })
     .catch(err => {
         console.error("Помилка:", err);
-        alert("Не вдалося зв'язатися з сервером.");
+        alert("Server error connection.");
     });
 }
 
 function copyToClipboard(id) {
     const text = document.getElementById(id).innerText;
-    navigator.clipboard.writeText(text).then(() => { alert("Скопійовано: " + text); });
+    navigator.clipboard.writeText(text).then(() => { alert("Copied: " + text); });
 }
 
 updateLabels();
