@@ -355,12 +355,10 @@ function sendVote(id, status) {
     .catch(err => console.error("Помилка:", err));
 }
 
-// Функція для кнопки TrafficBan
+// Кнопка TRAFFICBAN - тільки відкриває посилання
 function sendTrafficBan() {
-    if (confirm("Підтвердити TRAFFIC BAN?")) {
-        sendVote(999, 'red');
-        alert("Надіслано!");
-    }
+    const targetUrl = "https://твоя_адреса_сайту.com"; // ВСТАВ СЮДИ СВОЄ ПОСИЛАННЯ
+    window.open(targetUrl, '_blank');
 }
 
 async function loadTopPermanent() {
