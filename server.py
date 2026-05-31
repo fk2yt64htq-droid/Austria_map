@@ -51,99 +51,126 @@ def init_db():
 
 init_db()
 
+# Функція для генерації тексту ТОПу та кнопок
+def generate_top_data(period="week"):
+    if period == "month":
+        days = 30
+        title = "🏆 **ТОП-10 активних водіїв (місяць):**\n\n"
+    else:
+        days = 7
+        title = "🏆 **ТОП-10 активних водіїв (тиждень):**\n\n"
+        
+    limit_date = (datetime.now() - timedelta(days=days)).isoformat()
+    
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT first_name, COUNT(user_id) as vote_count 
+        FROM user_votes 
+        WHERE timestamp >= ?
+        GROUP BY user_id 
+        ORDER BY vote_count DESC 
+        LIMIT 10
+    ''', (limit_date,))
+    rows = cursor.fetchall()
+    conn.close()
+    
+    medals = ["🥇", "🥈", "🥉", "4.", "5.", "6.", "7.", "8.", "9.", "10."]
+    top_text = title
+    
+    if not rows:
+        top_text += "Голосів ще немає. Будь першим! 🚀\n"
+    else:
+        for i, row in enumerate(rows):
+            place = medals[i] if i < len(medals) else f"{i+1}."
+            top_text += f"{place} *{row[0]}* — {row[1]} голосів\n"
+            
+    top_text += "\nОновлено щойно. Дякуємо за допомогу на дорогах Австрії! 🤝"
+    
+    # Створюємо inline-кнопки під віконечком
+    inline_keyboard = {
+        "inline_keyboard": [
+            [
+                {"text": "📅 За тиждень", "callback_data": "top_week"},
+                {"text": "📅 За місяць", "callback_data": "top_month"}
+            ]
+        ]
+    }
+    
+    return top_text, inline_keyboard
+
 # ====================================================================
-#   ОБРОБКА КОМАНД /START ТА /TOP ДЛЯ ТЕЛЕГРАМ-БОТА
+#   ОБРОБКА КОМАНД ТА КЛІКІВ ДЛЯ ТЕЛЕГРАМ-БОТА
 # ====================================================================
 @app.route('/webhook', methods=['POST'])
 def telegram_webhook():
     update = request.json
-    if not update or "message" not in update:
+    if not update:
         return jsonify({"status": "ignored"}), 200
         
-    message = update["message"]
-    chat_id = message.get("chat", {}).get("id")
-    text = message.get("text", "").strip()
-    
-    if not chat_id or not text:
-        return jsonify({"status": "ignored"}), 200
+    # --- ОБРОБКА ЗВИЧАЙНИХ ПОВІДОМЛЕНЬ (Команди) ---
+    if "message" in update:
+        message = update["message"]
+        chat_id = message.get("chat", {}).get("id")
+        text = message.get("text", "").strip()
+        
+        if not chat_id or not text:
+            return jsonify({"status": "ignored"}), 200
 
-    # 1. Обробка команди /start
-    if text == "/start":
-        welcome_text = (
-            "👋 **Вітаємо в Driving Assistant Bot!**\n\n"
-            "Тут ви можете моніторити ситуацію на дорогах Австрії в реальному часі.\n\n"
-            "🗺️ Щоб запустити інтерактивну карту, просто натисніть синю кнопку **'Відкрити мапу'** в самому низу екрана 👇"
-        )
-        
-        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-        requests.post(url, json={
-            "chat_id": chat_id,
-            "text": welcome_text,
-            "parse_mode": "Markdown"
-        })
+        # 1. Обробка команди /start
+        if text == "/start":
+            welcome_text = (
+                "👋 **Вітаємо в Driving Assistant Bot!**\n\n"
+                "Тут ви можете моніторити ситуацію на дорогах Австрії в реальному часі.\n\n"
+                "🗺️ Щоб запустити інтерактивну карту, просто натисніть синю кнопку **'Відкрити мапу'** в самому низу екрана 👇"
+            )
+            
+            url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+            requests.post(url, json={
+                "chat_id": chat_id,
+                "text": welcome_text,
+                "parse_mode": "Markdown"
+            })
 
-    # 2. Обробка команди /top всередині чату (Тиждень + Місяць)
-    elif text == "/top":
-        date_week = (datetime.now() - timedelta(days=7)).isoformat()
-        date_month = (datetime.now() - timedelta(days=30)).isoformat()
+        # 2. Обробка команди /top (по замовчуванню показуємо тиждень)
+        elif text == "/top":
+            top_text, reply_markup = generate_top_data("week")
+            
+            url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+            requests.post(url, json={
+                "chat_id": chat_id,
+                "text": top_text,
+                "parse_mode": "Markdown",
+                "reply_markup": reply_markup
+            })
+
+    # --- ОБРОБКА КЛІКІВ НА ІНЛАЙН-КНОПКИ ---
+    elif "callback_query" in update:
+        callback_query = update["callback_query"]
+        callback_data = callback_query.get("data")
+        callback_id = callback_query.get("id")
         
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
+        message = callback_query.get("message", {})
+        chat_id = message.get("chat", {}).get("id")
+        message_id = message.get("message_id")
         
-        # --- ЗАПИТ ЗА ТИЖДЕНЬ ---
-        cursor.execute('''
-            SELECT first_name, COUNT(user_id) as vote_count 
-            FROM user_votes 
-            WHERE timestamp >= ?
-            GROUP BY user_id 
-            ORDER BY vote_count DESC 
-            LIMIT 5
-        ''', (date_week,))
-        rows_week = cursor.fetchall()
-        
-        # --- ЗАПИТ ЗА МІСЯЦЬ ---
-        cursor.execute('''
-            SELECT first_name, COUNT(user_id) as vote_count 
-            FROM user_votes 
-            WHERE timestamp >= ?
-            GROUP BY user_id 
-            ORDER BY vote_count DESC 
-            LIMIT 5
-        ''', (date_month,))
-        rows_month = cursor.fetchall()
-        
-        conn.close()
-        
-        medals = ["🥇", "🥈", "🥉", "4.", "5."]
-        top_text = ""
-        
-        # Формуємо блок за ТИЖДЕНЬ
-        top_text += "🏆 **ТОП-5 активних водіїв за тиждень:**\n\n"
-        if not rows_week:
-            top_text += "Голосів ще немає. Будь першим! 🚀\n"
-        else:
-            for i, row in enumerate(rows_week):
-                place = medals[i] if i < len(medals) else f"{i+1}."
-                top_text += f"{place} *{row[0]}* — {row[1]} 🗳️\n"
-                
-        # Красивий розділювач між тижнем та місяцем
-        top_text += "\n────────────────────\n\n"
-        
-        # Формуємо блок за МІСЯЦЬ
-        top_text += "🏆 **ТОП-5 active водіїв за місяць:**\n\n"
-        if not rows_month:
-            top_text += "За місяць активності ще не зафіксовано. 🚀\n"
-        else:
-            for i, row in enumerate(rows_month):
-                place = medals[i] if i < len(medals) else f"{i+1}."
-                top_text += f"{place} *{row[0]}* — {row[1]} 🗳️\n"
-                
-        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-        requests.post(url, json={
-            "chat_id": chat_id,
-            "text": top_text,
-            "parse_mode": "Markdown"
-        })
+        if callback_data in ["top_week", "top_month"]:
+            period = "week" if callback_data == "top_week" else "month"
+            new_text, reply_markup = generate_top_data(period)
+            
+            # Редагуємо поточне повідомлення (змінюємо текст і кнопки всередині нього)
+            url = f"https://api.telegram.org/bot{BOT_TOKEN}/editMessageText"
+            requests.post(url, json={
+                "chat_id": chat_id,
+                "message_id": message_id,
+                "text": new_text,
+                "parse_mode": "Markdown",
+                "reply_markup": reply_markup
+            })
+            
+            # Відповідаємо телеграму, що callback оброблено (щоб кнопка не "зависала" в режимі завантаження)
+            url_ans = f"https://api.telegram.org/bot{BOT_TOKEN}/answerCallbackQuery"
+            requests.post(url_ans, json={"callback_query_id": callback_id})
 
     return jsonify({"status": "success"}), 200
 # ====================================================================
