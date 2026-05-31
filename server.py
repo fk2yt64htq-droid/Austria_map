@@ -51,6 +51,81 @@ def init_db():
 
 init_db()
 
+# ====================================================================
+#   ОБРОБКА КОМАНД /START ТА /TOP ДЛЯ ТЕЛЕГРАМ-БОТА
+# ====================================================================
+@app.route('/webhook', methods=['POST'])
+def telegram_webhook():
+    update = request.json
+    if not update or "message" not in update:
+        return jsonify({"status": "ignored"}), 200
+        
+    message = update["message"]
+    chat_id = message.get("chat", {}).get("id")
+    text = message.get("text", "").strip()
+    
+    if not chat_id or not text:
+        return jsonify({"status": "ignored"}), 200
+
+    # 1. Обробка команди /start
+    if text == "/start":
+        welcome_text = "👋 Вітаємо в **Driving Assistant Bot**!\n\nТут ви можете моніторити ситуацію на дорогах Австрії в реальному часі.\n\nНатисніть кнопку нижче, щоб відкрити інтерактивну карту 👇"
+        
+        # Створюємо кнопку WebApp (як у тебе на скріншоті)
+        reply_markup = {
+            "inline_keyboard": [[
+                {
+                    "text": "🗺️ Відкрити мапу",
+                    "web_app": {"url": "https://fk2yt64htq-droid.github.io/"} # Твоя адреса github.io
+                }
+            ]]
+        }
+        
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+        requests.post(url, json={
+            "chat_id": chat_id,
+            "text": welcome_text,
+            "parse_mode": "Markdown",
+            "reply_markup": reply_markup
+        })
+
+    # 2. Обробка команди /top всередині чату
+    elif text == "/top":
+        limit_date = (datetime.now() - timedelta(days=7)).isoformat()
+        
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT first_name, COUNT(user_id) as vote_count 
+            FROM user_votes 
+            WHERE timestamp >= ?
+            GROUP BY user_id 
+            ORDER BY vote_count DESC 
+            LIMIT 5
+        ''', (limit_date,))
+        rows = cursor.fetchall()
+        conn.close()
+        
+        top_text = "🏆 **ТОП-5 активних водіїв за тиждень:**\n\n"
+        medals = ["🥇", "🥈", "🥉", "4.", "5."]
+        
+        if not rows:
+            top_text += "Голосів ще немає. Будь першим! 🚀"
+        else:
+            for i, row in enumerate(rows):
+                place = medals[i] if i < len(medals) else f"{i+1}."
+                top_text += f"{place} *{row[0]}* — {row[1]} 🗳️\n"
+                
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+        requests.post(url, json={
+            "chat_id": chat_id,
+            "text": top_text,
+            "parse_mode": "Markdown"
+        })
+
+    return jsonify({"status": "success"}), 200
+# ====================================================================
+
 @app.route('/update', methods=['POST'])
 def update_point():
     data = request.json
@@ -184,7 +259,6 @@ def save_feedback():
         
     now = datetime.now().isoformat()
     
-    # 1. Збереження в локальну базу даних австрійської мапи
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('''
@@ -194,7 +268,6 @@ def save_feedback():
     conn.commit()
     conn.close()
     
-    # 2. Пряме надсилання сповіщення адміну без заплутаних перевірок рядків
     if BOT_TOKEN and ADMIN_CHAT_ID:
         tg_user = f"@{username}" if username else f"ID: {user_id}"
         message_text = f"💡 *Нова пропозиція від водія!*\n\n👤 *Ім'я:* {first_name} ({tg_user})\n📝 *Ідея:* {text}"
