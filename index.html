@@ -91,7 +91,6 @@ font-size: 16px;
 cursor: pointer;
 }
 
-/* Нові стилі для панелі масштабу */
 .map-controls {
     position: fixed;
     bottom: 80px;
@@ -174,16 +173,6 @@ font-weight: bold;
 .btn-cancel { background: #eee; color: #333; }
 .btn-submit { background: #ff9800; color: white; }
 
-.copy-btn {
-    cursor: pointer;
-    border: none;
-    background: #eee;
-    border-radius: 4px;
-    padding: 2px 6px;
-    font-size: 12px;
-    margin-left: 5px;
-}
-
 @media (max-width: 400px) {
   .top-permanent-box { width: 190px; padding: 8px; font-size: 11px; }
   .top-permanent-box h3 { font-size: 12px; }
@@ -238,16 +227,21 @@ font-weight: bold;
 </div>
 
 <div class="modal-overlay" id="donateModal">
-    <div class="modal-box" style="text-align:left; font-size:13px;">
-        <h3 id="donateTitle" style="text-align:center;">Дякуємо за підтримку! ☕️</h3>
-        <p><b>EUR (Revolut):</b><br>Vitalii Sachenko<br>
-          IBAN: <code id="iban1">LT733250059128960771</code> 
-          <button class="copy-btn" onclick="copyToClipboard('iban1')">📋</button>
-        </p>
-        <p><b>PLN (UniCredit):</b><br>Vitalii Sachenko<br>
-          PL: <code id="iban2">78291000062469800208676521</code> 
-          <button class="copy-btn" onclick="copyToClipboard('iban2')">📋</button>
-        </p>
+    <div class="modal-box" style="text-align:center;">
+        <h3 id="donateTitle">Дякуємо за підтримку! ☕️</h3>
+        <p style="font-size: 13px; margin-bottom: 15px;">Оберіть суму донату:</p>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+            <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=100', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">1 €</button>
+            <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=300', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">3 €</button>
+            <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=500', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">5 €</button>
+            <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=1000', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">10 €</button>
+        </div>
+
+        <button onclick="window.open('https://www.paypal.me/VitaliiSachenko', '_blank')" style="width: 100%; padding: 10px; border:none; border-radius:6px; background:#ffc439; color:#000; font-weight:bold; margin-bottom: 15px;">
+            PayPal (інша сума)
+        </button>
+
         <div class="modal-actions">
             <button class="btn-modal btn-cancel" id="btnDonateClose" onclick="closeDonateModal()">Закрити</button>
         </div>
@@ -280,7 +274,7 @@ document.getElementById("langSelect").addEventListener("change",(e)=>{
 });
 
 const i18n = {
-  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", was_control:"Був КОНТРОЛЬ", was_clean:"Було ЧИСТО", active: "Активно:", top_title: "🏆 ТОП-5 active drivers", support_title: "Зв'язатися з підтримкою", placeholder: "Опишіть вашу ідею чи проблему...", cancel: "Скасувати", send: "Надіслати", close: "Закрити", donate_title: "Дякую за підтримку! ☕️", alert_empty: "Будь ласка, введіть текст!", alert_success: "Повідомлення надіслано!" },
+  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", was_control:"Був КОНТРОЛЬ", was_clean:"Було ЧИСТО", active: "Активно:", top_title: "🏆 ТОП-5 active drivers", support_title: "Зв'язатися з підтримкою", placeholder: "Опишіть вашу ідею чи проблему...", cancel: "Скасувати", send: "Надіслати", close: "Закрити", donate_title: "Дякуємо за підтримку! ☕️", alert_empty: "Будь ласка, введіть текст!", alert_success: "Повідомлення надіслано!" },
   pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:", top_title: "🏆 TOP-5 active drivers", support_title: "Skontaktuj się z wsparciem", placeholder: "Opisz swój pomysł lub problem...", cancel: "Anuluj", send: "Wyślij", close: "Zamknij", donate_title: "Dziękuję za wsparcie! ☕️", alert_empty: "Proszę wpisać tekst!", alert_success: "Wiadomość została wysłana!" },
   sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", was_control:"Bola KONTROLA", was_clean:"Bolo ČISTÉ", active: "Aktívne:", top_title: "🏆 TOP-5 active drivers", support_title: "Kontaktovať podporu", placeholder: "Popíšte svoj nápad alebo problém...", cancel: "Zrušiť", send: "Odoslať", close: "Zatvoriť", donate_title: "Ďakujem za podporu! ☕️", alert_empty: "Prosím, zadajte text!", alert_success: "Správa bola odoslaná!" },
   en:{ clean:"CLEAR", control:"CONTROL", total:"Total", was_control:"Was CONTROL", was_clean:"Was CLEAR", active: "Active:", top_title: "🏆 TOP-5 active drivers", support_title: "Contact Support", placeholder: "Describe your idea or problem...", cancel: "Cancel", send: "Send", close: "Close", donate_title: "Thanks for your support! ☕️", alert_empty: "Please enter text!", alert_success: "Message sent!" },
@@ -434,8 +428,6 @@ function submitFeedback() {
         body: JSON.stringify({ text, user_id: userId, username, first_name: firstName })
     }).then(res => { if (res.ok) { alert(t("alert_success")); document.getElementById("feedbackText").value = ""; closeFeedbackModal(); } });
 }
-
-function copyToClipboard(id) { const text = document.getElementById(id).innerText; navigator.clipboard.writeText(text).then(() => { alert("Copied: " + text); }); }
 
 updateLabels();
 loadStats();
