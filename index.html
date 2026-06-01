@@ -304,8 +304,6 @@ body.dark-theme .leaflet-popup-content div, body.dark-theme .leaflet-popup-conte
     </div>
 </div>
 
-<audio id="alertAudio" src="https://austria-map.onrender.com/alert.mp3" preload="auto"></audio>
-
 <script>
 const tg = window.Telegram ? window.Telegram.WebApp : null;
 if (tg) { tg.ready(); tg.expand(); }
@@ -488,7 +486,7 @@ if (lastUserLatLng && color === "red") {
 }
 });
 
-// ЛОГІКА ЗВУКУ НА РАДІУСІ 2 КМ
+// АВТОМАТИЧНИЙ СИГНАЛ НА РАДІУСІ
 if (closestControlDistance <= 2000) {
     if (!hasAlertedForCurrentControl) {
         playDafAlert();
@@ -499,12 +497,44 @@ if (closestControlDistance <= 2000) {
 }
 }
 
-// Пряме відтворення з твого сервера Render
+// НОВИЙ НАДІЙНИЙ МЕТОД: WEB AUDIO API
+let audioContext = null;
+let audioBuffer = null;
+
+// Функція попереднього завантаження аудіо у бінарному вигляді
+async function preloadAudio() {
+    try {
+        const response = await fetch(`${API_URL}/alert.mp3`);
+        const arrayBuffer = await response.arrayBuffer();
+        
+        // Створюємо аудіо-контекст відразу
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioContext = new AudioContextClass();
+        
+        // Декодуємо бінарні дані файлу в аудіо-буфер браузера
+        audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        console.log("Звуковий файл успішно декодовано в пам'ять!");
+    } catch (e) {
+        console.log("Помилка завантаження/декодування аудіо через Web Audio API:", e);
+    }
+}
+
+// Функція програвання безпосередньо з оперативної пам'яті
 function playDafAlert() {
-    const audio = document.getElementById('alertAudio');
-    if (audio) {
-        audio.currentTime = 0;
-        audio.play().catch(e => console.log("Браузер блокує звук до тапу"));
+    // Якщо контекст створено, але він "спить" через обмеження безпеки, будимо його
+    if (audioContext && audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+    
+    if (audioContext && audioBuffer) {
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioContext.destination);
+        source.start(0);
+    } else {
+        // Запасний варіант, якщо Web Audio API не встиг ініціалізуватися
+        const fallbackAudio = new Audio(`${API_URL}/alert.mp3`);
+        fallbackAudio.play().catch(e => console.log("Резервний плеєр заблоковано"));
     }
 }
 
@@ -566,13 +596,23 @@ locateUser(false);
 setInterval(loadStats, 4000);
 setInterval(loadTopPermanent, 15000);
 
-// КНОПКА ТЕСТУ
+// Завантажуємо аудіо в буфер відразу при старті сторінки
+preloadAudio();
+
+// КНОПКА ТЕСТУ (ПІД ПЕРЕМИКАЧЕМ ТЕМИ)
 document.addEventListener("DOMContentLoaded", function() {
     const testButton = document.createElement('button');
     testButton.innerHTML = "🔊 ТЕСТ ЗВУКУ";
     testButton.style = "position:fixed; top:160px; right:10px; z-index:9999; padding:10px 12px; background:#b71c1c; color:white; font-weight:bold; border:2px solid white; border-radius:6px; cursor:pointer; box-shadow:0px 4px 8px rgba(0,0,0,0.4); font-size:12px;";
     testButton.onclick = function() { playDafAlert(); };
     document.body.appendChild(testButton);
+    
+    // Активуємо аудіо-контекст при першому кліку користувача по екрану (вимога безпеки Android)
+    document.body.addEventListener('click', function() {
+        if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+    }, { once: true });
 });
 </script>
 </body>
