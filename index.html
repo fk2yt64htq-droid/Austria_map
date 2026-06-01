@@ -229,7 +229,7 @@ font-weight: bold;
 <div class="modal-overlay" id="donateModal">
     <div class="modal-box" style="text-align:center;">
         <h3 id="donateTitle">Дякуємо за підтримку! ☕️</h3>
-        <p style="font-size: 13px; margin-bottom: 15px;">Оберіть суму донату:</p>
+        <p id="donateDesc" style="font-size: 13px; margin-bottom: 15px;">Оберіть суму донату:</p>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
             <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=100', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">1 €</button>
@@ -238,7 +238,7 @@ font-weight: bold;
             <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=1000', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">10 €</button>
         </div>
 
-        <button onclick="window.open('https://www.paypal.me/VitaliiSachenko', '_blank')" style="width: 100%; padding: 10px; border:none; border-radius:6px; background:#ffc439; color:#000; font-weight:bold; margin-bottom: 15px;">
+        <button id="btnPaypal" onclick="window.open('https://www.paypal.me/VitaliiSachenko', '_blank')" style="width: 100%; padding: 10px; border:none; border-radius:6px; background:#ffc439; color:#000; font-weight:bold; margin-bottom: 15px;">
             PayPal (інша сума)
         </button>
 
@@ -274,11 +274,11 @@ document.getElementById("langSelect").addEventListener("change",(e)=>{
 });
 
 const i18n = {
-  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", was_control:"Був КОНТРОЛЬ", was_clean:"Було ЧИСТО", active: "Активно:", top_title: "🏆 ТОП-5 active drivers", support_title: "Зв'язатися з підтримкою", placeholder: "Опишіть вашу ідею чи проблему...", cancel: "Скасувати", send: "Надіслати", close: "Закрити", donate_title: "Дякуємо за підтримку! ☕️", alert_empty: "Будь ласка, введіть текст!", alert_success: "Повідомлення надіслано!" },
-  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:", top_title: "🏆 TOP-5 active drivers", support_title: "Skontaktuj się z wsparciem", placeholder: "Opisz swój pomysł lub problem...", cancel: "Anuluj", send: "Wyślij", close: "Zamknij", donate_title: "Dziękuję za wsparcie! ☕️", alert_empty: "Proszę wpisać tekst!", alert_success: "Wiadomość została wysłana!" },
-  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", was_control:"Bola KONTROLA", was_clean:"Bolo ČISTÉ", active: "Aktívne:", top_title: "🏆 TOP-5 active drivers", support_title: "Kontaktovať podporu", placeholder: "Popíšte svoj nápad alebo problém...", cancel: "Zrušiť", send: "Odoslať", close: "Zatvoriť", donate_title: "Ďakujem za podporu! ☕️", alert_empty: "Prosím, zadajte text!", alert_success: "Správa bola odoslaná!" },
-  en:{ clean:"CLEAR", control:"CONTROL", total:"Total", was_control:"Was CONTROL", was_clean:"Was CLEAR", active: "Active:", top_title: "🏆 TOP-5 active drivers", support_title: "Contact Support", placeholder: "Describe your idea or problem...", cancel: "Cancel", send: "Send", close: "Close", donate_title: "Thanks for your support! ☕️", alert_empty: "Please enter text!", alert_success: "Message sent!" },
-  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", was_control:"Быў КАНТРОЛЬ", was_clean:"Было ЧЫСТА", active: "Актыўна:", top_title: "🏆 ТОП-5 active drivers", support_title: "Звязацца з падтрымкай", placeholder: "Апішыце вашу ідэю ці праблему...", cancel: "Скасаваць", send: "Адправіць", close: "Зачыніць", donate_title: "Дзякуй за падтрымку! ☕️", alert_empty: "Калі ласка, увядзіце тэкст!", alert_success: "Паведамленне адпраўлено!" }
+  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", was_control:"Був КОНТРОЛЬ", was_clean:"Було ЧИСТО", active: "Активно:", top_title: "🏆 ТОП-5 active drivers", support_title: "Зв'язатися з підтримкою", placeholder: "Опишіть вашу ідею чи проблему...", cancel: "Скасувати", send: "Надіслати", close: "Закрити", donate_title: "Дякуємо за підтримку! ☕️", donate_desc: "Оберіть суму донату:", paypal_text: "PayPal (інша сума)", alert_empty: "Будь ласка, введіть текст!", alert_success: "Повідомлення надіслано!" },
+  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:", top_title: "🏆 TOP-5 active drivers", support_title: "Skontaktuj się z wsparciem", placeholder: "Opisz swój pomysł lub problem...", cancel: "Anuluj", send: "Wyślij", close: "Zamknij", donate_title: "Dziękuję za wsparcie! ☕️", donate_desc: "Wybierz kwotę darowizny:", paypal_text: "PayPal (inna kwota)", alert_empty: "Proszę wpisać tekst!", alert_success: "Wiadomość została wysłana!" },
+  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", was_control:"Bola KONTROLA", was_clean:"Bolo ČISTÉ", active: "Aktívne:", top_title: "🏆 TOP-5 active drivers", support_title: "Kontaktovať podporu", placeholder: "Popíšte svoj nápad alebo problém...", cancel: "Zrušiť", send: "Odoslať", close: "Zatvoriť", donate_title: "Ďakujem za podporu! ☕️", donate_desc: "Vyberte sumu daru:", paypal_text: "PayPal (iná suma)", alert_empty: "Prosím, zadajte text!", alert_success: "Správa bola odoslaná!" },
+  en:{ clean:"CLEAR", control:"CONTROL", total:"Total", was_control:"Was CONTROL", was_clean:"Was CLEAR", active: "Active:", top_title: "🏆 TOP-5 active drivers", support_title: "Contact Support", placeholder: "Describe your idea or problem...", cancel: "Cancel", send: "Send", close: "Close", donate_title: "Thanks for your support! ☕️", donate_desc: "Select donation amount:", paypal_text: "PayPal (other amount)", alert_empty: "Please enter text!", alert_success: "Message sent!" },
+  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", was_control:"Быў КАНТРОЛЬ", was_clean:"Было ЧЫСТА", active: "Актыўна:", top_title: "🏆 ТОП-5 active drivers", support_title: "Звязацца з падтрымкай", placeholder: "Апішыце вашу ідэю ці праблему...", cancel: "Скасаваць", send: "Адправіць", close: "Зачыніць", donate_title: "Дзякуй за падтрымку! ☕️", donate_desc: "Абярыце суму даната:", paypal_text: "PayPal (іншая сума)", alert_empty: "Калі ласка, увядзіце тэкст!", alert_success: "Паведамленне адпраўлено!" }
 };
 function t(k){ return i18n[lang][k]; }
 
@@ -289,6 +289,8 @@ function updateLabels() {
     document.getElementById("btnFeedbackCancel").innerText = t("cancel");
     document.getElementById("btnFeedbackSubmit").innerText = t("send");
     document.getElementById("donateTitle").innerText = t("donate_title");
+    document.getElementById("donateDesc").innerText = t("donate_desc");
+    document.getElementById("btnPaypal").innerText = t("paypal_text");
     document.getElementById("btnDonateClose").innerText = t("close");
 }
 
