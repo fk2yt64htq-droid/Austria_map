@@ -310,6 +310,12 @@ if (tg) { tg.ready(); tg.expand(); }
 
 const API_URL = "https://austria-map.onrender.com";
 
+// НАЛАШТУВАННЯ ЗВУКУ ПОПЕРЕДЖЕННЯ ("тигидинь-тигидинь")
+const warningSound = new Audio("https://notificationsounds.com/storage/sounds/file-sounds-1143-sharp.mp3"); 
+
+// Об'єкт для трекінгу пройдених зон (щоб пищало тільки 1 раз на кожній межі)
+let warnedZones = {}; 
+
 let lang = localStorage.getItem("lang");
 if(!lang){
   const tgLang = tg?.initDataUnsafe?.user?.language_code;
@@ -376,11 +382,9 @@ const dots = [
 
 let map = L.map("map", {zoomControl: false}).setView([47.5162, 14.5501], 7);
 
-// НАЛАШТУВАННЯ ШАРІВ ДЛЯ ДНЯ ТА НОЧІ
 const dayTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap'});
 const nightTiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {attribution: '&copy; OpenStreetMap &copy; CARTO'});
 
-// Логіка визначення початкової теми (пам'ять або авто-час)
 let currentTheme = localStorage.getItem("theme");
 if (!currentTheme) {
     const hours = new Date().getHours();
@@ -415,6 +419,7 @@ function toggleTheme() {
 let markers = {}, stats = {};
 let userLocationMarker = null;
 let watchId = null;
+let lastUserLatLng = null;
 
 function locateUser(centerMap = false) {
     if (navigator.geolocation) {
@@ -422,6 +427,8 @@ function locateUser(centerMap = false) {
             watchId = navigator.geolocation.watchPosition(function(position) {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
+                lastUserLatLng = L.latLng(lat, lng);
+
                 if (!userLocationMarker) {
                     userLocationMarker = L.circleMarker([lat, lng], { radius: 8, color: '#ffffff', weight: 2, fillColor: '#136AEC', fillOpacity: 1 }).addTo(map);
                 } else {
@@ -468,7 +475,55 @@ L.circle([dot.lt,dot.ln],{radius:1500,color:"blue",weight:1,fillOpacity:0.1}).ad
 markers[dot.id].setIcon(new L.Icon({iconUrl:iconUrl,shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]}));
 markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total,s.color,s.old_status,s.last_time));
 }
+
+// СУПЕР АНТИРАДАР (ПЕРЕВІРКА КОЖЕН КІЛОМЕТР: 3км, 2км, 1км, 100м)
+if (lastUserLatLng && color === "red") {
+    const pointLatLng = L.latLng(dot.lt, dot.ln);
+    const distance = lastUserLatLng.distanceTo(pointLatLng); // Відстань в метрах
+
+    if (!warnedZones[dot.id]) {
+        warnedZones[dot.id] = { z3: false, z2: false, z1: false, z100: false };
+    }
+
+    // 1. Межа 3000 метрів (3 км)
+    if (distance <= 3000 && distance > 2100) {
+        if (!warnedZones[dot.id].z3) {
+            playWarning();
+            warnedZones[dot.id].z3 = true;
+        }
+    } 
+    // 2. Межа 2000 метрів (2 км)
+    else if (distance <= 2000 && distance > 1100) {
+        if (!warnedZones[dot.id].z2) {
+            playWarning();
+            warnedZones[dot.id].z2 = true;
+        }
+    } 
+    // 3. Межа 1000 метрів (1 км)
+    else if (distance <= 1000 && distance > 150) {
+        if (!warnedZones[dot.id].z1) {
+            playWarning();
+            warnedZones[dot.id].z1 = true;
+        }
+    } 
+    // 4. Межа 100 метрів (фінал)
+    else if (distance <= 100) {
+        if (!warnedZones[dot.id].z100) {
+            playWarning();
+            warnedZones[dot.id].z100 = true;
+        }
+    }
+    // Якщо водій розвернувся і поїхав назад від точки далі 3.5 км, скидаємо триггери зон
+    else if (distance > 3500) {
+        warnedZones[dot.id] = { z3: false, z2: false, z1: false, z100: false };
+    }
+}
 });
+}
+
+// Функція програвання звуку DAF "тигидинь-тигидинь"
+function playWarning() {
+    warningSound.play().catch(e => console.log("Потрібна взаємодія з екраном для увімкнення звуку"));
 }
 
 function sendVote(id, status, pointLat, pointLng) {
@@ -526,8 +581,8 @@ updateLabels();
 loadStats();
 loadTopPermanent();
 locateUser(false); 
-setInterval(loadStats, 2000);
-setInterval(loadTopPermanent, 10000);
+setInterval(loadStats, 4000); // Оновлюємо перевірку кожні 4 секунди, щоб точніше ловити швидкість фури
+setInterval(loadTopPermanent, 15000);
 </script>
 </body>
 </html>
