@@ -145,7 +145,6 @@ transition: background 0.3s, color 0.3s;
   .top-item { font-size: 11px; padding: 3px 0; }
 }
 
-/* СТИЛІ ДЛЯ НІЧНОГО РЕЖИМУ */
 body.dark-theme .top-permanent-box { background: rgba(30, 30, 30, 0.95); color: #fff; border-color: #444; }
 body.dark-theme .top-permanent-box h3 { color: #fff; }
 body.dark-theme .top-item { border-bottom-color: #333; }
@@ -231,7 +230,6 @@ if (tg) { tg.ready(); tg.expand(); }
 const API_URL = "https://austria-map.onrender.com";
 let hasAlertedForCurrentControl = false; 
 
-// ... (твій початковий JS код)
 let lang = localStorage.getItem("lang");
 if(!lang){ const tgLang = tg?.initDataUnsafe?.user?.language_code; lang = (tgLang && ["pl","sk","be","uk"].includes(tgLang.substring(0,2))) ? tgLang.substring(0,2) : "uk"; }
 document.getElementById("langSelect").value = lang;
@@ -274,18 +272,13 @@ function locateUser(centerMap = false) {
     }
 }
 
-// ЛОГІКА ПОДВІЙНОГО НАТИСКАННЯ (Double Tap)
+// Покращена логіка подвійного натискання (dblclick)
 function addMarkerTapLogic(marker, dot) {
-    let taps = 0;
-    marker.on('click', function() {
-        taps++;
-        if (taps === 1) {
-            setTimeout(() => { taps = 0; }, 300);
-        } else if (taps === 2) {
-            taps = 0;
-            map.setView([dot.lt, dot.ln], 12); // Центрування
-            playDafAlert(); // Тест звуку
-        }
+    marker.on('dblclick', function(e) {
+        L.DomEvent.stopPropagation(e);
+        map.setView([dot.lt, dot.ln], 12);
+        playDafAlert();
+        map.closePopup();
     });
 }
 
@@ -310,7 +303,7 @@ async function loadStats(){
         const iconUrl=`https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`;
         if(!markers[dot.id]){
             markers[dot.id]=L.marker([dot.lt,dot.ln],{icon:new L.Icon({iconUrl:iconUrl,shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]})}).addTo(map).bindPopup(createPopup(dot,redP,greenP,total,s.color,s.old_status,s.last_time));
-            addMarkerTapLogic(markers[dot.id], dot); // Додаємо обробку кліків
+            addMarkerTapLogic(markers[dot.id], dot); 
             L.circle([dot.lt,dot.ln],{radius:2000,color:"red",weight:1,fillOpacity:0.05}).addTo(map);
         } else {
             markers[dot.id].setIcon(new L.Icon({iconUrl:iconUrl,shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]}));
