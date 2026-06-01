@@ -2,7 +2,8 @@ import os
 import sqlite3
 import requests
 import math
-from flask import Flask, request, jsonify
+# Додано send_from_directory до імпорту Flask
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from datetime import datetime, timedelta
 
@@ -64,6 +65,15 @@ def init_db():
     conn.close()
 
 init_db()
+
+# ====================================================================
+#   РОУТ ДЛЯ ВІДДАТІ ФАЙЛУ ЗВУКУ (ALERT.MP3)
+# ====================================================================
+@app.route('/alert.mp3')
+def play_alert():
+    # Віддаємо файл alert.mp3 прямо з головної папки проєкту
+    return send_from_directory('.', 'alert.mp3')
+# ====================================================================
 
 def calculate_distance(lat1, lon1, lat2, lon2):
     """
