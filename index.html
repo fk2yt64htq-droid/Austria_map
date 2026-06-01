@@ -304,17 +304,16 @@ body.dark-theme .leaflet-popup-content div, body.dark-theme .leaflet-popup-conte
     </div>
 </div>
 
+<audio id="alertAudio" src="alert.mp3" preload="auto"></audio>
+
 <script>
 const tg = window.Telegram ? window.Telegram.WebApp : null;
 if (tg) { tg.ready(); tg.expand(); }
 
 const API_URL = "https://austria-map.onrender.com";
 
-// НАЛАШТУВАННЯ ЗВУКУ ПОПЕРЕДЖЕННЯ ("тигидинь-тигидинь")
-const warningSound = new Audio("https://notificationsounds.com/storage/sounds/file-sounds-1143-sharp.mp3"); 
-
-// Об'єкт для трекінгу пройдених зон (щоб пищало тільки 1 раз на кожній межі)
-let warnedZones = {}; 
+// Прапорець, щоб звук не торохтів постійно, а спрацьовував ОДИН РАЗ на межі 2 км
+let hasAlertedForCurrentControl = false; 
 
 let lang = localStorage.getItem("lang");
 if(!lang){
@@ -356,6 +355,7 @@ function updateLabels() {
     document.getElementById("btnDonateClose").innerText = t("close");
 }
 
+// ПОВНА БАЗА ТВОЇХ ТОЧОК
 const dots = [
 {"id":1,"n":"Hörbranz A14","lt":47.5446,"ln":9.7407},
 {"id":2,"n":"Nuziders A14","lt":47.1731,"ln":9.7737},
@@ -438,6 +438,9 @@ function locateUser(centerMap = false) {
                     map.setView([lat, lng], 12);
                     centerMap = false;
                 }
+                
+                // Перевіряємо відстань при кожній зміні координат водія
+                loadStats();
             }, function(err) { console.log("Помилка GPS"); }, { enableHighAccuracy: true });
         } else if (centerMap && userLocationMarker) {
             map.setView(userLocationMarker.getLatLng(), 12);
@@ -460,6 +463,9 @@ return `<b>${dot.n}</b><br>${historyHtml}<span style="display:inline-block;width
 
 async function loadStats(){
 try{ const res = await fetch(`${API_URL}/stats`); stats = await res.json(); } catch{ stats = {}; }
+
+let closestControlDistance = Infinity;
+
 dots.forEach(dot=>{
 const s = stats[dot.id] || {color:"blue", green:0, red:0, old_status:"", last_time:""};
 const total = s.green + s.red;
@@ -476,54 +482,35 @@ markers[dot.id].setIcon(new L.Icon({iconUrl:iconUrl,shadowUrl:'https://cdnjs.clo
 markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total,s.color,s.old_status,s.last_time));
 }
 
-// СУПЕР АНТИРАДАР (ПЕРЕВІРКА КОЖЕН КІЛОМЕТР: 3км, 2км, 1км, 100м)
+// РРАЗРАХУНОК ВІДСТАНІ ДО НАЙБЛИЖЧОГО ЧЕРВОНОГО КОНТРОЛЮ
 if (lastUserLatLng && color === "red") {
     const pointLatLng = L.latLng(dot.lt, dot.ln);
     const distance = lastUserLatLng.distanceTo(pointLatLng); // Відстань в метрах
-
-    if (!warnedZones[dot.id]) {
-        warnedZones[dot.id] = { z3: false, z2: false, z1: false, z100: false };
-    }
-
-    // 1. Межа 3000 метрів (3 км)
-    if (distance <= 3000 && distance > 2100) {
-        if (!warnedZones[dot.id].z3) {
-            playWarning();
-            warnedZones[dot.id].z3 = true;
-        }
-    } 
-    // 2. Межа 2000 метрів (2 км)
-    else if (distance <= 2000 && distance > 1100) {
-        if (!warnedZones[dot.id].z2) {
-            playWarning();
-            warnedZones[dot.id].z2 = true;
-        }
-    } 
-    // 3. Межа 1000 метрів (1 км)
-    else if (distance <= 1000 && distance > 150) {
-        if (!warnedZones[dot.id].z1) {
-            playWarning();
-            warnedZones[dot.id].z1 = true;
-        }
-    } 
-    // 4. Межа 100 метрів (фінал)
-    else if (distance <= 100) {
-        if (!warnedZones[dot.id].z100) {
-            playWarning();
-            warnedZones[dot.id].z100 = true;
-        }
-    }
-    // Якщо водій розвернувся і поїхав назад від точки далі 3.5 км, скидаємо триггери зон
-    else if (distance > 3500) {
-        warnedZones[dot.id] = { z3: false, z2: false, z1: false, z100: false };
+    if (distance < closestControlDistance) {
+        closestControlDistance = distance;
     }
 }
 });
+
+// ЛОГІКА ЗВУКУ: ЯКЩО ЗАЇХАЛИ В РАДІУС 2 КМ (2000 МЕТРІВ)
+if (closestControlDistance <= 2000) {
+    if (!hasAlertedForCurrentControl) {
+        playDafAlert();
+        hasAlertedForCurrentControl = true; // Спрацьовує лише 1 раз, спаму не буде
+    }
+} else {
+    // Якщо поруч немає червоних точок у радіусі 2 км — скидаємо блок, чекаємо наступну точку
+    hasAlertedForCurrentControl = false;
+}
 }
 
-// Функція програвання звуку DAF "тигидинь-тигидинь"
-function playWarning() {
-    warningSound.play().catch(e => console.log("Потрібна взаємодія з екраном для увімкнення звуку"));
+// Функція відтворення аудіо
+function playDafAlert() {
+    const audio = document.getElementById('alertAudio');
+    if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(e => console.log("Потрібен клік по карті для активації звуку браузером"));
+    }
 }
 
 function sendVote(id, status, pointLat, pointLng) {
@@ -581,8 +568,17 @@ updateLabels();
 loadStats();
 loadTopPermanent();
 locateUser(false); 
-setInterval(loadStats, 4000); // Оновлюємо перевірку кожні 4 секунди, щоб точніше ловити швидкість фури
+setInterval(loadStats, 4000); // Оновлення розрахунку кожні 4 секунди
 setInterval(loadTopPermanent, 15000);
+
+// КНОПКА ТЕСТУ ЗВУКУ (ПРАВОРУЧ НА ЕКРАНІ)
+document.addEventListener("DOMContentLoaded", function() {
+    const testButton = document.createElement('button');
+    testButton.innerHTML = "🔊 ТЕСТ ЗВУКУ";
+    testButton.style = "position:fixed; top:160px; right:10px; z-index:9999; padding:10px 12px; background:#b71c1c; color:white; font-weight:bold; border:2px solid white; border-radius:6px; cursor:pointer; box-shadow:0px 4px 8px rgba(0,0,0,0.4); font-size:12px;";
+    testButton.onclick = function() { playDafAlert(); };
+    document.body.appendChild(testButton);
+});
 </script>
 </body>
 </html>
