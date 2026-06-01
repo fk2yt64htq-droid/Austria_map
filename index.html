@@ -27,6 +27,7 @@ box-shadow: 0 4px 12px rgba(0,0,0,.3);
 padding: 12px;
 font-family: Arial, sans-serif;
 border: 1px solid #ddd;
+transition: background 0.3s, color 0.3s, border-color 0.3s;
 }
 .top-permanent-box h3 { 
 margin: 0 0 8px 0; 
@@ -56,7 +57,7 @@ align-items: center;
 gap: 8px;
 }
 
-.feedback-btn, .donate-btn {
+.feedback-btn, .donate-btn, .theme-btn {
 background: #ff9800;
 color: white;
 border: none;
@@ -69,8 +70,10 @@ box-shadow: 0 2px 6px rgba(0,0,0,.3);
 display: flex;
 align-items: center;
 justify-content: center;
+transition: background 0.3s;
 }
 .donate-btn { background: #4caf50; }
+.theme-btn { background: #673ab7; }
 
 .langBox {
 background: white;
@@ -82,6 +85,7 @@ display: flex;
 align-items: center;
 width: 36px;
 justify-content: center;
+transition: background 0.3s;
 }
 .langBox select {
 border: none;
@@ -115,7 +119,7 @@ cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.2s;
+    transition: background 0.2s, color 0.2s;
 }
 .ctrl-btn:active { background: #e0e0e0; }
 
@@ -139,6 +143,7 @@ width: 85%;
 max-width: 320px;
 box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 font-family: Arial, sans-serif;
+transition: background 0.3s, color 0.3s;
 }
 .modal-box h3 {
 margin: 0 0 10px 0;
@@ -156,6 +161,7 @@ resize: none;
 box-sizing: border-box;
 font-size: 14px;
 outline: none;
+transition: background 0.3s, color 0.3s, border-color 0.3s;
 }
 .modal-actions {
 display: flex;
@@ -170,13 +176,62 @@ border-radius: 6px;
 cursor: pointer;
 font-weight: bold;
 }
-.btn-cancel { background: #eee; color: #333; }
+.btn-cancel { background: #eee; color: #333; transition: background 0.3s, color 0.3s; }
 .btn-submit { background: #ff9800; color: white; }
 
 @media (max-width: 400px) {
   .top-permanent-box { width: 190px; padding: 8px; font-size: 11px; }
   .top-permanent-box h3 { font-size: 12px; }
   .top-item { font-size: 11px; padding: 3px 0; }
+}
+
+/* СТИЛІ ДЛЯ НІЧНОГО РЕЖИМУ */
+body.dark-theme .top-permanent-box {
+    background: rgba(30, 30, 30, 0.95);
+    color: #fff;
+    border-color: #444;
+}
+body.dark-theme .top-permanent-box h3 {
+    color: #fff;
+}
+body.dark-theme .top-item {
+    border-bottom-color: #333;
+}
+body.dark-theme .langBox {
+    background: #222;
+}
+body.dark-theme .ctrl-btn {
+    background: #222;
+    color: #fff;
+}
+body.dark-theme .ctrl-btn:active {
+    background: #444;
+}
+body.dark-theme .modal-box {
+    background: #222;
+    color: #fff;
+}
+body.dark-theme .modal-box h3 {
+    color: #fff;
+}
+body.dark-theme .modal-box textarea {
+    background: #333;
+    color: #fff;
+    border-color: #555;
+}
+body.dark-theme .btn-cancel {
+    background: #444;
+    color: #fff;
+}
+body.dark-theme .leaflet-popup-content-wrapper, body.dark-theme .leaflet-popup-tip {
+    background: #222;
+    color: #fff !important;
+}
+body.dark-theme .leaflet-popup-content {
+    color: #fff !important;
+}
+body.dark-theme .leaflet-popup-content div, body.dark-theme .leaflet-popup-content b {
+    color: #fff !important;
 }
 </style>
 </head>
@@ -201,6 +256,7 @@ font-weight: bold;
     </div>
     <button class="feedback-btn" onclick="openFeedbackModal()">💡</button>
     <button class="donate-btn" onclick="showDonateModal()">☕️</button>
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
 </div>
 
 <div class="map-controls">
@@ -303,7 +359,7 @@ const dots = [
 {"id":6,"n":"Wolfsbach A1 (1)","lt":48.1120,"ln":14.6761},
 {"id":7,"n":"Wolfsbach A1 (2)","lt":48.1123,"ln":14.6786},
 {"id":8,"n":"Mistelbach A5","lt":48.5389,"ln":16.6259},
-{"id":9,"n":"Bruck an der Leitha A4","lt":48.0431,"ln":16.7791},
+{"id":9,"n":"Bruck an der Keitha A4","lt":48.0431,"ln":16.7791},
 {"id":10,"n":"Pernau A2","lt":47.0900,"ln":15.8511},
 {"id":11,"n":"Strass in Steiermark A9","lt":46.7317,"ln":15.6436},
 {"id":12,"n":"Hainburg A2","lt":46.6845,"ln":14.6591},
@@ -319,7 +375,42 @@ const dots = [
 ];
 
 let map = L.map("map", {zoomControl: false}).setView([47.5162, 14.5501], 7);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap'}).addTo(map);
+
+// НАЛАШТУВАННЯ ШАРІВ ДЛЯ ДНЯ ТА НОЧІ
+const dayTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap'});
+const nightTiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {attribution: '&copy; OpenStreetMap &copy; CARTO'});
+
+// Логіка визначення початкової теми (пам'ять або авто-час)
+let currentTheme = localStorage.getItem("theme");
+if (!currentTheme) {
+    const hours = new Date().getHours();
+    currentTheme = (hours >= 20 || hours < 6) ? "dark" : "light";
+}
+
+if (currentTheme === "dark") {
+    nightTiles.addTo(map);
+    document.body.classList.add("dark-theme");
+    document.getElementById("themeBtn").innerText = "☀️";
+} else {
+    dayTiles.addTo(map);
+    document.getElementById("themeBtn").innerText = "🌙";
+}
+
+function toggleTheme() {
+    if (map.hasLayer(dayTiles)) {
+        map.removeLayer(dayTiles);
+        nightTiles.addTo(map);
+        document.body.classList.add("dark-theme");
+        document.getElementById("themeBtn").innerText = "☀️";
+        localStorage.setItem("theme", "dark");
+    } else {
+        map.removeLayer(nightTiles);
+        dayTiles.addTo(map);
+        document.body.classList.remove("dark-theme");
+        document.getElementById("themeBtn").innerText = "🌙";
+        localStorage.setItem("theme", "light");
+    }
+}
 
 let markers = {}, stats = {};
 let userLocationMarker = null;
