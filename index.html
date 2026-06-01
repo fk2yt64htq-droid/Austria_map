@@ -304,7 +304,7 @@ body.dark-theme .leaflet-popup-content div, body.dark-theme .leaflet-popup-conte
     </div>
 </div>
 
-<audio id="alertAudio" src="alert.mp3" preload="auto"></audio>
+<audio id="alertAudio" src="https://austria-map.onrender.com/alert.mp3" preload="auto"></audio>
 
 <script>
 const tg = window.Telegram ? window.Telegram.WebApp : null;
@@ -312,7 +312,6 @@ if (tg) { tg.ready(); tg.expand(); }
 
 const API_URL = "https://austria-map.onrender.com";
 
-// Прапорець, щоб звук не торохтів постійно, а спрацьовував ОДИН РАЗ на межі 2 км
 let hasAlertedForCurrentControl = false; 
 
 let lang = localStorage.getItem("lang");
@@ -355,7 +354,6 @@ function updateLabels() {
     document.getElementById("btnDonateClose").innerText = t("close");
 }
 
-// ПОВНА БАЗА ТВОЇХ ТОЧОК
 const dots = [
 {"id":1,"n":"Hörbranz A14","lt":47.5446,"ln":9.7407},
 {"id":2,"n":"Nuziders A14","lt":47.1731,"ln":9.7737},
@@ -439,7 +437,6 @@ function locateUser(centerMap = false) {
                     centerMap = false;
                 }
                 
-                // Перевіряємо відстань при кожній зміні координат водія
                 loadStats();
             }, function(err) { console.log("Помилка GPS"); }, { enableHighAccuracy: true });
         } else if (centerMap && userLocationMarker) {
@@ -476,40 +473,38 @@ if(dot.fix){ color="red"; } else if(color !== "blue" && total > 0){ if(s.red > s
 const iconUrl=`https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`;
 if(!markers[dot.id]){
 markers[dot.id]=L.marker([dot.lt,dot.ln],{icon:new L.Icon({iconUrl:iconUrl,shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]})}).addTo(map).bindPopup(createPopup(dot,redP,greenP,total,s.color,s.old_status,s.last_time));
-L.circle([dot.lt,dot.ln],{radius:1500,color:"blue",weight:1,fillOpacity:0.1}).addTo(map);
+L.circle([dot.lt,dot.ln],{radius:2000,color:"red",weight:1,fillOpacity:0.05}).addTo(map);
 } else {
 markers[dot.id].setIcon(new L.Icon({iconUrl:iconUrl,shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]}));
 markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total,s.color,s.old_status,s.last_time));
 }
 
-// РРАЗРАХУНОК ВІДСТАНІ ДО НАЙБЛИЖЧОГО ЧЕРВОНОГО КОНТРОЛЮ
 if (lastUserLatLng && color === "red") {
     const pointLatLng = L.latLng(dot.lt, dot.ln);
-    const distance = lastUserLatLng.distanceTo(pointLatLng); // Відстань в метрах
+    const distance = lastUserLatLng.distanceTo(pointLatLng);
     if (distance < closestControlDistance) {
         closestControlDistance = distance;
     }
 }
 });
 
-// ЛОГІКА ЗВУКУ: ЯКЩО ЗАЇХАЛИ В РАДІУС 2 КМ (2000 МЕТРІВ)
+// ЛОГІКА ЗВУКУ НА РАДІУСІ 2 КМ
 if (closestControlDistance <= 2000) {
     if (!hasAlertedForCurrentControl) {
         playDafAlert();
-        hasAlertedForCurrentControl = true; // Спрацьовує лише 1 раз, спаму не буде
+        hasAlertedForCurrentControl = true;
     }
 } else {
-    // Якщо поруч немає червоних точок у радіусі 2 км — скидаємо блок, чекаємо наступну точку
     hasAlertedForCurrentControl = false;
 }
 }
 
-// Функція відтворення аудіо
+// Пряме відтворення з твого сервера Render
 function playDafAlert() {
     const audio = document.getElementById('alertAudio');
     if (audio) {
         audio.currentTime = 0;
-        audio.play().catch(e => console.log("Потрібен клік по карті для активації звуку браузером"));
+        audio.play().catch(e => console.log("Браузер блокує звук до тапу"));
     }
 }
 
@@ -531,8 +526,8 @@ function sendVote(id, status, pointLat, pointLng) {
             const data = await res.json();
             if (res.status === 200) { if (tg) tg.sendData(status + "_" + id); loadStats(); loadTopPermanent(); } 
             else { alert(data.message || "Помилка: Ви занадто далеко!"); }
-        }).catch(err => { alert("⚠️ Помилка зв'язку із сервером."); });
-    }, function(err) { alert("⚠️ GPS недоступний. Увімкніть його!"); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+        }).catch(err => { alert("⚠️ Помилка зв'язку."); });
+    }, function(err) { alert("⚠️ GPS недоступний."); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
 }
 
 function sendTrafficBan() { if (tg && tg.openLink) tg.openLink("https://trafficban.com"); else window.open("https://trafficban.com", '_blank'); }
@@ -568,10 +563,10 @@ updateLabels();
 loadStats();
 loadTopPermanent();
 locateUser(false); 
-setInterval(loadStats, 4000); // Оновлення розрахунку кожні 4 секунди
+setInterval(loadStats, 4000);
 setInterval(loadTopPermanent, 15000);
 
-// КНОПКА ТЕСТУ ЗВУКУ (ПРАВОРУЧ НА ЕКРАНІ)
+// КНОПКА ТЕСТУ
 document.addEventListener("DOMContentLoaded", function() {
     const testButton = document.createElement('button');
     testButton.innerHTML = "🔊 ТЕСТ ЗВУКУ";
