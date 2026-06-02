@@ -513,11 +513,16 @@ function closeDonateModal() { document.getElementById("donateModal").style.displ
 
 function submitFeedback() {
     const text = document.getElementById("feedbackText").value.trim();
-if (!text) { alert(t("alert_empty")); return; }
-tg.sendData("💡 Звернення: " + text);
-alert(t("alert_success"));
-document.getElementById("feedbackText").value = "";
-closeFeedbackModal();} });
+    if (!text) { 
+        alert(t("alert_empty")); 
+        return; 
+    }
+    if (tg) {
+        tg.sendData("💡 Звернення: " + text);
+        alert(t("alert_success"));
+        document.getElementById("feedbackText").value = "";
+        closeFeedbackModal();
+    }
 }
 
 updateLabels();
