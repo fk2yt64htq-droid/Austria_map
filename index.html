@@ -517,9 +517,17 @@ function submitFeedback() {
         alert(t("alert_empty")); 
         return; 
     }
-    // Це відправляє дані прямо в бота через Telegram
+
+    // Отримуємо дані про користувача автоматично
+    const user = window.Telegram.WebApp.initDataUnsafe?.user;
+    const userName = user ? `${user.first_name} ${user.last_name || ''}` : "Невідомий";
+    const userTag = user?.username ? `@${user.username}` : "без ніка";
+    
+    // Формуємо детальне повідомлення
+    const finalMessage = `💡 Звернення: ${text}\n👤 Від: ${userName} (${userTag})`;
+
     if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.sendData("💡 Звернення: " + text);
+        window.Telegram.WebApp.sendData(finalMessage);
         alert(t("alert_success"));
         document.getElementById("feedbackText").value = "";
         closeFeedbackModal();
