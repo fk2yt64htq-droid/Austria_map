@@ -7,33 +7,26 @@ from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from dotenv import load_dotenv
 
-# Твій токен від BotFather
+# Завантажуємо налаштування
 load_dotenv()
 API_TOKEN = os.getenv('BOT_TOKEN')
 ADMIN_CHAT_ID = os.getenv('ADMIN_CHAT_ID')
-
-# URL твого сервера на Render
 SERVER_URL = "https://austria-map.onrender.com"
 
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
-
-# Логування для відслідковування помилок
 logging.basicConfig(level=logging.INFO)
 
+# --- Функції для ТОПу ---
 async def fetch_top_data(period: str):
-    """Функція для безпечного запиту ТОПу з сервера Render"""
     async with aiohttp.ClientSession() as session:
         try:
             async with session.get(f"{SERVER_URL}/top?period={period}") as response:
-                if response.status == 200:
-                    return await response.json()
-        except Exception as e:
-            logging.error(f"Помилка запиту до сервера: {e}")
+                if response.status == 200: return await response.json()
+        except: pass
     return None
 
 def build_top_keyboard():
-    """Створює інлайн-кнопки для перемикання періоду рейтингу"""
     builder = InlineKeyboardBuilder()
     builder.row(
         types.InlineKeyboardButton(text="📅 За тиждень", callback_data="top_week"),
@@ -42,78 +35,39 @@ def build_top_keyboard():
     return builder.as_markup()
 
 def generate_top_text(top_users, period_name):
-    """Генерує красивий текст таблиці лідерів"""
-    if not top_users:
-        return f"🏆 **ТОП-10 активних водіїв ({period_name}):**\n\nПоки що немає голосів за цей період. Будь першим! 🚀"
-    
+    if not top_users: return f"ТОП-10 ({period_name}): поки порожньо."
     text = f"🏆 **ТОП-10 активних водіїв ({period_name}):**\n\n"
-    medals = ["🥇", "🥈", "🥉"]
-    
     for i, user in enumerate(top_users):
-        # Визначаємо емодзі для місця (1-3 місце медалі, далі просто цифри)
-        place = medals[i] if i < 3 else f"{i+1}."
-        
         name = user.get('first_name', 'Водій')
-        username = user.get('username')
-        username_str = f" (@{username})" if username else ""
         votes = user.get('votes', 0)
-        
-        text += f"{place} **{name}**{username_str} — {votes} голосів\n"
-        
-    text += "\n*Оновлено щойно. Дякуємо за допомогу на дорогах Австрії! 🤝*"
+        text += f"{i+1}. {name} — {votes} голосів\n"
     return text
 
+# --- Обробники команд ---
 @dp.message(Command("start"))
 async def start_command(message: types.Message):
     web_app_url = "https://fk2yt64htq-droid.github.io/Austria_map/"
-    
-    kb = [
-        [types.KeyboardButton(text="Відкрити мапу", web_app=types.WebAppInfo(url=web_app_url))]
-    ]
-    keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
-    
-    await message.answer(
-        "Вітаю! Натисніть кнопку нижче, щоб відкрити мапу контролю доріг Австрії.\n\n"
-        "Також ви можете переглянути рейтинг найкращих помічників за допомогою команди /top", 
-        reply_markup=keyboard
-    )
+    kb = [[types.KeyboardButton(text="Відкрити мапу", web_app=types.WebAppInfo(url=web_app_url))]]
+    await message.answer("Привіт! Натисніть кнопку, щоб відкрити мапу.", reply_markup=types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True))
 
 @dp.message(Command("top"))
 async def top_command(message: types.Message):
-    """Обробка команди /top — показує тижневий рейтинг за замовчуванням"""
-    top_data = await fetch_top_data("week")
-    text = generate_top_text(top_data, "тиждень")
-    await message.answer(text, parse_mode="Markdown", reply_markup=build_top_keyboard())
+    data = await fetch_top_data("week")
+    await message.answer(generate_top_text(data, "тиждень"), reply_markup=build_top_keyboard(), parse_mode="Markdown")
 
-@dp.callback_query(lambda c: c.data in ["top_week", "top_month"])
-async def top_callback_handler(callback_query: types.CallbackQuery):
-    """Обробка натискання на інлайн-кнопки тиждень/місяць"""
-    period = "week" if callback_query.data == "top_week" else "month"
-    period_name = "тиждень" if period == "week" else "місяць"
-    
-    top_data = await fetch_top_data(period)
-    text = generate_top_text(top_data, period_name)
-    
-    # Редагуємо поточне повідомлення, щоб не спамити новими
-    try:
-        await callback_query.message.edit_text(
-            text, 
-            parse_mode="Markdown", 
-            reply_markup=build_top_keyboard()
-        )
-    except Exception:
-        # Ігноруємо помилку, якщо текст топу не змінився при повторному кліку
-        pass
-    await callback_query.answer()
+@dp.callback_query(F.data.startswith("top_"))
+async def callback_top(callback: types.CallbackQuery):
+    period = "week" if callback.data == "top_week" else "month"
+    data = await fetch_top_data(period)
+    await callback.message.edit_text(generate_top_text(data, period), reply_markup=build_top_keyboard(), parse_mode="Markdown")
+    await callback.answer()
 
-# --- ЗВОРОТНИЙ ЗВ'ЯЗОК (через Telegram, а не через окремий порт) ---
+# --- ТУТ БОТ ОТРИМУЄ ПОВІДОМЛЕННЯ ВІД КНОПКИ 💡 ---
 @dp.message(F.web_app_data)
 async def handle_web_app_data(message: types.Message):
-    """Отримує повідомлення від кнопки 💡 через Telegram WebApp"""
-    data = message.web_app_data.data
     if ADMIN_CHAT_ID:
-        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"💡 Звернення в підтримку:\n{data}")
-    await message.answer("Дякуємо! Ваше повідомлення надіслано адміністратору.")
+        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"💡 Звернення: {message.web_app_data.data}")
+    await message.answer("Дякуємо! Повідомлення надіслано.")
 
 async def main():
     await dp.start_polling(bot)
