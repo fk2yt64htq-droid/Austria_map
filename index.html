@@ -513,13 +513,11 @@ function closeDonateModal() { document.getElementById("donateModal").style.displ
 
 function submitFeedback() {
     const text = document.getElementById("feedbackText").value.trim();
-    if (!text) { alert(t("alert_empty")); return; }
-    let userId = 0; let username = ""; let firstName = "Водій";
-    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) { userId = tg.initDataUnsafe.user.id || 0; username = tg.initDataUnsafe.user.username || ""; firstName = tg.initDataUnsafe.user.first_name || "Водій"; }
-    fetch(`${API_URL}/feedback`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, user_id: userId, username, first_name: firstName })
-    }).then(res => { if (res.ok) { alert(t("alert_success")); document.getElementById("feedbackText").value = ""; closeFeedbackModal(); } });
+if (!text) { alert(t("alert_empty")); return; }
+tg.sendData("💡 Звернення: " + text);
+alert(t("alert_success"));
+document.getElementById("feedbackText").value = "";
+closeFeedbackModal();} });
 }
 
 updateLabels();
