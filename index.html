@@ -1,16 +1,17 @@
 import logging
 import asyncio
 import aiohttp
-from aiogram import Bot, Dispatcher, types
+import os
+from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-
-# Твій токен від BotFather
-import os
 from dotenv import load_dotenv
 
+# Твій токен від BotFather
 load_dotenv()
 API_TOKEN = os.getenv('BOT_TOKEN')
+ADMIN_CHAT_ID = os.getenv('ADMIN_CHAT_ID')
+
 # URL твого сервера на Render
 SERVER_URL = "https://austria-map.onrender.com"
 
@@ -104,6 +105,15 @@ async def top_callback_handler(callback_query: types.CallbackQuery):
         # Ігноруємо помилку, якщо текст топу не змінився при повторному кліку
         pass
     await callback_query.answer()
+
+# --- ЗВОРОТНИЙ ЗВ'ЯЗОК (через Telegram, а не через окремий порт) ---
+@dp.message(F.web_app_data)
+async def handle_web_app_data(message: types.Message):
+    """Отримує повідомлення від кнопки 💡 через Telegram WebApp"""
+    data = message.web_app_data.data
+    if ADMIN_CHAT_ID:
+        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"💡 Звернення в підтримку:\n{data}")
+    await message.answer("Дякуємо! Ваше повідомлення надіслано адміністратору.")
 
 async def main():
     await dp.start_polling(bot)
