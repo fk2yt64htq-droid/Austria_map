@@ -35,12 +35,18 @@ def build_top_keyboard():
     return builder.as_markup()
 
 def generate_top_text(top_users, period_name):
-    if not top_users: return f"ТОП-10 ({period_name}): поки порожньо."
+    if not top_users: 
+        return f"ТОП-10 ({period_name}): поки порожньо."
+    
     text = f"🏆 **ТОП-10 активних водіїв ({period_name}):**\n\n"
     for i, user in enumerate(top_users):
         name = user.get('first_name', 'Водій')
         votes = user.get('votes', 0)
         text += f"{i+1}. {name} — {votes} голосів\n"
+    
+    # Вставте цей рядок сюди:
+    text += "\nОновлено щойно. Дякуємо за допомогу на дорогах Європи! 🤝"
+    
     return text
 
 # --- Обробники команд ---
