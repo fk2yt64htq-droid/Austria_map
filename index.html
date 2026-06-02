@@ -1,122 +1,533 @@
-import logging
-import asyncio
-import aiohttp
-import os
-from aiogram import Bot, Dispatcher, types, F
-from aiogram.filters import Command
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-from dotenv import load_dotenv
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Austria Map</title>
 
-# Твій токен від BotFather
-load_dotenv()
-API_TOKEN = os.getenv('BOT_TOKEN')
-ADMIN_CHAT_ID = os.getenv('ADMIN_CHAT_ID')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-# URL твого сервера на Render
-SERVER_URL = "https://austria-map.onrender.com"
+<style>
+html, body { margin:0; padding:0; height:100%; }
+#map { height:100vh; width:100vw; }
+.btn { width: 100%; padding:10px; margin-top:5px; border:none; border-radius:6px; color:#fff; font-weight:bold; cursor:pointer; }
+.leaflet-popup-content { text-align:center; color:#000 !important; }
 
-bot = Bot(token=API_TOKEN)
-dp = Dispatcher()
+.top-permanent-box {
+position: absolute;
+top: 10px;
+left: 10px;
+z-index: 9999;
+background: rgba(255, 255, 255, 0.95);
+width: 240px;
+border-radius: 8px;
+box-shadow: 0 4px 12px rgba(0,0,0,.3);
+padding: 12px;
+font-family: Arial, sans-serif;
+border: 1px solid #ddd;
+transition: background 0.3s, color 0.3s, border-color 0.3s;
+}
+.top-permanent-box h3 { 
+margin: 0 0 8px 0; 
+font-size: 14px; 
+text-align: center; 
+color: #222; 
+border-bottom: 2px solid #136AEC;
+padding-bottom: 4px;
+}
+.top-item { 
+display: flex; 
+justify-content: space-between; 
+padding: 5px 0; 
+border-bottom: 1px solid #eee; 
+font-size: 13px; 
+}
+.top-item:last-child { border: none; }
 
-# Логування для відслідковування помилок
-logging.basicConfig(level=logging.INFO)
+.right-controls {
+position: absolute;
+top: 10px;
+right: 10px;
+z-index: 9999;
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 8px;
+}
 
-async def fetch_top_data(period: str):
-    """Функція для безпечного запиту ТОПу з сервера Render"""
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.get(f"{SERVER_URL}/top?period={period}") as response:
-                if response.status == 200:
-                    return await response.json()
-        except Exception as e:
-            logging.error(f"Помилка запиту до сервера: {e}")
-    return None
+.feedback-btn, .donate-btn, .theme-btn {
+background: #ff9800;
+color: white;
+border: none;
+width: 36px;
+height: 36px;
+border-radius: 6px;
+font-size: 18px;
+cursor: pointer;
+box-shadow: 0 2px 6px rgba(0,0,0,.3);
+display: flex;
+align-items: center;
+justify-content: center;
+transition: background 0.3s;
+}
+.donate-btn { background: #4caf50; }
+.theme-btn { background: #673ab7; }
 
-def build_top_keyboard():
-    """Створює інлайн-кнопки для перемикання періоду рейтингу"""
-    builder = InlineKeyboardBuilder()
-    builder.row(
-        types.InlineKeyboardButton(text="📅 За тиждень", callback_data="top_week"),
-        types.InlineKeyboardButton(text="🗓️ За місяць", callback_data="top_month")
-    )
-    return builder.as_markup()
+.langBox {
+background: white;
+padding: 5px;
+border-radius: 6px;
+box-shadow: 0 2px 6px rgba(0,0,0,.3);
+height: 24px;
+display: flex;
+align-items: center;
+width: 36px;
+justify-content: center;
+transition: background 0.3s;
+}
+.langBox select {
+border: none;
+outline: none;
+background: transparent;
+font-size: 16px;
+cursor: pointer;
+}
 
-def generate_top_text(top_users, period_name):
-    """Генерує красивий текст таблиці лідерів"""
-    if not top_users:
-        return f"🏆 **ТОП-10 активних водіїв ({period_name}):**\n\nПоки що немає голосів за цей період. Будь першим! 🚀"
-    
-    text = f"🏆 **ТОП-10 активних водіїв ({period_name}):**\n\n"
-    medals = ["🥇", "🥈", "🥉"]
-    
-    for i, user in enumerate(top_users):
-        # Визначаємо емодзі для місця (1-3 місце медалі, далі просто цифри)
-        place = medals[i] if i < 3 else f"{i+1}."
+.map-controls {
+    position: fixed;
+    bottom: 80px;
+    left: 0;
+    width: 100%;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+.ctrl-btn {
+    background: #ffffff;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    font-size: 22px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+}
+.ctrl-btn:active { background: #e0e0e0; }
+
+.modal-overlay {
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: rgba(0,0,0,0.5);
+z-index: 10000;
+display: none;
+align-items: center;
+justify-content: center;
+}
+.modal-box {
+background: white;
+padding: 20px;
+border-radius: 12px;
+width: 85%;
+max-width: 320px;
+box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+font-family: Arial, sans-serif;
+transition: background 0.3s, color 0.3s;
+}
+.modal-box h3 {
+margin: 0 0 10px 0;
+font-size: 16px;
+text-align: center;
+color: #333;
+}
+.modal-box textarea {
+width: 100%;
+height: 90px;
+border: 1px solid #ccc;
+border-radius: 6px;
+padding: 8px;
+resize: none;
+box-sizing: border-box;
+font-size: 14px;
+outline: none;
+transition: background 0.3s, color 0.3s, border-color 0.3s;
+}
+.modal-actions {
+display: flex;
+justify-content: flex-end;
+gap: 10px;
+margin-top: 10px;
+}
+.btn-modal {
+padding: 8px 14px;
+border: none;
+border-radius: 6px;
+cursor: pointer;
+font-weight: bold;
+}
+.btn-cancel { background: #eee; color: #333; transition: background 0.3s, color 0.3s; }
+.btn-submit { background: #ff9800; color: white; }
+
+@media (max-width: 400px) {
+  .top-permanent-box { width: 190px; padding: 8px; font-size: 11px; }
+  .top-permanent-box h3 { font-size: 12px; }
+  .top-item { font-size: 11px; padding: 3px 0; }
+}
+
+/* СТИЛІ ДЛЯ НІЧНОГО РЕЖИМУ */
+body.dark-theme .top-permanent-box {
+    background: rgba(30, 30, 30, 0.95);
+    color: #fff;
+    border-color: #444;
+}
+body.dark-theme .top-permanent-box h3 {
+    color: #fff;
+}
+body.dark-theme .top-item {
+    border-bottom-color: #333;
+}
+body.dark-theme .langBox {
+    background: #222;
+}
+body.dark-theme .ctrl-btn {
+    background: #222;
+    color: #fff;
+}
+body.dark-theme .ctrl-btn:active {
+    background: #444;
+}
+body.dark-theme .modal-box {
+    background: #222;
+    color: #fff;
+}
+body.dark-theme .modal-box h3 {
+    color: #fff;
+}
+body.dark-theme .modal-box textarea {
+    background: #333;
+    color: #fff;
+    border-color: #555;
+}
+body.dark-theme .btn-cancel {
+    background: #444;
+    color: #fff;
+}
+body.dark-theme .leaflet-popup-content-wrapper, body.dark-theme .leaflet-popup-tip {
+    background: #222;
+    color: #fff !important;
+}
+body.dark-theme .leaflet-popup-content {
+    color: #fff !important;
+}
+body.dark-theme .leaflet-popup-content div, body.dark-theme .leaflet-popup-content b {
+    color: #fff !important;
+}
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div class="top-permanent-box">
+    <h3 id="topTitle">🏆 ТОП-5 active drivers</h3>
+    <div id="topList">Завантаження рейтингу...</div>
+</div>
+
+<div class="right-controls">
+    <div class="langBox">
+        <select id="langSelect">
+            <option value="uk">🇺🇦</option>
+            <option value="pl">🇵🇱</option>
+            <option value="sk">🇸🇰</option>
+            <option value="en">🇬🇧</option>
+            <option value="be">🇧🇾</option>
+        </select>
+    </div>
+    <button class="feedback-btn" onclick="openFeedbackModal()">💡</button>
+    <button class="donate-btn" onclick="showDonateModal()">☕️</button>
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
+</div>
+
+<div class="map-controls">
+    <button class="ctrl-btn" onclick="map.zoomOut()">➖</button>
+    <button class="ctrl-btn" onclick="locateUser(true)">🎯</button>
+    <button class="ctrl-btn" onclick="map.zoomIn()">➕</button>
+</div>
+
+<div style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 9999; padding: 10px; box-sizing: border-box; background: rgba(255,255,255,0.1);">
+    <button onclick="sendTrafficBan()" style="width: 100%; padding: 15px; border: none; border-radius: 8px; background: #b71c1c; color: white; font-weight: bold; font-size: 16px; cursor: pointer; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);">
+        TRAFFICBAN
+    </button>
+</div>
+
+<div class="modal-overlay" id="feedbackModal">
+    <div class="modal-box">
+        <h3 id="modalTitle">Зв'язатися з підтримкою</h3>
+        <textarea id="feedbackText" placeholder="Опишіть вашу ідею чи проблему..."></textarea>
+        <div class="modal-actions">
+            <button class="btn-modal btn-cancel" id="btnFeedbackCancel" onclick="closeFeedbackModal()">Скасувати</button>
+            <button class="btn-modal btn-submit" id="btnFeedbackSubmit" onclick="submitFeedback()">Надіслати</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="donateModal">
+    <div class="modal-box" style="text-align:center;">
+        <h3 id="donateTitle">Дякуємо за підтримку! ☕️</h3>
+        <p id="donateDesc" style="font-size: 13px; margin-bottom: 15px;">Оберіть суму донату:</p>
         
-        name = user.get('first_name', 'Водій')
-        username = user.get('username')
-        username_str = f" (@{username})" if username else ""
-        votes = user.get('votes', 0)
-        
-        text += f"{place} **{name}**{username_str} — {votes} голосів\n"
-        
-    text += "\n*Оновлено щойно. Дякуємо за допомогу на дорогах Австрії! 🤝*"
-    return text
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+            <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=100', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">1 €</button>
+            <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=300', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">3 €</button>
+            <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=500', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">5 €</button>
+            <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=1000', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">10 €</button>
+        </div>
 
-@dp.message(Command("start"))
-async def start_command(message: types.Message):
-    web_app_url = "https://fk2yt64htq-droid.github.io/Austria_map/"
-    
-    kb = [
-        [types.KeyboardButton(text="Відкрити мапу", web_app=types.WebAppInfo(url=web_app_url))]
-    ]
-    keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
-    
-    await message.answer(
-        "Вітаю! Натисніть кнопку нижче, щоб відкрити мапу контролю доріг Австрії.\n\n"
-        "Також ви можете переглянути рейтинг найкращих помічників за допомогою команди /top", 
-        reply_markup=keyboard
-    )
+        <button id="btnPaypal" onclick="window.open('https://www.paypal.me/VitaliiSachenko', '_blank')" style="width: 100%; padding: 10px; border:none; border-radius:6px; background:#ffc439; color:#000; font-weight:bold; margin-bottom: 15px;">
+            PayPal (інша сума)
+        </button>
 
-@dp.message(Command("top"))
-async def top_command(message: types.Message):
-    """Обробка команди /top — показує тижневий рейтинг за замовчуванням"""
-    top_data = await fetch_top_data("week")
-    text = generate_top_text(top_data, "тиждень")
-    await message.answer(text, parse_mode="Markdown", reply_markup=build_top_keyboard())
+        <div class="modal-actions">
+            <button class="btn-modal btn-cancel" id="btnDonateClose" onclick="closeDonateModal()">Закрити</button>
+        </div>
+    </div>
+</div>
 
-@dp.callback_query(lambda c: c.data in ["top_week", "top_month"])
-async def top_callback_handler(callback_query: types.CallbackQuery):
-    """Обробка натискання на інлайн-кнопки тиждень/місяць"""
-    period = "week" if callback_query.data == "top_week" else "month"
-    period_name = "тиждень" if period == "week" else "місяць"
-    
-    top_data = await fetch_top_data(period)
-    text = generate_top_text(top_data, period_name)
-    
-    # Редагуємо поточне повідомлення, щоб не спамити новими
-    try:
-        await callback_query.message.edit_text(
-            text, 
-            parse_mode="Markdown", 
-            reply_markup=build_top_keyboard()
-        )
-    except Exception:
-        # Ігноруємо помилку, якщо текст топу не змінився при повторному кліку
-        pass
-    await callback_query.answer()
+<script>
+const tg = window.Telegram ? window.Telegram.WebApp : null;
+if (tg) { tg.ready(); tg.expand(); }
 
-# --- ЗВОРОТНИЙ ЗВ'ЯЗОК (через Telegram, а не через окремий порт) ---
-@dp.message(F.web_app_data)
-async def handle_web_app_data(message: types.Message):
-    """Отримує повідомлення від кнопки 💡 через Telegram WebApp"""
-    data = message.web_app_data.data
-    if ADMIN_CHAT_ID:
-        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"💡 Звернення в підтримку:\n{data}")
-    await message.answer("Дякуємо! Ваше повідомлення надіслано адміністратору.")
+const API_URL = "https://austria-map.onrender.com";
 
-async def main():
-    await dp.start_polling(bot)
+let lang = localStorage.getItem("lang");
+if(!lang){
+  const tgLang = tg?.initDataUnsafe?.user?.language_code;
+  if(tgLang){
+    if(tgLang.startsWith("pl")) lang="pl";
+    else if(tgLang.startsWith("sk")) lang="sk";
+    else if(tgLang.startsWith("be")) lang="be";
+    else if(tgLang.startsWith("uk")) lang="uk";
+    else lang="en";
+  } else { lang="uk"; }
+}
+document.getElementById("langSelect").value = lang;
+document.getElementById("langSelect").addEventListener("change",(e)=>{
+  lang = e.target.value;
+  localStorage.setItem("lang",lang);
+  updateLabels();
+  loadStats();
+});
 
-if __name__ == "__main__":
-    asyncio.run(main())
+const i18n = {
+  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", was_control:"Був КОНТРОЛЬ", was_clean:"Було ЧИСТО", active: "Активно:", top_title: "🏆 ТОП-5 active drivers", support_title: "Зв'язатися з підтримкою", placeholder: "Опишіть вашу ідею чи проблему...", cancel: "Скасувати", send: "Надіслати", close: "Закрити", donate_title: "Дякуємо за підтримку! ☕️", donate_desc: "Оберіть суму донату:", paypal_text: "PayPal (інша сума)", alert_empty: "Будь ласка, введіть текст!", alert_success: "Повідомлення надіслано!" },
+  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:", top_title: "🏆 TOP-5 active drivers", support_title: "Skontaktuj się z wsparciem", placeholder: "Opisz swój pomysł lub problem...", cancel: "Anuluj", send: "Wyślij", close: "Zamknij", donate_title: "Dziękuję za wsparcie! ☕️", donate_desc: "Wybierz kwotę darowizny:", paypal_text: "PayPal (inna kwota)", alert_empty: "Proszę wpisać tekst!", alert_success: "Wiadomość została wysłana!" },
+  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", was_control:"Bola KONTROLA", was_clean:"Bolo ČISTÉ", active: "Aktívne:", top_title: "🏆 TOP-5 active drivers", support_title: "Kontaktovať podporu", placeholder: "Popíšte svoj nápad alebo problém...", cancel: "Zrušiť", send: "Odoslať", close: "Zatvoriť", donate_title: "Ďakujem za podporu! ☕️", donate_desc: "Vyberte sumu daru:", paypal_text: "PayPal (iná suma)", alert_empty: "Prosím, zadajte text!", alert_success: "Správa bola odoslaná!" },
+  en:{ clean:"CLEAR", control:"CONTROL", total:"Total", was_control:"Was CONTROL", was_clean:"Was CLEAR", active: "Active:", top_title: "🏆 TOP-5 active drivers", support_title: "Contact Support", placeholder: "Describe your idea or problem...", cancel: "Cancel", send: "Send", close: "Close", donate_title: "Thanks for your support! ☕️", donate_desc: "Select donation amount:", paypal_text: "PayPal (other amount)", alert_empty: "Please enter text!", alert_success: "Message sent!" },
+  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", was_control:"Быў КАНТРОЛЬ", was_clean:"Было ЧЫСТА", active: "Актыўна:", top_title: "🏆 ТОП-5 active drivers", support_title: "Звязацца з падтрымкай", placeholder: "Апішыце вашу ідэю ці праблему...", cancel: "Скасаваць", send: "Адправіць", close: "Зачыніць", donate_title: "Дзякуй за падтрымку! ☕️", donate_desc: "Абярыце суму даната:", paypal_text: "PayPal (іншая сума)", alert_empty: "Калі ласка, увядзіце тэкст!", alert_success: "Паведамленне адпраўлено!" }
+};
+function t(k){ return i18n[lang][k]; }
+
+function updateLabels() {
+    document.getElementById("topTitle").innerText = t("top_title");
+    document.getElementById("modalTitle").innerText = t("support_title");
+    document.getElementById("feedbackText").placeholder = t("placeholder");
+    document.getElementById("btnFeedbackCancel").innerText = t("cancel");
+    document.getElementById("btnFeedbackSubmit").innerText = t("send");
+    document.getElementById("donateTitle").innerText = t("donate_title");
+    document.getElementById("donateDesc").innerText = t("donate_desc");
+    document.getElementById("btnPaypal").innerText = t("paypal_text");
+    document.getElementById("btnDonateClose").innerText = t("close");
+}
+
+const dots = [
+{"id":1,"n":"Hörbranz A14","lt":47.5446,"ln":9.7407},
+{"id":2,"n":"Nuziders A14","lt":47.1731,"ln":9.7737},
+{"id":3,"n":"Rabfeld A12","lt":47.4574,"ln":11.9196},
+{"id":4,"n":"Kundl A12","lt":47.4734,"ln":11.9693},
+{"id":5,"n":"Wels A8","lt":48.1790,"ln":13.8623},
+{"id":6,"n":"Wolfsbach A1 (1)","lt":48.1120,"ln":14.6761},
+{"id":7,"n":"Wolfsbach A1 (2)","lt":48.1123,"ln":14.6786},
+{"id":8,"n":"Mistelbach A5","lt":48.5389,"ln":16.6259},
+{"id":9,"n":"Bruck an der Keitha A4","lt":48.0431,"ln":16.7791},
+{"id":10,"n":"Pernau A2","lt":47.0900,"ln":15.8511},
+{"id":11,"n":"Strass in Steiermark A9","lt":46.7317,"ln":15.6436},
+{"id":12,"n":"Hainburg A2","lt":46.6845,"ln":14.6591},
+{"id":13,"n":"Arnoldstein A2","lt":46.5410114,"ln":13.6711268},
+{"id":14,"n":"Grassbrunn A99","lt":48.0894396,"ln":11.7446506},
+{"id":15,"n":"Eberstalzell A1","lt":48.038939,"ln":13.988940},
+{"id":16,"n":"Toplitsch/Sud A10","lt":46.654471,"ln":13.739964},
+{"id":17,"n":"Kuchl A10","lt":47.649664,"ln":13.136348},
+{"id":18,"n":"San Vittore A13","lt":46.2313847,"ln":9.1017162},
+{"id":19,"n":"Holztraume A13","lt":46.7635930,"ln":9.4191040},
+{"id":20,"n":"Erstfeld A2","lt":46.8369363,"ln":8.6352301,"fix":true},
+{"id":21,"n":"Giornoco A2","lt":46.3882186,"ln":8.8929391,"fix":true}
+];
+
+let map = L.map("map", {zoomControl: false}).setView([47.5162, 14.5501], 7);
+
+// НАЛАШТУВАННЯ ШАРІВ ДЛЯ ДНЯ ТА НОЧІ
+const dayTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap'});
+const nightTiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {attribution: '&copy; OpenStreetMap &copy; CARTO'});
+
+// Логіка визначення початкової теми (пам'ять або авто-час)
+let currentTheme = localStorage.getItem("theme");
+if (!currentTheme) {
+    const hours = new Date().getHours();
+    currentTheme = (hours >= 20 || hours < 6) ? "dark" : "light";
+}
+
+if (currentTheme === "dark") {
+    nightTiles.addTo(map);
+    document.body.classList.add("dark-theme");
+    document.getElementById("themeBtn").innerText = "☀️";
+} else {
+    dayTiles.addTo(map);
+    document.getElementById("themeBtn").innerText = "🌙";
+}
+
+function toggleTheme() {
+    if (map.hasLayer(dayTiles)) {
+        map.removeLayer(dayTiles);
+        nightTiles.addTo(map);
+        document.body.classList.add("dark-theme");
+        document.getElementById("themeBtn").innerText = "☀️";
+        localStorage.setItem("theme", "dark");
+    } else {
+        map.removeLayer(nightTiles);
+        dayTiles.addTo(map);
+        document.body.classList.remove("dark-theme");
+        document.getElementById("themeBtn").innerText = "🌙";
+        localStorage.setItem("theme", "light");
+    }
+}
+
+let markers = {}, stats = {};
+let userLocationMarker = null;
+let watchId = null;
+
+function locateUser(centerMap = false) {
+    if (navigator.geolocation) {
+        if (watchId === null) {
+            watchId = navigator.geolocation.watchPosition(function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                if (!userLocationMarker) {
+                    userLocationMarker = L.circleMarker([lat, lng], { radius: 8, color: '#ffffff', weight: 2, fillColor: '#136AEC', fillOpacity: 1 }).addTo(map);
+                } else {
+                    userLocationMarker.setLatLng([lat, lng]);
+                }
+                if (centerMap) {
+                    map.setView([lat, lng], 12);
+                    centerMap = false;
+                }
+            }, function(err) { console.log("Помилка GPS"); }, { enableHighAccuracy: true });
+        } else if (centerMap && userLocationMarker) {
+            map.setView(userLocationMarker.getLatLng(), 12);
+        }
+    }
+}
+
+function createPopup(dot, redP, greenP, total, color, oldStatus, lastTime){
+if(dot.fix) return `<b>${dot.n}</b><br><span style="color:red;font-weight:bold;">КОНТРОЛЬ</span>`;
+let historyHtml = "";
+if (color === "blue" && oldStatus) {
+    let statusText = oldStatus === "red" ? t("was_control") : t("was_clean");
+    let statusColor = oldStatus === "red" ? "red" : "green";
+    historyHtml = `<div style="margin: 5px 0; font-size:12px; color:#555;">⏳ <b>${statusText}</b> (<span style="color:${statusColor}">${lastTime}</span>)</div>`;
+} else if (lastTime) {
+    historyHtml = `<div style="margin: 5px 0; font-size:12px; color:#666;">⏱️ ${t("active")} ${lastTime}</div>`;
+}
+return `<b>${dot.n}</b><br>${historyHtml}<span style="display:inline-block;width:16px;height:16px;background:red;border-radius:50%;"></span> ${redP}% | <span style="display:inline-block;width:16px;height:16px;background:green;border-radius:50%;"></span> ${greenP}%<br><small>${t("total")}: ${total}</small><br><button class="btn" style="background:green" onclick="sendVote(${dot.id},'green',${dot.lt},${dot.ln})">${t("clean")}</button><button class="btn" style="background:red" onclick="sendVote(${dot.id},'red',${dot.lt},${dot.ln})">${t("control")}</button>`;
+}
+
+async function loadStats(){
+try{ const res = await fetch(`${API_URL}/stats`); stats = await res.json(); } catch{ stats = {}; }
+dots.forEach(dot=>{
+const s = stats[dot.id] || {color:"blue", green:0, red:0, old_status:"", last_time:""};
+const total = s.green + s.red;
+const redP = total ? Math.round((s.red/total)*100) : 0;
+const greenP = total ? 100-redP : 0;
+let color = s.color || "blue";
+if(dot.fix){ color="red"; } else if(color !== "blue" && total > 0){ if(s.red > s.green) color="red"; else if(s.green > s.red) color="green"; else color="gold"; }
+const iconUrl=`https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`;
+if(!markers[dot.id]){
+markers[dot.id]=L.marker([dot.lt,dot.ln],{icon:new L.Icon({iconUrl:iconUrl,shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]})}).addTo(map).bindPopup(createPopup(dot,redP,greenP,total,s.color,s.old_status,s.last_time));
+L.circle([dot.lt,dot.ln],{radius:1500,color:"blue",weight:1,fillOpacity:0.1}).addTo(map);
+} else {
+markers[dot.id].setIcon(new L.Icon({iconUrl:iconUrl,shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]}));
+markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total,s.color,s.old_status,s.last_time));
+}
+});
+}
+
+function sendVote(id, status, pointLat, pointLng) {
+    if (!navigator.geolocation) { alert("⚠️ Помилка GPS!"); return; }
+    navigator.geolocation.getCurrentPosition(function(position) {
+        const userLat = position.coords.latitude;
+        const userLng = position.coords.longitude;
+        let userId = 0; let username = ""; let firstName = "Водій";
+        if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) { 
+            userId = tg.initDataUnsafe.user.id || 0; 
+            username = tg.initDataUnsafe.user.username || ""; 
+            firstName = tg.initDataUnsafe.user.first_name || "Водій"; 
+        }
+        fetch(`${API_URL}/update`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, status, user_id: userId, username, first_name: firstName, user_lat: userLat, user_lng: userLng, point_lat: pointLat, point_lng: pointLng })
+        }).then(async res => {
+            const data = await res.json();
+            if (res.status === 200) { if (tg) tg.sendData(status + "_" + id); loadStats(); loadTopPermanent(); } 
+            else { alert(data.message || "Помилка: Ви занадто далеко!"); }
+        }).catch(err => { alert("⚠️ Помилка зв'язку із сервером."); });
+    }, function(err) { alert("⚠️ GPS недоступний. Увімкніть його!"); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+}
+
+function sendTrafficBan() { if (tg && tg.openLink) tg.openLink("https://trafficban.com"); else window.open("https://trafficban.com", '_blank'); }
+async function loadTopPermanent() {
+    const listDiv = document.getElementById("topList");
+    try {
+        const res = await fetch(`${API_URL}/top?period=week`);
+        const topUsers = await res.json();
+        if (!topUsers || topUsers.length === 0) { listDiv.innerHTML = "Голосів ще немає 🚀"; return; }
+        let html = ""; const medals = ["🥇", "🥈", "🥉"];
+        topUsers.slice(0, 5).forEach((user, i) => { html += `<div class="top-item"><span>${i < 3 ? medals[i] : (i+1)+'.'} <b>${user.first_name}</b></span> <span>${user.votes} 🗳️</span></div>`; });
+        listDiv.innerHTML = html;
+    } catch (e) { listDiv.innerHTML = "Помилка рейтингу"; }
+}
+
+function openFeedbackModal() { document.getElementById("feedbackModal").style.display = "flex"; }
+function closeFeedbackModal() { document.getElementById("feedbackModal").style.display = "none"; }
+function showDonateModal() { document.getElementById("donateModal").style.display = "flex"; }
+function closeDonateModal() { document.getElementById("donateModal").style.display = "none"; }
+
+function submitFeedback() {
+    const text = document.getElementById("feedbackText").value.trim();
+    if (!text) { alert(t("alert_empty")); return; }
+    let userId = 0; let username = ""; let firstName = "Водій";
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) { userId = tg.initDataUnsafe.user.id || 0; username = tg.initDataUnsafe.user.username || ""; firstName = tg.initDataUnsafe.user.first_name || "Водій"; }
+    fetch(`${API_URL}/feedback`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, user_id: userId, username, first_name: firstName })
+    }).then(res => { if (res.ok) { alert(t("alert_success")); document.getElementById("feedbackText").value = ""; closeFeedbackModal(); } });
+}
+
+updateLabels();
+loadStats();
+loadTopPermanent();
+locateUser(false); 
+setInterval(loadStats, 2000);
+setInterval(loadTopPermanent, 10000);
+</script>
+</body>
+</html>
