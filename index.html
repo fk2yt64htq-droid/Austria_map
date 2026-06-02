@@ -57,7 +57,7 @@ align-items: center;
 gap: 8px;
 }
 
-.feedback-btn, .donate-btn, .theme-btn {
+.donate-btn, .theme-btn {
 background: #ff9800;
 color: white;
 border: none;
@@ -151,18 +151,6 @@ font-size: 16px;
 text-align: center;
 color: #333;
 }
-.modal-box textarea {
-width: 100%;
-height: 90px;
-border: 1px solid #ccc;
-border-radius: 6px;
-padding: 8px;
-resize: none;
-box-sizing: border-box;
-font-size: 14px;
-outline: none;
-transition: background 0.3s, color 0.3s, border-color 0.3s;
-}
 .modal-actions {
 display: flex;
 justify-content: flex-end;
@@ -177,7 +165,6 @@ cursor: pointer;
 font-weight: bold;
 }
 .btn-cancel { background: #eee; color: #333; transition: background 0.3s, color 0.3s; }
-.btn-submit { background: #ff9800; color: white; }
 
 @media (max-width: 400px) {
   .top-permanent-box { width: 190px; padding: 8px; font-size: 11px; }
@@ -186,53 +173,18 @@ font-weight: bold;
 }
 
 /* СТИЛІ ДЛЯ НІЧНОГО РЕЖИМУ */
-body.dark-theme .top-permanent-box {
-    background: rgba(30, 30, 30, 0.95);
-    color: #fff;
-    border-color: #444;
-}
-body.dark-theme .top-permanent-box h3 {
-    color: #fff;
-}
-body.dark-theme .top-item {
-    border-bottom-color: #333;
-}
-body.dark-theme .langBox {
-    background: #222;
-}
-body.dark-theme .ctrl-btn {
-    background: #222;
-    color: #fff;
-}
-body.dark-theme .ctrl-btn:active {
-    background: #444;
-}
-body.dark-theme .modal-box {
-    background: #222;
-    color: #fff;
-}
-body.dark-theme .modal-box h3 {
-    color: #fff;
-}
-body.dark-theme .modal-box textarea {
-    background: #333;
-    color: #fff;
-    border-color: #555;
-}
-body.dark-theme .btn-cancel {
-    background: #444;
-    color: #fff;
-}
-body.dark-theme .leaflet-popup-content-wrapper, body.dark-theme .leaflet-popup-tip {
-    background: #222;
-    color: #fff !important;
-}
-body.dark-theme .leaflet-popup-content {
-    color: #fff !important;
-}
-body.dark-theme .leaflet-popup-content div, body.dark-theme .leaflet-popup-content b {
-    color: #fff !important;
-}
+body.dark-theme .top-permanent-box { background: rgba(30, 30, 30, 0.95); color: #fff; border-color: #444; }
+body.dark-theme .top-permanent-box h3 { color: #fff; }
+body.dark-theme .top-item { border-bottom-color: #333; }
+body.dark-theme .langBox { background: #222; }
+body.dark-theme .ctrl-btn { background: #222; color: #fff; }
+body.dark-theme .ctrl-btn:active { background: #444; }
+body.dark-theme .modal-box { background: #222; color: #fff; }
+body.dark-theme .modal-box h3 { color: #fff; }
+body.dark-theme .btn-cancel { background: #444; color: #fff; }
+body.dark-theme .leaflet-popup-content-wrapper, body.dark-theme .leaflet-popup-tip { background: #222; color: #fff !important; }
+body.dark-theme .leaflet-popup-content { color: #fff !important; }
+body.dark-theme .leaflet-popup-content div, body.dark-theme .leaflet-popup-content b { color: #fff !important; }
 </style>
 </head>
 <body>
@@ -254,7 +206,6 @@ body.dark-theme .leaflet-popup-content div, body.dark-theme .leaflet-popup-conte
             <option value="be">🇧🇾</option>
         </select>
     </div>
-    <button class="feedback-btn" onclick="openFeedbackModal()">💡</button>
     <button class="donate-btn" onclick="showDonateModal()">☕️</button>
     <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
 </div>
@@ -269,17 +220,6 @@ body.dark-theme .leaflet-popup-content div, body.dark-theme .leaflet-popup-conte
     <button onclick="sendTrafficBan()" style="width: 100%; padding: 15px; border: none; border-radius: 8px; background: #b71c1c; color: white; font-weight: bold; font-size: 16px; cursor: pointer; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);">
         TRAFFICBAN
     </button>
-</div>
-
-<div class="modal-overlay" id="feedbackModal">
-    <div class="modal-box">
-        <h3 id="modalTitle">Зв'язатися з підтримкою</h3>
-        <textarea id="feedbackText" placeholder="Опишіть вашу ідею чи проблему..."></textarea>
-        <div class="modal-actions">
-            <button class="btn-modal btn-cancel" id="btnFeedbackCancel" onclick="closeFeedbackModal()">Скасувати</button>
-            <button class="btn-modal btn-submit" id="btnFeedbackSubmit" onclick="submitFeedback()">Надіслати</button>
-        </div>
-    </div>
 </div>
 
 <div class="modal-overlay" id="donateModal">
@@ -330,20 +270,16 @@ document.getElementById("langSelect").addEventListener("change",(e)=>{
 });
 
 const i18n = {
-  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", was_control:"Був КОНТРОЛЬ", was_clean:"Було ЧИСТО", active: "Активно:", top_title: "🏆 ТОП-5 active drivers", support_title: "Зв'язатися з підтримкою", placeholder: "Опишіть вашу ідею чи проблему...", cancel: "Скасувати", send: "Надіслати", close: "Закрити", donate_title: "Дякуємо за підтримку! ☕️", donate_desc: "Оберіть суму донату:", paypal_text: "PayPal (інша сума)", alert_empty: "Будь ласка, введіть текст!", alert_success: "Повідомлення надіслано!" },
-  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:", top_title: "🏆 TOP-5 active drivers", support_title: "Skontaktuj się z wsparciem", placeholder: "Opisz swój pomysł lub problem...", cancel: "Anuluj", send: "Wyślij", close: "Zamknij", donate_title: "Dziękuję za wsparcie! ☕️", donate_desc: "Wybierz kwotę darowizny:", paypal_text: "PayPal (inna kwota)", alert_empty: "Proszę wpisać tekst!", alert_success: "Wiadomość została wysłana!" },
-  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", was_control:"Bola KONTROLA", was_clean:"Bolo ČISTÉ", active: "Aktívne:", top_title: "🏆 TOP-5 active drivers", support_title: "Kontaktovať podporu", placeholder: "Popíšte svoj nápad alebo problém...", cancel: "Zrušiť", send: "Odoslať", close: "Zatvoriť", donate_title: "Ďakujem za podporu! ☕️", donate_desc: "Vyberte sumu daru:", paypal_text: "PayPal (iná suma)", alert_empty: "Prosím, zadajte text!", alert_success: "Správa bola odoslaná!" },
-  en:{ clean:"CLEAR", control:"CONTROL", total:"Total", was_control:"Was CONTROL", was_clean:"Was CLEAR", active: "Active:", top_title: "🏆 TOP-5 active drivers", support_title: "Contact Support", placeholder: "Describe your idea or problem...", cancel: "Cancel", send: "Send", close: "Close", donate_title: "Thanks for your support! ☕️", donate_desc: "Select donation amount:", paypal_text: "PayPal (other amount)", alert_empty: "Please enter text!", alert_success: "Message sent!" },
-  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", was_control:"Быў КАНТРОЛЬ", was_clean:"Было ЧЫСТА", active: "Актыўна:", top_title: "🏆 ТОП-5 active drivers", support_title: "Звязацца з падтрымкай", placeholder: "Апішыце вашу ідэю ці праблему...", cancel: "Скасаваць", send: "Адправіць", close: "Зачыніць", donate_title: "Дзякуй за падтрымку! ☕️", donate_desc: "Абярыце суму даната:", paypal_text: "PayPal (іншая сума)", alert_empty: "Калі ласка, увядзіце тэкст!", alert_success: "Паведамленне адпраўлено!" }
+  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", was_control:"Був КОНТРОЛЬ", was_clean:"Було ЧИСТО", active: "Активно:", top_title: "🏆 ТОП-5 active drivers", close: "Закрити", donate_title: "Дякуємо за підтримку! ☕️", donate_desc: "Оберіть суму донату:", paypal_text: "PayPal (інша сума)" },
+  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:", top_title: "🏆 TOP-5 active drivers", close: "Zamknij", donate_title: "Dziękuję za wsparcie! ☕️", donate_desc: "Wybierz kwotę darowizny:", paypal_text: "PayPal (inna kwota)" },
+  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", was_control:"Bola KONTROLA", was_clean:"Bolo ČISTÉ", active: "Aktívne:", top_title: "🏆 TOP-5 active drivers", close: "Zatvoriť", donate_title: "Ďakujem za podporu! ☕️", donate_desc: "Vyberte sumu daru:", paypal_text: "PayPal (iná suma)" },
+  en:{ clean:"CLEAR", control:"CONTROL", total:"Total", was_control:"Was CONTROL", was_clean:"Was CLEAR", active: "Active:", top_title: "🏆 TOP-5 active drivers", close: "Close", donate_title: "Thanks for your support! ☕️", donate_desc: "Select donation amount:", paypal_text: "PayPal (other amount)" },
+  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", was_control:"Быў КАНТРОЛЬ", was_clean:"Было ЧЫСТА", active: "Актыўна:", top_title: "🏆 ТОП-5 active drivers", close: "Зачыніць", donate_title: "Дзякуй за падтрымку! ☕️", donate_desc: "Абярыце суму даната:", paypal_text: "PayPal (іншая сума)" }
 };
 function t(k){ return i18n[lang][k]; }
 
 function updateLabels() {
     document.getElementById("topTitle").innerText = t("top_title");
-    document.getElementById("modalTitle").innerText = t("support_title");
-    document.getElementById("feedbackText").placeholder = t("placeholder");
-    document.getElementById("btnFeedbackCancel").innerText = t("cancel");
-    document.getElementById("btnFeedbackSubmit").innerText = t("send");
     document.getElementById("donateTitle").innerText = t("donate_title");
     document.getElementById("donateDesc").innerText = t("donate_desc");
     document.getElementById("btnPaypal").innerText = t("paypal_text");
@@ -376,11 +312,9 @@ const dots = [
 
 let map = L.map("map", {zoomControl: false}).setView([47.5162, 14.5501], 7);
 
-// НАЛАШТУВАННЯ ШАРІВ ДЛЯ ДНЯ ТА НОЧІ
 const dayTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap'});
 const nightTiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {attribution: '&copy; OpenStreetMap &copy; CARTO'});
 
-// Логіка визначення початкової теми (пам'ять або авто-час)
 let currentTheme = localStorage.getItem("theme");
 if (!currentTheme) {
     const hours = new Date().getHours();
@@ -506,35 +440,8 @@ async function loadTopPermanent() {
     } catch (e) { listDiv.innerHTML = "Помилка рейтингу"; }
 }
 
-function openFeedbackModal() { document.getElementById("feedbackModal").style.display = "flex"; }
-function closeFeedbackModal() { document.getElementById("feedbackModal").style.display = "none"; }
-function showDonateModal() { document.getElementById("donateModal").style.display = "flex"; }
 function closeDonateModal() { document.getElementById("donateModal").style.display = "none"; }
-
-function submitFeedback() {
-    const text = document.getElementById("feedbackText").value.trim();
-    if (!text) { 
-        alert(t("alert_empty")); 
-        return; 
-    }
-
-    // Отримуємо дані про користувача автоматично
-    const user = window.Telegram.WebApp.initDataUnsafe?.user;
-    const userName = user ? `${user.first_name} ${user.last_name || ''}` : "Невідомий";
-    const userTag = user?.username ? `@${user.username}` : "без ніка";
-    
-    // Формуємо детальне повідомлення
-    const finalMessage = `💡 Звернення: ${text}\n👤 Від: ${userName} (${userTag})`;
-
-    if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.sendData(finalMessage);
-        alert(t("alert_success"));
-        document.getElementById("feedbackText").value = "";
-        closeFeedbackModal();
-    } else {
-        alert("Помилка: Відкрийте мапу через Telegram");
-    }
-}
+function showDonateModal() { document.getElementById("donateModal").style.display = "flex"; }
 
 updateLabels();
 loadStats();
