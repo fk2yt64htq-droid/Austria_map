@@ -48,7 +48,9 @@ def generate_top_text(top_users, period_name):
 async def start_command(message: types.Message):
     web_app_url = "https://fk2yt64htq-droid.github.io/Austria_map/"
     kb = [[types.KeyboardButton(text="Відкрити мапу", web_app=types.WebAppInfo(url=web_app_url))]]
-    await message.answer("Привіт! Натисніть кнопку, щоб відкрити мапу.", reply_markup=types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True))
+    await message.answer("👋 **Вітаємо в Driving Assistant Bot!**\n\n"
+                "🛣️ Тут ви можете моніторити ситуацію на дорогах Австрії в реальному часі.\n\n"
+                "🗺️ Щоб запустити інтерактивну карту, просто натисніть синю кнопку **'Відкрити мапу'** в самому низу екрана 👇", reply_markup=types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True))
 
 @dp.message(Command("top"))
 async def top_command(message: types.Message):
