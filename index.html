@@ -186,53 +186,19 @@ font-weight: bold;
 }
 
 /* СТИЛІ ДЛЯ НІЧНОГО РЕЖИМУ */
-body.dark-theme .top-permanent-box {
-    background: rgba(30, 30, 30, 0.95);
-    color: #fff;
-    border-color: #444;
-}
-body.dark-theme .top-permanent-box h3 {
-    color: #fff;
-}
-body.dark-theme .top-item {
-    border-bottom-color: #333;
-}
-body.dark-theme .langBox {
-    background: #222;
-}
-body.dark-theme .ctrl-btn {
-    background: #222;
-    color: #fff;
-}
-body.dark-theme .ctrl-btn:active {
-    background: #444;
-}
-body.dark-theme .modal-box {
-    background: #222;
-    color: #fff;
-}
-body.dark-theme .modal-box h3 {
-    color: #fff;
-}
-body.dark-theme .modal-box textarea {
-    background: #333;
-    color: #fff;
-    border-color: #555;
-}
-body.dark-theme .btn-cancel {
-    background: #444;
-    color: #fff;
-}
-body.dark-theme .leaflet-popup-content-wrapper, body.dark-theme .leaflet-popup-tip {
-    background: #222;
-    color: #fff !important;
-}
-body.dark-theme .leaflet-popup-content {
-    color: #fff !important;
-}
-body.dark-theme .leaflet-popup-content div, body.dark-theme .leaflet-popup-content b {
-    color: #fff !important;
-}
+body.dark-theme .top-permanent-box { background: rgba(30, 30, 30, 0.95); color: #fff; border-color: #444; }
+body.dark-theme .top-permanent-box h3 { color: #fff; }
+body.dark-theme .top-item { border-bottom-color: #333; }
+body.dark-theme .langBox { background: #222; }
+body.dark-theme .ctrl-btn { background: #222; color: #fff; }
+body.dark-theme .ctrl-btn:active { background: #444; }
+body.dark-theme .modal-box { background: #222; color: #fff; }
+body.dark-theme .modal-box h3 { color: #fff; }
+body.dark-theme .modal-box textarea { background: #333; color: #fff; border-color: #555; }
+body.dark-theme .btn-cancel { background: #444; color: #fff; }
+body.dark-theme .leaflet-popup-content-wrapper, body.dark-theme .leaflet-popup-tip { background: #222; color: #fff !important; }
+body.dark-theme .leaflet-popup-content { color: #fff !important; }
+body.dark-theme .leaflet-popup-content div, body.dark-theme .leaflet-popup-content b { color: #fff !important; }
 </style>
 </head>
 <body>
@@ -286,18 +252,13 @@ body.dark-theme .leaflet-popup-content div, body.dark-theme .leaflet-popup-conte
     <div class="modal-box" style="text-align:center;">
         <h3 id="donateTitle">Дякуємо за підтримку! ☕️</h3>
         <p id="donateDesc" style="font-size: 13px; margin-bottom: 15px;">Оберіть суму донату:</p>
-        
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
             <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=100', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">1 €</button>
             <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=300', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">3 €</button>
             <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=500', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">5 €</button>
             <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=1000', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">10 €</button>
         </div>
-
-        <button id="btnPaypal" onclick="window.open('https://www.paypal.me/VitaliiSachenko', '_blank')" style="width: 100%; padding: 10px; border:none; border-radius:6px; background:#ffc439; color:#000; font-weight:bold; margin-bottom: 15px;">
-            PayPal (інша сума)
-        </button>
-
+        <button id="btnPaypal" onclick="window.open('https://www.paypal.me/VitaliiSachenko', '_blank')" style="width: 100%; padding: 10px; border:none; border-radius:6px; background:#ffc439; color:#000; font-weight:bold; margin-bottom: 15px;">PayPal (інша сума)</button>
         <div class="modal-actions">
             <button class="btn-modal btn-cancel" id="btnDonateClose" onclick="closeDonateModal()">Закрити</button>
         </div>
@@ -309,7 +270,9 @@ const tg = window.Telegram ? window.Telegram.WebApp : null;
 if (tg) { tg.ready(); tg.expand(); }
 
 const API_URL = "https://austria-map.onrender.com";
+let borderLayer;
 
+// Логіка мов
 let lang = localStorage.getItem("lang");
 if(!lang){
   const tgLang = tg?.initDataUnsafe?.user?.language_code;
@@ -376,11 +339,25 @@ const dots = [
 
 let map = L.map("map", {zoomControl: false}).setView([47.5162, 14.5501], 7);
 
-// НАЛАШТУВАННЯ ШАРІВ ДЛЯ ДНЯ ТА НОЧІ
 const dayTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap'});
 const nightTiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {attribution: '&copy; OpenStreetMap &copy; CARTO'});
 
-// Логіка визначення початкової теми (пам'ять або авто-час)
+// Логіка кордонів
+function loadBorders() {
+    const isDark = document.body.classList.contains("dark-theme");
+    const color = isDark ? "#ffffff" : "#136AEC";
+    fetch('https://nominatim.openstreetmap.org/search?country=Austria&polygon_geojson=1&format=json')
+        .then(res => res.json())
+        .then(data => {
+            if(data[0] && data[0].geojson) {
+                if(borderLayer) map.removeLayer(borderLayer);
+                borderLayer = L.geoJSON(data[0].geojson, {
+                    style: { color: color, weight: 3, opacity: 0.7, fill: false, interactive: false }
+                }).addTo(map);
+            }
+        });
+}
+
 let currentTheme = localStorage.getItem("theme");
 if (!currentTheme) {
     const hours = new Date().getHours();
@@ -410,6 +387,7 @@ function toggleTheme() {
         document.getElementById("themeBtn").innerText = "🌙";
         localStorage.setItem("theme", "light");
     }
+    loadBorders();
 }
 
 let markers = {}, stats = {};
@@ -427,10 +405,7 @@ function locateUser(centerMap = false) {
                 } else {
                     userLocationMarker.setLatLng([lat, lng]);
                 }
-                if (centerMap) {
-                    map.setView([lat, lng], 12);
-                    centerMap = false;
-                }
+                if (centerMap) { map.setView([lat, lng], 12); centerMap = false; }
             }, function(err) { console.log("Помилка GPS"); }, { enableHighAccuracy: true });
         } else if (centerMap && userLocationMarker) {
             map.setView(userLocationMarker.getLatLng(), 12);
@@ -522,11 +497,10 @@ function submitFeedback() {
     }).then(res => { if (res.ok) { alert(t("alert_success")); document.getElementById("feedbackText").value = ""; closeFeedbackModal(); } });
 }
 
-function copyToClipboard(id) { const text = document.getElementById(id).innerText; navigator.clipboard.writeText(text).then(() => { alert("Copied: " + text); }); }
-
 updateLabels();
 loadStats();
 loadTopPermanent();
+loadBorders(); // Завантажуємо кордони
 locateUser(false); 
 setInterval(loadStats, 2000);
 setInterval(loadTopPermanent, 10000);
