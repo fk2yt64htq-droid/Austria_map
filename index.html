@@ -272,18 +272,7 @@ if (tg) { tg.ready(); tg.expand(); }
 const API_URL = "https://austria-map.onrender.com";
 let borderLayer;
 
-// Логіка мов
-let lang = localStorage.getItem("lang");
-if(!lang){
-  const tgLang = tg?.initDataUnsafe?.user?.language_code;
-  if(tgLang){
-    if(tgLang.startsWith("pl")) lang="pl";
-    else if(tgLang.startsWith("sk")) lang="sk";
-    else if(tgLang.startsWith("be")) lang="be";
-    else if(tgLang.startsWith("uk")) lang="uk";
-    else lang="en";
-  } else { lang="uk"; }
-}
+let lang = localStorage.getItem("lang") || "uk";
 document.getElementById("langSelect").value = lang;
 document.getElementById("langSelect").addEventListener("change",(e)=>{
   lang = e.target.value;
@@ -297,7 +286,7 @@ const i18n = {
   pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:", top_title: "🏆 TOP-5 active drivers", support_title: "Skontaktuj się z wsparciem", placeholder: "Opisz swój pomysł lub problem...", cancel: "Anuluj", send: "Wyślij", close: "Zamknij", donate_title: "Dziękuję za wsparcie! ☕️", donate_desc: "Wybierz kwotę darowizny:", paypal_text: "PayPal (inna kwota)", alert_empty: "Proszę wpisać tekst!", alert_success: "Wiadomość została wysłana!" },
   sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", was_control:"Bola KONTROLA", was_clean:"Bolo ČISTÉ", active: "Aktívne:", top_title: "🏆 TOP-5 active drivers", support_title: "Kontaktovať podporu", placeholder: "Popíšte svoj nápad alebo problém...", cancel: "Zrušiť", send: "Odoslať", close: "Zatvoriť", donate_title: "Ďakujem za podporu! ☕️", donate_desc: "Vyberte sumu daru:", paypal_text: "PayPal (iná suma)", alert_empty: "Prosím, zadajte text!", alert_success: "Správa bola odoslaná!" },
   en:{ clean:"CLEAR", control:"CONTROL", total:"Total", was_control:"Was CONTROL", was_clean:"Was CLEAR", active: "Active:", top_title: "🏆 TOP-5 active drivers", support_title: "Contact Support", placeholder: "Describe your idea or problem...", cancel: "Cancel", send: "Send", close: "Close", donate_title: "Thanks for your support! ☕️", donate_desc: "Select donation amount:", paypal_text: "PayPal (other amount)", alert_empty: "Please enter text!", alert_success: "Message sent!" },
-  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", was_control:"Быў КАНТРОЛЬ", was_clean:"Было ЧЫСТА", active: "Актыўна:", top_title: "🏆 ТОП-5 active drivers", support_title: "Звязацца з падтрымкай", placeholder: "Апішыце вашу ідэю ці праблему...", cancel: "Скасаваць", send: "Адправіць", close: "Зачыніць", donate_title: "Дзякуй за падтрымку! ☕️", donate_desc: "Абярыце суму даната:", paypal_text: "PayPal (іншая сума)", alert_empty: "Калі ласка, увядзіце тэкст!", alert_success: "Паведамленне адпраўлено!" }
+  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", was_control:"Быў КАНТРОЛЬ", was_clean:"Было ЧЫСТА", active: "Актыўна:", top_title: "🏆 ТОП-5 active drivers", support_title: "Звязацца з падтрымкай", placeholder: "Апішыце вашу ідэю ці праблему...", cancel: "Скасаваць", send: "Адправіць", close: "Зачыніць", donate_title: "Дзякуй за падтрымку! ☕️", donate_desc: "Абярыце суму даната:", paypal_text: "PayPal (інша сума)", alert_empty: "Калі ласка, увядзіце тэкст!", alert_success: "Паведамленне адпраўлено!" }
 };
 function t(k){ return i18n[lang][k]; }
 
@@ -342,19 +331,24 @@ let map = L.map("map", {zoomControl: false}).setView([47.5162, 14.5501], 7);
 const dayTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap'});
 const nightTiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {attribution: '&copy; OpenStreetMap &copy; CARTO'});
 
-// Логіка кордонів
+// Логіка всіх кордонів світу
 function loadBorders() {
     const isDark = document.body.classList.contains("dark-theme");
-    const color = isDark ? "#ffffff" : "#136AEC";
-    fetch('https://nominatim.openstreetmap.org/search?country=Austria&polygon_geojson=1&format=json')
+    const color = isDark ? "#ffffff" : "#333333";
+    
+    fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
         .then(res => res.json())
         .then(data => {
-            if(data[0] && data[0].geojson) {
-                if(borderLayer) map.removeLayer(borderLayer);
-                borderLayer = L.geoJSON(data[0].geojson, {
-                    style: { color: color, weight: 3, opacity: 0.7, fill: false, interactive: false }
-                }).addTo(map);
-            }
+            if(borderLayer) map.removeLayer(borderLayer);
+            borderLayer = L.geoJSON(data, {
+                style: { 
+                    color: color, 
+                    weight: 1.5, 
+                    opacity: 0.6, 
+                    fill: false, 
+                    interactive: false 
+                }
+            }).addTo(map);
         });
 }
 
@@ -500,7 +494,7 @@ function submitFeedback() {
 updateLabels();
 loadStats();
 loadTopPermanent();
-loadBorders(); // Завантажуємо кордони
+loadBorders(); 
 locateUser(false); 
 setInterval(loadStats, 2000);
 setInterval(loadTopPermanent, 10000);
