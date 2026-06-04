@@ -57,7 +57,7 @@ align-items: center;
 gap: 8px;
 }
 
-.feedback-btn, .donate-btn, .theme-btn {
+.feedback-btn, .donate-btn, .theme-btn, .maps-btn {
 background: #ff9800;
 color: white;
 border: none;
@@ -74,6 +74,7 @@ transition: background 0.3s;
 }
 .donate-btn { background: #4caf50; }
 .theme-btn { background: #673ab7; }
+.maps-btn { background: #2196f3; }
 
 .langBox {
 background: white;
@@ -223,6 +224,7 @@ body.dark-theme .leaflet-popup-content div, body.dark-theme .leaflet-popup-conte
     <button class="feedback-btn" onclick="openFeedbackModal()">💡</button>
     <button class="donate-btn" onclick="showDonateModal()">☕️</button>
     <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
+    <button class="maps-btn" onclick="openGoogleMaps()">🌍</button>
 </div>
 
 <div class="map-controls">
@@ -271,6 +273,12 @@ if (tg) { tg.ready(); tg.expand(); }
 
 const API_URL = "https://austria-map.onrender.com";
 let borderLayer;
+
+// Функція для відкриття Google Maps
+function openGoogleMaps() {
+    const url = "https://www.google.com/maps";
+    if (tg && tg.openLink) { tg.openLink(url); } else { window.open(url, '_blank'); }
+}
 
 let lang = localStorage.getItem("lang") || "uk";
 document.getElementById("langSelect").value = lang;
@@ -331,7 +339,6 @@ let map = L.map("map", {zoomControl: false}).setView([47.5162, 14.5501], 7);
 const dayTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap'});
 const nightTiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {attribution: '&copy; OpenStreetMap &copy; CARTO'});
 
-// Логіка всіх кордонів світу
 function loadBorders() {
     const isDark = document.body.classList.contains("dark-theme");
     const color = isDark ? "#ffffff" : "#333333";
