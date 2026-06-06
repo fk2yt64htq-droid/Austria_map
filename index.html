@@ -29,20 +29,20 @@ font-family: Arial, sans-serif;
 border: 1px solid #ddd;
 transition: background 0.3s, color 0.3s, border-color 0.3s;
 }
-.top-permanent-box h3 { 
-margin: 0 0 8px 0; 
-font-size: 14px; 
-text-align: center; 
-color: #222; 
+.top-permanent-box h3 { 
+margin: 0 0 8px 0; 
+font-size: 14px; 
+text-align: center; 
+color: #222; 
 border-bottom: 2px solid #136AEC;
 padding-bottom: 4px;
 }
-.top-item { 
-display: flex; 
-justify-content: space-between; 
-padding: 5px 0; 
-border-bottom: 1px solid #eee; 
-font-size: 13px; 
+.top-item { 
+display: flex; 
+justify-content: space-between; 
+padding: 5px 0; 
+border-bottom: 1px solid #eee; 
+font-size: 13px; 
 }
 .top-item:last-child { border: none; }
 
@@ -57,7 +57,7 @@ align-items: center;
 gap: 8px;
 }
 
-.feedback-btn, .donate-btn, .theme-btn {
+.feedback-btn, .donate-btn, .theme-btn, .maps-btn {
 background: #ff9800;
 color: white;
 border: none;
@@ -74,6 +74,7 @@ transition: background 0.3s;
 }
 .donate-btn { background: #4caf50; }
 .theme-btn { background: #673ab7; }
+.maps-btn { background: #2196f3; }
 
 .langBox {
 background: white;
@@ -96,30 +97,30 @@ cursor: pointer;
 }
 
 .map-controls {
-    position: fixed;
-    bottom: 80px;
-    left: 0;
-    width: 100%;
-    z-index: 9999;
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    padding: 10px;
-    box-sizing: border-box;
+    position: fixed;
+    bottom: 80px;
+    left: 0;
+    width: 100%;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    padding: 10px;
+    box-sizing: border-box;
 }
 .ctrl-btn {
-    background: #ffffff;
-    border: none;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    font-size: 22px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s, color 0.2s;
+    background: #ffffff;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    font-size: 22px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
 }
 .ctrl-btn:active { background: #e0e0e0; }
 
@@ -180,59 +181,24 @@ font-weight: bold;
 .btn-submit { background: #ff9800; color: white; }
 
 @media (max-width: 400px) {
-  .top-permanent-box { width: 190px; padding: 8px; font-size: 11px; }
-  .top-permanent-box h3 { font-size: 12px; }
-  .top-item { font-size: 11px; padding: 3px 0; }
+  .top-permanent-box { width: 190px; padding: 8px; font-size: 11px; }
+  .top-permanent-box h3 { font-size: 12px; }
+  .top-item { font-size: 11px; padding: 3px 0; }
 }
 
-/* СТИЛІ ДЛЯ НІЧНОГО РЕЖИМУ */
-body.dark-theme .top-permanent-box {
-    background: rgba(30, 30, 30, 0.95);
-    color: #fff;
-    border-color: #444;
-}
-body.dark-theme .top-permanent-box h3 {
-    color: #fff;
-}
-body.dark-theme .top-item {
-    border-bottom-color: #333;
-}
-body.dark-theme .langBox {
-    background: #222;
-}
-body.dark-theme .ctrl-btn {
-    background: #222;
-    color: #fff;
-}
-body.dark-theme .ctrl-btn:active {
-    background: #444;
-}
-body.dark-theme .modal-box {
-    background: #222;
-    color: #fff;
-}
-body.dark-theme .modal-box h3 {
-    color: #fff;
-}
-body.dark-theme .modal-box textarea {
-    background: #333;
-    color: #fff;
-    border-color: #555;
-}
-body.dark-theme .btn-cancel {
-    background: #444;
-    color: #fff;
-}
-body.dark-theme .leaflet-popup-content-wrapper, body.dark-theme .leaflet-popup-tip {
-    background: #222;
-    color: #fff !important;
-}
-body.dark-theme .leaflet-popup-content {
-    color: #fff !important;
-}
-body.dark-theme .leaflet-popup-content div, body.dark-theme .leaflet-popup-content b {
-    color: #fff !important;
-}
+body.dark-theme .top-permanent-box { background: rgba(30, 30, 30, 0.95); color: #fff; border-color: #444; }
+body.dark-theme .top-permanent-box h3 { color: #fff; }
+body.dark-theme .top-item { border-bottom-color: #333; }
+body.dark-theme .langBox { background: #222; }
+body.dark-theme .ctrl-btn { background: #222; color: #fff; }
+body.dark-theme .ctrl-btn:active { background: #444; }
+body.dark-theme .modal-box { background: #222; color: #fff; }
+body.dark-theme .modal-box h3 { color: #fff; }
+body.dark-theme .modal-box textarea { background: #333; color: #fff; border-color: #555; }
+body.dark-theme .btn-cancel { background: #444; color: #fff; }
+body.dark-theme .leaflet-popup-content-wrapper, body.dark-theme .leaflet-popup-tip { background: #222; color: #fff !important; }
+body.dark-theme .leaflet-popup-content { color: #fff !important; }
+body.dark-theme .leaflet-popup-content div, body.dark-theme .leaflet-popup-content b { color: #fff !important; }
 </style>
 </head>
 <body>
@@ -240,68 +206,64 @@ body.dark-theme .leaflet-popup-content div, body.dark-theme .leaflet-popup-conte
 <div id="map"></div>
 
 <div class="top-permanent-box">
-    <h3 id="topTitle">🏆 ТОП-5 active drivers</h3>
-    <div id="topList">Завантаження рейтингу...</div>
+    <h3 id="topTitle">🏆 ТОП-5 active drivers</h3>
+    <div id="topList">Завантаження рейтингу...</div>
 </div>
 
 <div class="right-controls">
-    <div class="langBox">
-        <select id="langSelect">
-            <option value="uk">🇺🇦</option>
-            <option value="pl">🇵🇱</option>
-            <option value="sk">🇸🇰</option>
-            <option value="en">🇬🇧</option>
-            <option value="be">🇧🇾</option>
-        </select>
-    </div>
-    <button class="feedback-btn" onclick="openFeedbackModal()">💡</button>
-    <button class="donate-btn" onclick="showDonateModal()">☕️</button>
-    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
+    <div class="langBox">
+        <select id="langSelect">
+            <option value="uk">🇺🇦</option>
+            <option value="pl">🇵🇱</option>
+            <option value="sk">🇸🇰</option>
+            <option value="en">🇬🇧</option>
+            <option value="be">🇧🇾</option>
+        </select>
+    </div>
+    <button class="feedback-btn" onclick="openFeedbackModal()">💡</button>
+    <button class="donate-btn" onclick="showDonateModal()">☕️</button>
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
+    <button class="maps-btn" onclick="openGoogleMaps()">🌍</button>
 </div>
 
 <div class="map-controls">
-    <button class="ctrl-btn" onclick="map.zoomOut()">➖</button>
-    <button class="ctrl-btn" onclick="locateUser(true)">🎯</button>
-    <button class="ctrl-btn" onclick="map.zoomIn()">➕</button>
+    <button class="ctrl-btn" onclick="map.zoomOut()">➖</button>
+    <button class="ctrl-btn" onclick="locateUser(true)">🎯</button>
+    <button class="ctrl-btn" onclick="map.zoomIn()">➕</button>
 </div>
 
 <div style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 9999; padding: 10px; box-sizing: border-box; background: rgba(255,255,255,0.1);">
-    <button onclick="sendTrafficBan()" style="width: 100%; padding: 15px; border: none; border-radius: 8px; background: #b71c1c; color: white; font-weight: bold; font-size: 16px; cursor: pointer; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);">
-        TRAFFICBAN
-    </button>
+    <button onclick="sendTrafficBan()" style="width: 100%; padding: 15px; border: none; border-radius: 8px; background: #b71c1c; color: white; font-weight: bold; font-size: 16px; cursor: pointer; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);">
+        TRAFFICBAN
+    </button>
 </div>
 
 <div class="modal-overlay" id="feedbackModal">
-    <div class="modal-box">
-        <h3 id="modalTitle">Зв'язатися з підтримкою</h3>
-        <textarea id="feedbackText" placeholder="Опишіть вашу ідею чи проблему..."></textarea>
-        <div class="modal-actions">
-            <button class="btn-modal btn-cancel" id="btnFeedbackCancel" onclick="closeFeedbackModal()">Скасувати</button>
-            <button class="btn-modal btn-submit" id="btnFeedbackSubmit" onclick="submitFeedback()">Надіслати</button>
-        </div>
-    </div>
+    <div class="modal-box">
+        <h3 id="modalTitle">Зв'язатися з підтримкою</h3>
+        <textarea id="feedbackText" placeholder="Опишіть вашу ідею чи проблему..."></textarea>
+        <div class="modal-actions">
+            <button class="btn-modal btn-cancel" id="btnFeedbackCancel" onclick="closeFeedbackModal()">Скасувати</button>
+            <button class="btn-modal btn-submit" id="btnFeedbackSubmit" onclick="submitFeedback()">Надіслати</button>
+        </div>
+    </div>
 </div>
 
 <div class="modal-overlay" id="donateModal">
-    <div class="modal-box" style="text-align:center;">
-        <h3 id="donateTitle">Дякуємо за підтримку! ☕️</h3>
-        <p id="donateDesc" style="font-size: 13px; margin-bottom: 15px;">Оберіть суму донату:</p>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-            <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=100', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">1 €</button>
-            <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=300', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">3 €</button>
-            <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=500', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">5 €</button>
-            <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=1000', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">10 €</button>
-        </div>
-
-        <button id="btnPaypal" onclick="window.open('https://www.paypal.me/VitaliiSachenko', '_blank')" style="width: 100%; padding: 10px; border:none; border-radius:6px; background:#ffc439; color:#000; font-weight:bold; margin-bottom: 15px;">
-            PayPal (інша сума)
-        </button>
-
-        <div class="modal-actions">
-            <button class="btn-modal btn-cancel" id="btnDonateClose" onclick="closeDonateModal()">Закрити</button>
-        </div>
-    </div>
+    <div class="modal-box" style="text-align:center;">
+        <h3 id="donateTitle">Дякуємо за підтримку! ☕️</h3>
+        <p id="donateDesc" style="font-size: 13px; margin-bottom: 15px;">Оберіть суму донату:</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+            <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=100', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">1 €</button>
+            <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=300', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">3 €</button>
+            <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=500', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">5 €</button>
+            <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=1000', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">10 €</button>
+        </div>
+        <button id="btnPaypal" onclick="window.open('https://www.paypal.me/VitaliiSachenko', '_blank')" style="width: 100%; padding: 10px; border:none; border-radius:6px; background:#ffc439; color:#000; font-weight:bold; margin-bottom: 15px;">PayPal (інша сума)</button>
+        <div class="modal-actions">
+            <button class="btn-modal btn-cancel" id="btnDonateClose" onclick="closeDonateModal()">Закрити</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -309,45 +271,41 @@ const tg = window.Telegram ? window.Telegram.WebApp : null;
 if (tg) { tg.ready(); tg.expand(); }
 
 const API_URL = "https://austria-map.onrender.com";
+let borderLayer;
 
-let lang = localStorage.getItem("lang");
-if(!lang){
-  const tgLang = tg?.initDataUnsafe?.user?.language_code;
-  if(tgLang){
-    if(tgLang.startsWith("pl")) lang="pl";
-    else if(tgLang.startsWith("sk")) lang="sk";
-    else if(tgLang.startsWith("be")) lang="be";
-    else if(tgLang.startsWith("uk")) lang="uk";
-    else lang="en";
-  } else { lang="uk"; }
+function openGoogleMaps() {
+    const url = "https://www.google.com/maps";
+    if (tg && tg.openLink) { tg.openLink(url); } else { window.open(url, '_blank'); }
 }
+
+let lang = localStorage.getItem("lang") || "uk";
 document.getElementById("langSelect").value = lang;
 document.getElementById("langSelect").addEventListener("change",(e)=>{
-  lang = e.target.value;
-  localStorage.setItem("lang",lang);
-  updateLabels();
-  loadStats();
+  lang = e.target.value;
+  localStorage.setItem("lang",lang);
+  updateLabels();
+  loadStats();
 });
 
 const i18n = {
-  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", was_control:"Був КОНТРОЛЬ", was_clean:"Було ЧИСТО", active: "Активно:", top_title: "🏆 ТОП-5 active drivers", support_title: "Зв'язатися з підтримкою", placeholder: "Опишіть вашу ідею чи проблему...", cancel: "Скасувати", send: "Надіслати", close: "Закрити", donate_title: "Дякуємо за підтримку! ☕️", donate_desc: "Оберіть суму донату:", paypal_text: "PayPal (інша сума)", alert_empty: "Будь ласка, введіть текст!", alert_success: "Повідомлення надіслано!" },
-  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:", top_title: "🏆 TOP-5 active drivers", support_title: "Skontaktuj się z wsparciem", placeholder: "Opisz swój pomysł lub problem...", cancel: "Anuluj", send: "Wyślij", close: "Zamknij", donate_title: "Dziękuję za wsparcie! ☕️", donate_desc: "Wybierz kwotę darowizny:", paypal_text: "PayPal (inna kwota)", alert_empty: "Proszę wpisać tekst!", alert_success: "Wiadomość została wysłana!" },
-  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", was_control:"Bola KONTROLA", was_clean:"Bolo ČISTÉ", active: "Aktívne:", top_title: "🏆 TOP-5 active drivers", support_title: "Kontaktovať podporu", placeholder: "Popíšte svoj nápad alebo problém...", cancel: "Zrušiť", send: "Odoslať", close: "Zatvoriť", donate_title: "Ďakujem za podporu! ☕️", donate_desc: "Vyberte sumu daru:", paypal_text: "PayPal (iná suma)", alert_empty: "Prosím, zadajte text!", alert_success: "Správa bola odoslaná!" },
-  en:{ clean:"CLEAR", control:"CONTROL", total:"Total", was_control:"Was CONTROL", was_clean:"Was CLEAR", active: "Active:", top_title: "🏆 TOP-5 active drivers", support_title: "Contact Support", placeholder: "Describe your idea or problem...", cancel: "Cancel", send: "Send", close: "Close", donate_title: "Thanks for your support! ☕️", donate_desc: "Select donation amount:", paypal_text: "PayPal (other amount)", alert_empty: "Please enter text!", alert_success: "Message sent!" },
-  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", was_control:"Быў КАНТРОЛЬ", was_clean:"Было ЧЫСТА", active: "Актыўна:", top_title: "🏆 ТОП-5 active drivers", support_title: "Звязацца з падтрымкай", placeholder: "Апішыце вашу ідэю ці праблему...", cancel: "Скасаваць", send: "Адправіць", close: "Зачыніць", donate_title: "Дзякуй за падтрымку! ☕️", donate_desc: "Абярыце суму даната:", paypal_text: "PayPal (іншая сума)", alert_empty: "Калі ласка, увядзіце тэкст!", alert_success: "Паведамленне адпраўлено!" }
+  uk:{ top_header: "🏆 ТОП-5 активних водіїв", clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", was_control:"Був КОНТРОЛЬ", was_clean:"Було ЧИСТО", active: "Активно:", top_title: "🏆 ТОП-5 active drivers", support_title: "Зв'язатися з підтримкою", placeholder: "Опишіть вашу ідею чи проблему...", cancel: "Скасувати", send: "Надіслати", close: "Закрити", donate_title: "Дякуємо за підтримку! ☕️", donate_desc: "Оберіть суму донату:", paypal_text: "PayPal (інша сума)", alert_empty: "Будь ласка, введіть текст!", alert_success: "Повідомлення надіслано!" },
+  pl:{ top_header: "🏆 TOP-5 aktywnych kierowców", clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:", top_title: "🏆 TOP-5 active drivers", support_title: "Skontaktuj się z wsparciem", placeholder: "Opisz swój pomysł lub problem...", cancel: "Anuluj", send: "Wyślij", close: "Zamknij", donate_title: "Dziękuję za wsparcie! ☕️", donate_desc: "Wybierz kwotę darowizny:", paypal_text: "PayPal (inna kwota)", alert_empty: "Proszę wpisać tekst!", alert_success: "Wiadomość została wysłana!" },
+  sk:{ top_header: "🏆 TOP-5 aktívnych vodičov", clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", was_control:"Bola KONTROLA", was_clean:"Bolo ČISTÉ", active: "Aktívne:", top_title: "🏆 TOP-5 active drivers", support_title: "Kontaktovať podporu", placeholder: "Popíšte svoj nápad alebo problém...", cancel: "Zrušiť", send: "Odoslať", close: "Zatvoriť", donate_title: "Ďakujem za podporu! ☕️", donate_desc: "Vyberte sumu daru:", paypal_text: "PayPal (iná suma)", alert_empty: "Prosím, zadajte text!", alert_success: "Správa bola odoslaná!" },
+  en:{ top_header: "🏆 TOP-5 active drivers", clean:"CLEAR", control:"CONTROL", total:"Total", was_control:"Was CONTROL", was_clean:"Was CLEAR", active: "Active:", top_title: "🏆 TOP-5 active drivers", support_title: "Contact Support", placeholder: "Describe your idea or problem...", cancel: "Cancel", send: "Send", close: "Close", donate_title: "Thanks for your support! ☕️", donate_desc: "Select donation amount:", paypal_text: "PayPal (other amount)", alert_empty: "Please enter text!", alert_success: "Message sent!" },
+  be:{ top_header: "🏆 ТОП-5 актыўных кіроўцаў", clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", was_control:"Быў КАНТРОЛЬ", was_clean:"Было ЧЫСТА", active: "Актыўна:", top_title: "🏆 ТОП-5 active drivers", support_title: "Звязацца з падтрымкай", placeholder: "Апішыце вашу ідэю ці праблему...", cancel: "Скасаваць", send: "Адправіць", close: "Зачыніць", donate_title: "Дзякуй за падтрымку! ☕️", donate_desc: "Абярыце суму даната:", paypal_text: "PayPal (інша сума)", alert_empty: "Калі ласка, увядзіце тэкст!", alert_success: "Паведамленне адпраўлено!" }
 };
 function t(k){ return i18n[lang][k]; }
 
 function updateLabels() {
-    document.getElementById("topTitle").innerText = t("top_title");
-    document.getElementById("modalTitle").innerText = t("support_title");
-    document.getElementById("feedbackText").placeholder = t("placeholder");
-    document.getElementById("btnFeedbackCancel").innerText = t("cancel");
-    document.getElementById("btnFeedbackSubmit").innerText = t("send");
-    document.getElementById("donateTitle").innerText = t("donate_title");
-    document.getElementById("donateDesc").innerText = t("donate_desc");
-    document.getElementById("btnPaypal").innerText = t("paypal_text");
-    document.getElementById("btnDonateClose").innerText = t("close");
+    document.getElementById("topTitle").innerText = t("top_header");
+    document.getElementById("modalTitle").innerText = t("support_title");
+    document.getElementById("feedbackText").placeholder = t("placeholder");
+    document.getElementById("btnFeedbackCancel").innerText = t("cancel");
+    document.getElementById("btnFeedbackSubmit").innerText = t("send");
+    document.getElementById("donateTitle").innerText = t("donate_title");
+    document.getElementById("donateDesc").innerText = t("donate_desc");
+    document.getElementById("btnPaypal").innerText = t("paypal_text");
+    document.getElementById("btnDonateClose").innerText = t("close");
 }
 
 const dots = [
@@ -376,40 +334,59 @@ const dots = [
 
 let map = L.map("map", {zoomControl: false}).setView([47.5162, 14.5501], 7);
 
-// НАЛАШТУВАННЯ ШАРІВ ДЛЯ ДНЯ ТА НОЧІ
-const dayTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap'});
-const nightTiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {attribution: '&copy; OpenStreetMap &copy; CARTO'});
+const dayTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'© OpenStreetMap'});
+const nightTiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {attribution: '© OpenStreetMap © CARTO'});
 
-// Логіка визначення початкової теми (пам'ять або авто-час)
+function loadBorders() {
+    const isDark = document.body.classList.contains("dark-theme");
+    const color = isDark ? "#ffffff" : "#333333";
+    
+    fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
+        .then(res => res.json())
+        .then(data => {
+            if(borderLayer) map.removeLayer(borderLayer);
+            borderLayer = L.geoJSON(data, {
+                style: { 
+                    color: color, 
+                    weight: 1.5, 
+                    opacity: 0.6, 
+                    fill: false, 
+                    interactive: false 
+                }
+            }).addTo(map);
+        });
+}
+
 let currentTheme = localStorage.getItem("theme");
 if (!currentTheme) {
-    const hours = new Date().getHours();
-    currentTheme = (hours >= 20 || hours < 6) ? "dark" : "light";
+    const hours = new Date().getHours();
+    currentTheme = (hours >= 20 || hours < 6) ? "dark" : "light";
 }
 
 if (currentTheme === "dark") {
-    nightTiles.addTo(map);
-    document.body.classList.add("dark-theme");
-    document.getElementById("themeBtn").innerText = "☀️";
+    nightTiles.addTo(map);
+    document.body.classList.add("dark-theme");
+    document.getElementById("themeBtn").innerText = "☀️";
 } else {
-    dayTiles.addTo(map);
-    document.getElementById("themeBtn").innerText = "🌙";
+    dayTiles.addTo(map);
+    document.getElementById("themeBtn").innerText = "🌙";
 }
 
 function toggleTheme() {
-    if (map.hasLayer(dayTiles)) {
-        map.removeLayer(dayTiles);
-        nightTiles.addTo(map);
-        document.body.classList.add("dark-theme");
-        document.getElementById("themeBtn").innerText = "☀️";
-        localStorage.setItem("theme", "dark");
-    } else {
-        map.removeLayer(nightTiles);
-        dayTiles.addTo(map);
-        document.body.classList.remove("dark-theme");
-        document.getElementById("themeBtn").innerText = "🌙";
-        localStorage.setItem("theme", "light");
-    }
+    if (map.hasLayer(dayTiles)) {
+        map.removeLayer(dayTiles);
+        nightTiles.addTo(map);
+        document.body.classList.add("dark-theme");
+        document.getElementById("themeBtn").innerText = "☀️";
+        localStorage.setItem("theme", "dark");
+    } else {
+        map.removeLayer(nightTiles);
+        dayTiles.addTo(map);
+        document.body.classList.remove("dark-theme");
+        document.getElementById("themeBtn").innerText = "🌙";
+        localStorage.setItem("theme", "light");
+    }
+    loadBorders();
 }
 
 let markers = {}, stats = {};
@@ -417,36 +394,33 @@ let userLocationMarker = null;
 let watchId = null;
 
 function locateUser(centerMap = false) {
-    if (navigator.geolocation) {
-        if (watchId === null) {
-            watchId = navigator.geolocation.watchPosition(function(position) {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                if (!userLocationMarker) {
-                    userLocationMarker = L.circleMarker([lat, lng], { radius: 8, color: '#ffffff', weight: 2, fillColor: '#136AEC', fillOpacity: 1 }).addTo(map);
-                } else {
-                    userLocationMarker.setLatLng([lat, lng]);
-                }
-                if (centerMap) {
-                    map.setView([lat, lng], 12);
-                    centerMap = false;
-                }
-            }, function(err) { console.log("Помилка GPS"); }, { enableHighAccuracy: true });
-        } else if (centerMap && userLocationMarker) {
-            map.setView(userLocationMarker.getLatLng(), 12);
-        }
-    }
+    if (navigator.geolocation) {
+        if (watchId === null) {
+            watchId = navigator.geolocation.watchPosition(function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                if (!userLocationMarker) {
+                    userLocationMarker = L.circleMarker([lat, lng], { radius: 8, color: '#ffffff', weight: 2, fillColor: '#136AEC', fillOpacity: 1 }).addTo(map);
+                } else {
+                    userLocationMarker.setLatLng([lat, lng]);
+                }
+                if (centerMap) { map.setView([lat, lng], 12); centerMap = false; }
+            }, function(err) { console.log("Помилка GPS"); }, { enableHighAccuracy: true });
+        } else if (centerMap && userLocationMarker) {
+            map.setView(userLocationMarker.getLatLng(), 12);
+        }
+    }
 }
 
 function createPopup(dot, redP, greenP, total, color, oldStatus, lastTime){
 if(dot.fix) return `<b>${dot.n}</b><br><span style="color:red;font-weight:bold;">КОНТРОЛЬ</span>`;
 let historyHtml = "";
 if (color === "blue" && oldStatus) {
-    let statusText = oldStatus === "red" ? t("was_control") : t("was_clean");
-    let statusColor = oldStatus === "red" ? "red" : "green";
-    historyHtml = `<div style="margin: 5px 0; font-size:12px; color:#555;">⏳ <b>${statusText}</b> (<span style="color:${statusColor}">${lastTime}</span>)</div>`;
+    let statusText = oldStatus === "red" ? t("was_control") : t("was_clean");
+    let statusColor = oldStatus === "red" ? "red" : "green";
+    historyHtml = `<div style="margin: 5px 0; font-size:12px; color:#555;">⏳ <b>${statusText}</b> (<span style="color:${statusColor}">${lastTime}</span>)</div>`;
 } else if (lastTime) {
-    historyHtml = `<div style="margin: 5px 0; font-size:12px; color:#666;">⏱️ ${t("active")} ${lastTime}</div>`;
+    historyHtml = `<div style="margin: 5px 0; font-size:12px; color:#666;">⏱️ ${t("active")} ${lastTime}</div>`;
 }
 return `<b>${dot.n}</b><br>${historyHtml}<span style="display:inline-block;width:16px;height:16px;background:red;border-radius:50%;"></span> ${redP}% | <span style="display:inline-block;width:16px;height:16px;background:green;border-radius:50%;"></span> ${greenP}%<br><small>${t("total")}: ${total}</small><br><button class="btn" style="background:green" onclick="sendVote(${dot.id},'green',${dot.lt},${dot.ln})">${t("clean")}</button><button class="btn" style="background:red" onclick="sendVote(${dot.id},'red',${dot.lt},${dot.ln})">${t("control")}</button>`;
 }
@@ -472,38 +446,38 @@ markers[dot.id].setPopupContent(createPopup(dot,redP,greenP,total,s.color,s.old_
 }
 
 function sendVote(id, status, pointLat, pointLng) {
-    if (!navigator.geolocation) { alert("⚠️ Помилка GPS!"); return; }
-    navigator.geolocation.getCurrentPosition(function(position) {
-        const userLat = position.coords.latitude;
-        const userLng = position.coords.longitude;
-        let userId = 0; let username = ""; let firstName = "Водій";
-        if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) { 
-            userId = tg.initDataUnsafe.user.id || 0; 
-            username = tg.initDataUnsafe.user.username || ""; 
-            firstName = tg.initDataUnsafe.user.first_name || "Водій"; 
-        }
-        fetch(`${API_URL}/update`, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id, status, user_id: userId, username, first_name: firstName, user_lat: userLat, user_lng: userLng, point_lat: pointLat, point_lng: pointLng })
-        }).then(async res => {
-            const data = await res.json();
-            if (res.status === 200) { loadStats(); loadTopPermanent(); } 
-            else { alert(data.message || "Помилка: Ви занадто далеко!"); }
-        }).catch(err => { alert("⚠️ Помилка зв'язку із сервером."); });
-    }, function(err) { alert("⚠️ GPS недоступний. Увімкніть його!"); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+    if (!navigator.geolocation) { alert("⚠️ Помилка GPS!"); return; }
+    navigator.geolocation.getCurrentPosition(function(position) {
+        const userLat = position.coords.latitude;
+        const userLng = position.coords.longitude;
+        let userId = 0; let username = ""; let firstName = "Водій";
+        if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) { 
+            userId = tg.initDataUnsafe.user.id || 0; 
+            username = tg.initDataUnsafe.user.username || ""; 
+            firstName = tg.initDataUnsafe.user.first_name || "Водій"; 
+        }
+        fetch(`${API_URL}/update`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, status, user_id: userId, username, first_name: firstName, user_lat: userLat, user_lng: userLng, point_lat: pointLat, point_lng: pointLng })
+        }).then(async res => {
+            const data = await res.json();
+            if (res.status === 200) { loadStats(); loadTopPermanent(); } 
+            else { alert(data.message || "Помилка: Ви занадто далеко!"); }
+        }).catch(err => { alert("⚠️ Помилка зв'язку із сервером."); });
+    }, function(err) { alert("⚠️ GPS недоступний. Увімкніть його!"); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
 }
 
 function sendTrafficBan() { if (tg && tg.openLink) tg.openLink("https://trafficban.com"); else window.open("https://trafficban.com", '_blank'); }
 async function loadTopPermanent() {
-    const listDiv = document.getElementById("topList");
-    try {
-        const res = await fetch(`${API_URL}/top?period=week`);
-        const topUsers = await res.json();
-        if (!topUsers || topUsers.length === 0) { listDiv.innerHTML = "Голосів ще немає 🚀"; return; }
-        let html = ""; const medals = ["🥇", "🥈", "🥉"];
-        topUsers.slice(0, 5).forEach((user, i) => { html += `<div class="top-item"><span>${i < 3 ? medals[i] : (i+1)+'.'} <b>${user.first_name}</b></span> <span>${user.votes} 🗳️</span></div>`; });
-        listDiv.innerHTML = html;
-    } catch (e) { listDiv.innerHTML = "Помилка рейтингу"; }
+    const listDiv = document.getElementById("topList");
+    try {
+        const res = await fetch(`${API_URL}/top?period=week`);
+        const topUsers = await res.json();
+        if (!topUsers || topUsers.length === 0) { listDiv.innerHTML = "Голосів ще немає 🚀"; return; }
+        let html = ""; const medals = ["🥇", "🥈", "🥉"];
+        topUsers.slice(0, 5).forEach((user, i) => { html += `<div class="top-item"><span>${i < 3 ? medals[i] : (i+1)+'.'} <b>${user.first_name}</b></span> <span>${user.votes} 🗳️</span></div>`; });
+        listDiv.innerHTML = html;
+    } catch (e) { listDiv.innerHTML = "Помилка рейтингу"; }
 }
 
 function openFeedbackModal() { document.getElementById("feedbackModal").style.display = "flex"; }
@@ -512,22 +486,21 @@ function showDonateModal() { document.getElementById("donateModal").style.displa
 function closeDonateModal() { document.getElementById("donateModal").style.display = "none"; }
 
 function submitFeedback() {
-    const text = document.getElementById("feedbackText").value.trim();
-    if (!text) { alert(t("alert_empty")); return; }
-    let userId = 0; let username = ""; let firstName = "Водій";
-    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) { userId = tg.initDataUnsafe.user.id || 0; username = tg.initDataUnsafe.user.username || ""; firstName = tg.initDataUnsafe.user.first_name || "Водій"; }
-    fetch(`${API_URL}/feedback`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, user_id: userId, username, first_name: firstName })
-    }).then(res => { if (res.ok) { alert(t("alert_success")); document.getElementById("feedbackText").value = ""; closeFeedbackModal(); } });
+    const text = document.getElementById("feedbackText").value.trim();
+    if (!text) { alert(t("alert_empty")); return; }
+    let userId = 0; let username = ""; let firstName = "Водій";
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) { userId = tg.initDataUnsafe.user.id || 0; username = tg.initDataUnsafe.user.username || ""; firstName = tg.initDataUnsafe.user.first_name || "Водій"; }
+    fetch(`${API_URL}/feedback`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, user_id: userId, username, first_name: firstName })
+    }).then(res => { if (res.ok) { alert(t("alert_success")); document.getElementById("feedbackText").value = ""; closeFeedbackModal(); } });
 }
-
-function copyToClipboard(id) { const text = document.getElementById(id).innerText; navigator.clipboard.writeText(text).then(() => { alert("Copied: " + text); }); }
 
 updateLabels();
 loadStats();
 loadTopPermanent();
-locateUser(false); 
+loadBorders(); 
+locateUser(false); 
 setInterval(loadStats, 2000);
 setInterval(loadTopPermanent, 10000);
 </script>
