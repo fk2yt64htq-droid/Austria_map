@@ -273,14 +273,17 @@ if (tg) { tg.ready(); tg.expand(); }
 const API_URL = "https://austria-map.onrender.com";
 let borderLayer;
 
+// Функція для отримання кольору прапора
 function getFlagColor(countryName) {
     const colors = {
-        "Austria": "#ED2939",
-        "Germany": "#FFCE00",
-        "Italy": "#009246",
+        "Ukraine": "#FFD700",
+        "Germany": "#FFCC00",
+        "Poland": "#DC143C",
+        "Austria": "#FF4500",
+        "Italy": "#32CD32",
         "Switzerland": "#DA291C",
         "Slovenia": "#0057B7",
-        "Czech Republic": "#DA291C",
+        "Czechia": "#DA291C",
         "Hungary": "#429D45",
         "Slovakia": "#0057B7",
         "Liechtenstein": "#002B7F"
@@ -362,12 +365,14 @@ function loadBorders() {
             if(borderLayer) map.removeLayer(borderLayer);
             borderLayer = L.geoJSON(data, {
                 style: function(feature) {
+                    // Виводимо в консоль назви країн, щоб перевірити збіг
+                    // console.log("Country:", feature.properties.name);
                     return { 
                         color: color, 
                         weight: 1.5, 
                         opacity: 0.6, 
                         fillColor: getFlagColor(feature.properties.name),
-                        fillOpacity: 0.1,
+                        fillOpacity: 0.15, // Прозорість
                         interactive: false 
                     };
                 }
