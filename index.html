@@ -273,6 +273,21 @@ if (tg) { tg.ready(); tg.expand(); }
 const API_URL = "https://austria-map.onrender.com";
 let borderLayer;
 
+function getFlagColor(countryName) {
+    const colors = {
+        "Austria": "#ED2939",
+        "Germany": "#FFCE00",
+        "Italy": "#009246",
+        "Switzerland": "#DA291C",
+        "Slovenia": "#0057B7",
+        "Czech Republic": "#DA291C",
+        "Hungary": "#429D45",
+        "Slovakia": "#0057B7",
+        "Liechtenstein": "#002B7F"
+    };
+    return colors[countryName] || "#aaaaaa";
+}
+
 function openGoogleMaps() {
     const url = "https://www.google.com/maps";
     if (tg && tg.openLink) { tg.openLink(url); } else { window.open(url, '_blank'); }
@@ -346,12 +361,15 @@ function loadBorders() {
         .then(data => {
             if(borderLayer) map.removeLayer(borderLayer);
             borderLayer = L.geoJSON(data, {
-                style: { 
-                    color: color, 
-                    weight: 1.5, 
-                    opacity: 0.6, 
-                    fill: false, 
-                    interactive: false 
+                style: function(feature) {
+                    return { 
+                        color: color, 
+                        weight: 1.5, 
+                        opacity: 0.6, 
+                        fillColor: getFlagColor(feature.properties.name),
+                        fillOpacity: 0.1,
+                        interactive: false 
+                    };
                 }
             }).addTo(map);
         });
