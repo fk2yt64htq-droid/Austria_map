@@ -57,7 +57,7 @@ align-items: center;
 gap: 8px;
 }
 
-.feedback-btn, .donate-btn, .theme-btn, .maps-btn {
+.feedback-btn, .donate-btn, .theme-btn {
 background: #ff9800;
 color: white;
 border: none;
@@ -74,7 +74,6 @@ transition: background 0.3s;
 }
 .donate-btn { background: #4caf50; }
 .theme-btn { background: #673ab7; }
-.maps-btn { background: #2196f3; }
 
 .langBox {
 background: white;
@@ -186,19 +185,54 @@ font-weight: bold;
   .top-item { font-size: 11px; padding: 3px 0; }
 }
 
-body.dark-theme .top-permanent-box { background: rgba(30, 30, 30, 0.95); color: #fff; border-color: #444; }
-body.dark-theme .top-permanent-box h3 { color: #fff; }
-body.dark-theme .top-item { border-bottom-color: #333; }
-body.dark-theme .langBox { background: #222; }
-body.dark-theme .ctrl-btn { background: #222; color: #fff; }
-body.dark-theme .ctrl-btn:active { background: #444; }
-body.dark-theme .modal-box { background: #222; color: #fff; }
-body.dark-theme .modal-box h3 { color: #fff; }
-body.dark-theme .modal-box textarea { background: #333; color: #fff; border-color: #555; }
-body.dark-theme .btn-cancel { background: #444; color: #fff; }
-body.dark-theme .leaflet-popup-content-wrapper, body.dark-theme .leaflet-popup-tip { background: #222; color: #fff !important; }
-body.dark-theme .leaflet-popup-content { color: #fff !important; }
-body.dark-theme .leaflet-popup-content div, body.dark-theme .leaflet-popup-content b { color: #fff !important; }
+/* СТИЛІ ДЛЯ НІЧНОГО РЕЖИМУ */
+body.dark-theme .top-permanent-box {
+    background: rgba(30, 30, 30, 0.95);
+    color: #fff;
+    border-color: #444;
+}
+body.dark-theme .top-permanent-box h3 {
+    color: #fff;
+}
+body.dark-theme .top-item {
+    border-bottom-color: #333;
+}
+body.dark-theme .langBox {
+    background: #222;
+}
+body.dark-theme .ctrl-btn {
+    background: #222;
+    color: #fff;
+}
+body.dark-theme .ctrl-btn:active {
+    background: #444;
+}
+body.dark-theme .modal-box {
+    background: #222;
+    color: #fff;
+}
+body.dark-theme .modal-box h3 {
+    color: #fff;
+}
+body.dark-theme .modal-box textarea {
+    background: #333;
+    color: #fff;
+    border-color: #555;
+}
+body.dark-theme .btn-cancel {
+    background: #444;
+    color: #fff;
+}
+body.dark-theme .leaflet-popup-content-wrapper, body.dark-theme .leaflet-popup-tip {
+    background: #222;
+    color: #fff !important;
+}
+body.dark-theme .leaflet-popup-content {
+    color: #fff !important;
+}
+body.dark-theme .leaflet-popup-content div, body.dark-theme .leaflet-popup-content b {
+    color: #fff !important;
+}
 </style>
 </head>
 <body>
@@ -223,7 +257,6 @@ body.dark-theme .leaflet-popup-content div, body.dark-theme .leaflet-popup-conte
     <button class="feedback-btn" onclick="openFeedbackModal()">💡</button>
     <button class="donate-btn" onclick="showDonateModal()">☕️</button>
     <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
-    <button class="maps-btn" onclick="openGoogleMaps()">🌍</button>
 </div>
 
 <div class="map-controls">
@@ -253,13 +286,18 @@ body.dark-theme .leaflet-popup-content div, body.dark-theme .leaflet-popup-conte
     <div class="modal-box" style="text-align:center;">
         <h3 id="donateTitle">Дякуємо за підтримку! ☕️</h3>
         <p id="donateDesc" style="font-size: 13px; margin-bottom: 15px;">Оберіть суму донату:</p>
+        
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
             <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=100', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">1 €</button>
             <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=300', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">3 €</button>
             <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=500', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">5 €</button>
             <button onclick="window.open('https://revolut.me/vsachenko?currency=EUR&amount=1000', '_blank')" style="padding: 10px; border:none; border-radius:6px; background:#46a3fd; color:white; font-weight:bold;">10 €</button>
         </div>
-        <button id="btnPaypal" onclick="window.open('https://www.paypal.me/VitaliiSachenko', '_blank')" style="width: 100%; padding: 10px; border:none; border-radius:6px; background:#ffc439; color:#000; font-weight:bold; margin-bottom: 15px;">PayPal (інша сума)</button>
+
+        <button id="btnPaypal" onclick="window.open('https://www.paypal.me/VitaliiSachenko', '_blank')" style="width: 100%; padding: 10px; border:none; border-radius:6px; background:#ffc439; color:#000; font-weight:bold; margin-bottom: 15px;">
+            PayPal (інша сума)
+        </button>
+
         <div class="modal-actions">
             <button class="btn-modal btn-cancel" id="btnDonateClose" onclick="closeDonateModal()">Закрити</button>
         </div>
@@ -271,32 +309,18 @@ const tg = window.Telegram ? window.Telegram.WebApp : null;
 if (tg) { tg.ready(); tg.expand(); }
 
 const API_URL = "https://austria-map.onrender.com";
-let borderLayer;
 
-// Функція для отримання кольору прапора
-function getFlagColor(countryName) {
-    const colors = {
-        "Ukraine": "#FFD700",
-        "Germany": "#FFCC00",
-        "Poland": "#DC143C",
-        "Austria": "#FF4500",
-        "Italy": "#32CD32",
-        "Switzerland": "#DA291C",
-        "Slovenia": "#0057B7",
-        "Czechia": "#DA291C",
-        "Hungary": "#429D45",
-        "Slovakia": "#0057B7",
-        "Liechtenstein": "#002B7F"
-    };
-    return colors[countryName] || "#aaaaaa";
+let lang = localStorage.getItem("lang");
+if(!lang){
+  const tgLang = tg?.initDataUnsafe?.user?.language_code;
+  if(tgLang){
+    if(tgLang.startsWith("pl")) lang="pl";
+    else if(tgLang.startsWith("sk")) lang="sk";
+    else if(tgLang.startsWith("be")) lang="be";
+    else if(tgLang.startsWith("uk")) lang="uk";
+    else lang="en";
+  } else { lang="uk"; }
 }
-
-function openGoogleMaps() {
-    const url = "https://www.google.com/maps";
-    if (tg && tg.openLink) { tg.openLink(url); } else { window.open(url, '_blank'); }
-}
-
-let lang = localStorage.getItem("lang") || "uk";
 document.getElementById("langSelect").value = lang;
 document.getElementById("langSelect").addEventListener("change",(e)=>{
   lang = e.target.value;
@@ -306,16 +330,16 @@ document.getElementById("langSelect").addEventListener("change",(e)=>{
 });
 
 const i18n = {
-  uk:{ top_header: "🏆 ТОП-5 активних водіїв", clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", was_control:"Був КОНТРОЛЬ", was_clean:"Було ЧИСТО", active: "Активно:", top_title: "🏆 ТОП-5 active drivers", support_title: "Зв'язатися з підтримкою", placeholder: "Опишіть вашу ідею чи проблему...", cancel: "Скасувати", send: "Надіслати", close: "Закрити", donate_title: "Дякуємо за підтримку! ☕️", donate_desc: "Оберіть суму донату:", paypal_text: "PayPal (інша сума)", alert_empty: "Будь ласка, введіть текст!", alert_success: "Повідомлення надіслано!" },
-  pl:{ top_header: "🏆 TOP-5 aktywnych kierowców", clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:", top_title: "🏆 TOP-5 active drivers", support_title: "Skontaktuj się z wsparciem", placeholder: "Opisz swój pomysł lub problem...", cancel: "Anuluj", send: "Wyślij", close: "Zamknij", donate_title: "Dziękuję za wsparcie! ☕️", donate_desc: "Wybierz kwotę darowizny:", paypal_text: "PayPal (inna kwota)", alert_empty: "Proszę wpisać tekst!", alert_success: "Wiadomość została wysłana!" },
-  sk:{ top_header: "🏆 TOP-5 aktívnych vodičov", clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", was_control:"Bola KONTROLA", was_clean:"Bolo ČISTÉ", active: "Aktívne:", top_title: "🏆 TOP-5 active drivers", support_title: "Kontaktovať podporu", placeholder: "Popíšte svoj nápad alebo problém...", cancel: "Zrušiť", send: "Odoslať", close: "Zatvoriť", donate_title: "Ďakujem za podporu! ☕️", donate_desc: "Vyberte sumu daru:", paypal_text: "PayPal (iná suma)", alert_empty: "Prosím, zadajte text!", alert_success: "Správa bola odoslaná!" },
-  en:{ top_header: "🏆 TOP-5 active drivers", clean:"CLEAR", control:"CONTROL", total:"Total", was_control:"Was CONTROL", was_clean:"Was CLEAR", active: "Active:", top_title: "🏆 TOP-5 active drivers", support_title: "Contact Support", placeholder: "Describe your idea or problem...", cancel: "Cancel", send: "Send", close: "Close", donate_title: "Thanks for your support! ☕️", donate_desc: "Select donation amount:", paypal_text: "PayPal (other amount)", alert_empty: "Please enter text!", alert_success: "Message sent!" },
-  be:{ top_header: "🏆 ТОП-5 актыўных кіроўцаў", clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", was_control:"Быў КАНТРОЛЬ", was_clean:"Было ЧЫСТА", active: "Актыўна:", top_title: "🏆 ТОП-5 active drivers", support_title: "Звязацца з падтрымкай", placeholder: "Апішыце вашу ідэю ці праблему...", cancel: "Скасаваць", send: "Адправіць", close: "Зачыніць", donate_title: "Дзякуй за падтрымку! ☕️", donate_desc: "Абярыце суму даната:", paypal_text: "PayPal (інша сума)", alert_empty: "Калі ласка, увядзіце тэкст!", alert_success: "Паведамленне адпраўлено!" }
+  uk:{ clean:"ЧИСТО", control:"КОНТРОЛЬ", total:"Всього", was_control:"Був КОНТРОЛЬ", was_clean:"Було ЧИСТО", active: "Активно:", top_title: "🏆 ТОП-5 active drivers", support_title: "Зв'язатися з підтримкою", placeholder: "Опишіть вашу ідею чи проблему...", cancel: "Скасувати", send: "Надіслати", close: "Закрити", donate_title: "Дякуємо за підтримку! ☕️", donate_desc: "Оберіть суму донату:", paypal_text: "PayPal (інша сума)", alert_empty: "Будь ласка, введіть текст!", alert_success: "Повідомлення надіслано!" },
+  pl:{ clean:"CZYSTO", control:"KONTROLA", total:"Razem", was_control:"Była KONTROLA", was_clean:"Było CZYSTO", active: "Aktywne:", top_title: "🏆 TOP-5 active drivers", support_title: "Skontaktuj się z wsparciem", placeholder: "Opisz swój pomysł lub problem...", cancel: "Anuluj", send: "Wyślij", close: "Zamknij", donate_title: "Dziękuję za wsparcie! ☕️", donate_desc: "Wybierz kwotę darowizny:", paypal_text: "PayPal (inna kwota)", alert_empty: "Proszę wpisać tekst!", alert_success: "Wiadomość została wysłana!" },
+  sk:{ clean:"ČISTÉ", control:"KONTROLA", total:"Spolu", was_control:"Bola KONTROLA", was_clean:"Bolo ČISTÉ", active: "Aktívne:", top_title: "🏆 TOP-5 active drivers", support_title: "Kontaktovať podporu", placeholder: "Popíšte svoj nápad alebo problém...", cancel: "Zrušiť", send: "Odoslať", close: "Zatvoriť", donate_title: "Ďakujem za podporu! ☕️", donate_desc: "Vyberte sumu daru:", paypal_text: "PayPal (iná suma)", alert_empty: "Prosím, zadajte text!", alert_success: "Správa bola odoslaná!" },
+  en:{ clean:"CLEAR", control:"CONTROL", total:"Total", was_control:"Was CONTROL", was_clean:"Was CLEAR", active: "Active:", top_title: "🏆 TOP-5 active drivers", support_title: "Contact Support", placeholder: "Describe your idea or problem...", cancel: "Cancel", send: "Send", close: "Close", donate_title: "Thanks for your support! ☕️", donate_desc: "Select donation amount:", paypal_text: "PayPal (other amount)", alert_empty: "Please enter text!", alert_success: "Message sent!" },
+  be:{ clean:"ЧЫСТА", control:"КАНТРОЛЬ", total:"Усяго", was_control:"Быў КАНТРОЛЬ", was_clean:"Было ЧЫСТА", active: "Актыўна:", top_title: "🏆 ТОП-5 active drivers", support_title: "Звязацца з падтрымкай", placeholder: "Апішыце вашу ідэю ці праблему...", cancel: "Скасаваць", send: "Адправіць", close: "Зачыніць", donate_title: "Дзякуй за падтрымку! ☕️", donate_desc: "Абярыце суму даната:", paypal_text: "PayPal (іншая сума)", alert_empty: "Калі ласка, увядзіце тэкст!", alert_success: "Паведамленне адпраўлено!" }
 };
 function t(k){ return i18n[lang][k]; }
 
 function updateLabels() {
-    document.getElementById("topTitle").innerText = t("top_header");
+    document.getElementById("topTitle").innerText = t("top_title");
     document.getElementById("modalTitle").innerText = t("support_title");
     document.getElementById("feedbackText").placeholder = t("placeholder");
     document.getElementById("btnFeedbackCancel").innerText = t("cancel");
@@ -352,34 +376,11 @@ const dots = [
 
 let map = L.map("map", {zoomControl: false}).setView([47.5162, 14.5501], 7);
 
-const dayTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'© OpenStreetMap'});
-const nightTiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {attribution: '© OpenStreetMap © CARTO'});
+// НАЛАШТУВАННЯ ШАРІВ ДЛЯ ДНЯ ТА НОЧІ
+const dayTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'&copy; OpenStreetMap'});
+const nightTiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {attribution: '&copy; OpenStreetMap &copy; CARTO'});
 
-function loadBorders() {
-    const isDark = document.body.classList.contains("dark-theme");
-    const color = isDark ? "#ffffff" : "#333333";
-    
-    fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
-        .then(res => res.json())
-        .then(data => {
-            if(borderLayer) map.removeLayer(borderLayer);
-            borderLayer = L.geoJSON(data, {
-                style: function(feature) {
-                    // Виводимо в консоль назви країн, щоб перевірити збіг
-                    // console.log("Country:", feature.properties.name);
-                    return { 
-                        color: color, 
-                        weight: 1.5, 
-                        opacity: 0.6, 
-                        fillColor: getFlagColor(feature.properties.name),
-                        fillOpacity: 0.15, // Прозорість
-                        interactive: false 
-                    };
-                }
-            }).addTo(map);
-        });
-}
-
+// Логіка визначення початкової теми (пам'ять або авто-час)
 let currentTheme = localStorage.getItem("theme");
 if (!currentTheme) {
     const hours = new Date().getHours();
@@ -409,7 +410,6 @@ function toggleTheme() {
         document.getElementById("themeBtn").innerText = "🌙";
         localStorage.setItem("theme", "light");
     }
-    loadBorders();
 }
 
 let markers = {}, stats = {};
@@ -427,7 +427,10 @@ function locateUser(centerMap = false) {
                 } else {
                     userLocationMarker.setLatLng([lat, lng]);
                 }
-                if (centerMap) { map.setView([lat, lng], 12); centerMap = false; }
+                if (centerMap) {
+                    map.setView([lat, lng], 12);
+                    centerMap = false;
+                }
             }, function(err) { console.log("Помилка GPS"); }, { enableHighAccuracy: true });
         } else if (centerMap && userLocationMarker) {
             map.setView(userLocationMarker.getLatLng(), 12);
@@ -519,10 +522,11 @@ function submitFeedback() {
     }).then(res => { if (res.ok) { alert(t("alert_success")); document.getElementById("feedbackText").value = ""; closeFeedbackModal(); } });
 }
 
+function copyToClipboard(id) { const text = document.getElementById(id).innerText; navigator.clipboard.writeText(text).then(() => { alert("Copied: " + text); }); }
+
 updateLabels();
 loadStats();
 loadTopPermanent();
-loadBorders(); 
 locateUser(false); 
 setInterval(loadStats, 2000);
 setInterval(loadTopPermanent, 10000);
