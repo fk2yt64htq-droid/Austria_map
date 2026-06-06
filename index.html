@@ -15,6 +15,16 @@ html, body { margin:0; padding:0; height:100%; }
 .btn { width: 100%; padding:10px; margin-top:5px; border:none; border-radius:6px; color:#fff; font-weight:bold; cursor:pointer; }
 .leaflet-popup-content { text-align:center; color:#000 !important; }
 
+/* Стиль для напису РОСІЯ */
+.russia-label {
+    font-size: 24px;
+    font-weight: bold;
+    color: rgba(200, 200, 200, 0.5);
+    white-space: nowrap;
+    pointer-events: none;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}
+
 .top-permanent-box {
 position: absolute;
 top: 10px;
@@ -273,6 +283,17 @@ if (tg) { tg.ready(); tg.expand(); }
 const API_URL = "https://austria-map.onrender.com";
 let borderLayer;
 
+// Функція для додавання напису
+function addRussiaLabel() {
+    const russiaIcon = L.divIcon({
+        className: 'russia-label',
+        html: 'РОСІЯ',
+        iconSize: [100, 40]
+    });
+    // Координати центру (приблизно)
+    L.marker([64.0, 95.0], { icon: russiaIcon, interactive: false }).addTo(map);
+}
+
 function openGoogleMaps() {
     const url = "https://www.google.com/maps";
     if (tg && tg.openLink) { tg.openLink(url); } else { window.open(url, '_blank'); }
@@ -501,6 +522,7 @@ loadStats();
 loadTopPermanent();
 loadBorders(); 
 locateUser(false); 
+addRussiaLabel(); // Додаємо напис при завантаженні
 setInterval(loadStats, 2000);
 setInterval(loadTopPermanent, 10000);
 </script>
